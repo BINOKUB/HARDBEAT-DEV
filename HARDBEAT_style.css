@@ -198,3 +198,40 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
     color: var(--accent-color); font-weight: bold; font-family: 'Courier New', monospace; cursor: ns-resize;
 }
 .step-slider { accent-color: #ffffff; }
+
+/* --- FADERS & HZ LABELS (NEON) --- */
+.fader-unit { display: flex; flex-direction: column; align-items: center; height: 160px; }
+.freq-fader { appearance: slider-vertical; width: 12px; height: 130px; background: #222; cursor: ns-resize; }
+.hz-label { 
+    font-size: 9px; color: var(--accent-color); margin-bottom: 5px; 
+    font-family: 'Courier New', monospace; font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 243, 255, 0.4);
+}
+
+/* --- SYNTH CONTROLS (MUTE & RANDOM) --- */
+.synth-controls {
+    display: flex; gap: 15px; margin-top: 15px; justify-content: flex-start;
+}
+
+/* Bouton Random existant (rappel) */
+.btn-random {
+    background: #222; border: 1px solid #444; color: #888;
+    padding: 8px 15px; font-size: 10px; cursor: pointer; letter-spacing: 1px;
+}
+.btn-random:hover { background: var(--accent-color); color: #000; }
+
+/* Nouveau Bouton Mute Synth */
+.btn-synth-mute {
+    background: #222; border: 1px solid #444; color: #888;
+    padding: 8px 15px; font-size: 10px; cursor: pointer; letter-spacing: 1px;
+    font-weight: bold; transition: all 0.2s;
+}
+.btn-synth-mute:hover {
+    color: #fff; border-color: #666;
+}
+.btn-synth-mute.active {
+    background: #cc0000;
+    color: #fff;
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255,0,0,0.3);
+}
