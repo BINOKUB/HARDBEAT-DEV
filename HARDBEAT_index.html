@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | POLYRHYTHM UPDATE</title>
+    <title>HARDBEAT PRO | FINAL METRONOME</title>
     <link rel="stylesheet" href="HARDBEAT_style.css">
 </head>
 <body>
@@ -21,9 +21,16 @@
         <section id="seq1-container" class="rack-section">
             <div class="section-header">
                 <h2>SEQ 1 : DRUM ENGINE</h2>
-                <div class="bpm-control">
-                    <label>TEMPO 1</label>
-                    <span id="display-bpm1">120</span> BPM
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <div class="bpm-control" style="border-right:1px solid #333; padding-right:15px;">
+                        <label style="cursor:pointer; color:#00f3ff;">
+                            CLICK <input type="checkbox" id="metro-toggle" style="vertical-align:middle;">
+                        </label>
+                    </div>
+                    <div class="bpm-control">
+                        <label>TEMPO 1</label>
+                        <span id="display-bpm1">120</span> BPM
+                    </div>
                 </div>
             </div>
 
