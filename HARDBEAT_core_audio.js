@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO ENGINE (METRONOME)
+   HARDBEAT PRO - CORE AUDIO (ACCENT SUPPORT)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = audioCtx.createGain();
@@ -7,7 +7,12 @@ masterGain.connect(audioCtx.destination);
 masterGain.gain.value = 0.5;
 
 let isPlaying = false;
+
+// SÉQUENCES
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
+// NOUVEAU : Mémoire des Accents (5 pistes x 16 pas)
+let drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
+
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
 
 let freqCacheSeq2 = new Array(16).fill(440);
@@ -63,35 +68,40 @@ delayNode.connect(delayMix);
 distortionNode.connect(masterGain); delayMix.connect(masterGain);
 feedback.gain.value = 0; delayMix.gain.value = 0;
 
-// --- FONCTION METRONOME (NOUVEAU) ---
+// --- METRONOME ---
 function playMetronome(isDownbeat) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.connect(g); g.connect(masterGain);
-    
-    // 1200Hz pour le temps fort (1), 800Hz pour les autres temps
     osc.frequency.value = isDownbeat ? 1200 : 800;
-    
     g.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05); // Bip très court
-    
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
 }
 
-// --- INSTRUMENTS ---
-function playKick() {
+// --- DRUMS AVEC ACCENT ---
+// Le facteur accent est 1.4x le volume de base
+const ACCENT_BOOST = 1.4;
+
+function playKick(isAccent) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.connect(g); g.connect(masterGain);
     const p = kickSettings.pitch || 150;
     const d = kickSettings.decay || 0.5;
+    
+    // Calcul du volume avec Accent
+    let lvl = kickSettings.level;
+    if (isAccent) lvl = Math.min(1.0, lvl * ACCENT_BOOST);
+
     osc.frequency.setValueAtTime(p, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
-    g.gain.setValueAtTime(kickSettings.level, audioCtx.currentTime);
+    g.gain.setValueAtTime(lvl, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
     osc.start(); osc.stop(audioCtx.currentTime + d);
 }
-function playSnare() {
+
+function playSnare(isAccent) {
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -102,11 +112,16 @@ function playSnare() {
     filt.frequency.value = snareSettings.tone || 1000;
     const g = audioCtx.createGain();
     noise.connect(filt); filt.connect(g); g.connect(masterGain);
-    g.gain.setValueAtTime(snareSettings.level, audioCtx.currentTime);
+    
+    let lvl = snareSettings.level;
+    if (isAccent) lvl = Math.min(1.0, lvl * ACCENT_BOOST);
+
+    g.gain.setValueAtTime(lvl, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
     noise.start();
 }
-function playHiHat(isOpen) {
+
+function playHiHat(isOpen, isAccent) {
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.5, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -118,12 +133,16 @@ function playHiHat(isOpen) {
     const g = audioCtx.createGain();
     noise.connect(filt); filt.connect(g); g.connect(masterGain);
     const d = isOpen ? (hhSettings.decayOpen || 0.3) : (hhSettings.decayClose || 0.05);
-    const l = isOpen ? (hhSettings.levelOpen || 0.5) : (hhSettings.levelClose || 0.4);
+    
+    let l = isOpen ? (hhSettings.levelOpen || 0.5) : (hhSettings.levelClose || 0.4);
+    if (isAccent) l = Math.min(1.0, l * ACCENT_BOOST);
+
     g.gain.setValueAtTime(l, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
     noise.start();
 }
-function playDrumFM() {
+
+function playDrumFM(isAccent) {
     const car = audioCtx.createOscillator();
     const mod = audioCtx.createOscillator();
     const modG = audioCtx.createGain();
@@ -134,12 +153,17 @@ function playDrumFM() {
     mod.connect(modG); modG.connect(car.frequency);
     car.connect(mainG); mainG.connect(masterGain);
     const d = fmSettings.decay || 0.3;
-    mainG.gain.setValueAtTime(fmSettings.level || 0.5, audioCtx.currentTime);
+    
+    let lvl = fmSettings.level || 0.5;
+    if (isAccent) lvl = Math.min(1.0, lvl * ACCENT_BOOST);
+
+    mainG.gain.setValueAtTime(lvl, audioCtx.currentTime);
     mainG.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
     car.start(); mod.start();
     car.stop(audioCtx.currentTime + d); mod.stop(audioCtx.currentTime + d);
 }
 
+// --- SYNTHS ---
 function playSynthNote(freq, volume) {
     if (!freq || freq < 20) return;
     const targetVol = (typeof volume === 'number') ? volume : 0.5;
@@ -163,4 +187,5 @@ function checkSynthTick(step) {
     if (synthSequences.seq2[step]) playSynthNote(freqCacheSeq2[step], synthVol2);
     if (synthSequences.seq3[step]) playSynthNote(freqCacheSeq3[step] * 0.5, synthVol3);
 }
-console.log("Audio Engine : Prêt (Metronome Added).");
+
+console.log("Audio Engine : Prêt (Accent Enabled).");
