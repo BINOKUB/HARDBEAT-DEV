@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (SAVE & LOAD)
+   HARDBEAT PRO - UI LOGIC (SWING SAVE FIX)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -51,9 +51,7 @@ document.addEventListener('input', (e) => {
 
 // --- GESTION MEMOIRE (SAVE / LOAD) ---
 
-// Sauvegarder dans le Slot X
 function savePattern(slot) {
-    // 1. Récolter toutes les données UI qui ne sont pas dans le core
     const data = {
         drums: {
             seq: drumSequences,
@@ -61,31 +59,29 @@ function savePattern(slot) {
             mutes: trackMutes,
             solos: trackSolos,
             lengths: trackLengths,
-            settings: { // Sauver les valeurs des sliders instruments
+            settings: { 
                 kick: { ...kickSettings, steps: document.getElementById('kick-steps').value },
                 snare: { ...snareSettings, steps: document.getElementById('snare-steps').value },
                 hhc: { ...hhSettings, steps: document.getElementById('hhc-steps').value },
-                hho: { ...hhSettings, steps: document.getElementById('hho-steps').value }, // HH settings partagés mais steps séparés
+                hho: { ...hhSettings, steps: document.getElementById('hho-steps').value },
                 fm: { ...fmSettings, steps: document.getElementById('fm-steps').value }
             }
         },
         synths: {
             seq2: synthSequences.seq2,
-            seq3: synthSequences.seq3, // Peut être vide si pas étendu
-            params2: paramsSeq2, // Venant du core (via getter ou supposé sync) - On va lire les sliders pour être sûr
+            seq3: synthSequences.seq3,
+            params2: paramsSeq2, 
             params3: paramsSeq3,
             mutes: { seq2: muteState2, seq3: muteState3 },
             vol2: document.getElementById('vol-seq2').value,
             vol3: document.getElementById('vol-seq3') ? document.getElementById('vol-seq3').value : 0.6,
-            // Pour les fréquences, on doit lire les sliders car freqCache est dans AudioCore inaccessible direct
-            // Astuce: On lit le cache simulé ici ou on lit le DOM
             freqs2: Array.from(document.querySelectorAll('#grid-freq-seq2 .freq-fader')).map(f => f.value),
             freqs3: Array.from(document.querySelectorAll('#grid-freq-seq3 .freq-fader')).map(f => f.value)
         },
         global: {
             bpm1: document.getElementById('display-bpm1').innerText,
             bpm2: document.getElementById('display-bpm2').innerText,
-            swing: document.getElementById('global-swing').value,
+            swing: document.getElementById('global-swing').value, // Sauve "6" par exemple
             accent: document.getElementById('global-accent-amount').value,
             delay: globalDelay
         }
@@ -93,24 +89,22 @@ function savePattern(slot) {
 
     localStorage.setItem(`hardbeat_pattern_${slot}`, JSON.stringify(data));
     console.log(`Pattern saved to Slot ${slot}`);
-    updateMemoryUI(); // Rafraîchir les couleurs des slots
+    updateMemoryUI(); 
 }
 
-// Charger depuis le Slot X
 function loadPattern(slot) {
     const json = localStorage.getItem(`hardbeat_pattern_${slot}`);
-    if (!json) return; // Rien à charger
+    if (!json) return; 
     
     const data = JSON.parse(json);
     
-    // 1. RESTAURER DRUMS
+    // 1. DRUMS
     drumSequences = data.drums.seq;
     drumAccents = data.drums.accents;
     trackMutes = data.drums.mutes;
     trackSolos = data.drums.solos;
     trackLengths = data.drums.lengths;
     
-    // Appliquer Settings Drums (Sliders)
     const setSlider = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
     
     setSlider('kick-steps', data.drums.settings.kick.steps);
@@ -138,9 +132,7 @@ function loadPattern(slot) {
     setSlider('fm-decay', data.drums.settings.fm.decay);
     setSlider('fm-level', data.drums.settings.fm.level);
 
-    // Mutes / Solos UI Update
     document.querySelectorAll('.btn-mute').forEach((btn, i) => {
-        // Attention : les boutons mute synth sont à part
         if (!btn.classList.contains('btn-synth-mute')) {
             const track = parseInt(btn.dataset.track);
             btn.classList.toggle('active', trackMutes[track]);
@@ -151,37 +143,32 @@ function loadPattern(slot) {
         btn.classList.toggle('active', trackSolos[track]);
     });
 
-    // 2. RESTAURER SYNTHS
+    // 2. SYNTHS
     synthSequences.seq2 = data.synths.seq2;
     synthSequences.seq3 = data.synths.seq3;
     
-    // Si Seq 3 contient des données mais n'est pas affiché, on simule le clic Extend
     const hasSeq3Data = data.synths.freqs3 && data.synths.freqs3.length > 0;
     const isSeq3Visible = document.getElementById('seq3-container');
     if (hasSeq3Data && !isSeq3Visible) {
         document.getElementById('add-seq-btn').click();
     }
 
-    // Paramètres Synth 2
     setSlider('vol-seq2', data.synths.vol2);
     setSlider('synth2-disto', data.synths.params2.disto);
     setSlider('synth2-res', data.synths.params2.res);
     setSlider('synth2-cutoff', data.synths.params2.cutoff);
     setSlider('synth2-decay', data.synths.params2.decay);
     
-    // Mute Synth 2
     muteState2 = data.synths.mutes.seq2;
     const btnMute2 = document.getElementById('btn-mute-seq2');
     if(btnMute2) btnMute2.classList.toggle('active', muteState2);
     if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2);
 
-    // Fréquences Synth 2
     const faders2 = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
     if (data.synths.freqs2) {
         faders2.forEach((f, i) => { f.value = data.synths.freqs2[i]; f.dispatchEvent(new Event('input')); });
     }
 
-    // Paramètres Synth 3 (si existent)
     if (hasSeq3Data) {
         setSlider('vol-seq3', data.synths.vol3);
         setSlider('synth3-disto', data.synths.params3.disto);
@@ -198,10 +185,13 @@ function loadPattern(slot) {
         faders3.forEach((f, i) => { f.value = data.synths.freqs3[i]; f.dispatchEvent(new Event('input')); });
     }
 
-    // 3. RESTAURER GLOBAL
+    // 3. GLOBAL (LE FIX EST ICI)
     document.getElementById('display-bpm1').innerText = data.global.bpm1;
     document.getElementById('display-bpm2').innerText = data.global.bpm2;
-    setSlider('global-swing', data.global.swing * 100); // Storage en float (0.06), slider en int (6)
+    
+    // FIX SWING : On ne multiplie plus par 100, car on sauve la valeur brute du slider (ex: "6")
+    setSlider('global-swing', data.global.swing); 
+    
     setSlider('global-accent-amount', data.global.accent);
     setSlider('global-delay-amt', data.global.delay.amt);
     setSlider('global-delay-time', data.global.delay.time);
@@ -247,7 +237,7 @@ function bindControls() {
     
     const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => masterGain.gain.value = parseFloat(e.target.value);
 
-    // --- MEMORY BANK BINDING ---
+    // MEMORY BANK
     const btnSave = document.getElementById('btn-save-mode');
     btnSave.onclick = () => {
         isSaveMode = !isSaveMode;
@@ -258,27 +248,17 @@ function bindControls() {
         btn.onclick = () => {
             const slot = btn.dataset.slot;
             if (isSaveMode) {
-                // SAVE
                 savePattern(slot);
-                // Flash effect
-                btn.classList.add('flash-success');
-                setTimeout(() => btn.classList.remove('flash-success'), 200);
-                // Exit save mode
-                isSaveMode = false;
-                btnSave.classList.remove('saving');
+                btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200);
+                isSaveMode = false; btnSave.classList.remove('saving');
             } else {
-                // LOAD
-                // Check if data exists
                 if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
                     loadPattern(slot);
-                    // Flash effect
-                    btn.classList.add('flash-success');
-                    setTimeout(() => btn.classList.remove('flash-success'), 200);
+                    btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200);
                 }
             }
         };
     });
-    // Check slots on startup
     updateMemoryUI();
 }
 
@@ -318,7 +298,6 @@ function initSeq3Extension() {
         btn.disabled = true; btn.style.opacity = "0.3"; btn.innerText = "SEQ 3 ACTIVE";
         const zone = document.getElementById('extension-zone');
         
-        // --- INJECTION HTML SEQ 3 ---
         zone.innerHTML = `
         <section id="seq3-container" class="rack-section synth-instance">
             <div class="section-header">
@@ -361,7 +340,7 @@ function initSeq3Extension() {
     });
 }
 
-// --- BOUCLES & EVENTS (INCHANGÉS MAIS INCLUS POUR COMPLETUDE) ---
+// --- BOUCLES ---
 let globalTickCount = 0;
 function runDrumLoop() {
     if (!isPlaying) return;
@@ -416,6 +395,7 @@ function runSynthLoop() {
     timerSynths = setTimeout(runSynthLoop, currentStepDuration);
 }
 
+// --- ÉCOUTEURS ---
 document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
@@ -450,5 +430,5 @@ window.addEventListener('load', () => {
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
     const playBtn = document.getElementById('master-play-stop'); if (playBtn) { playBtn.onclick = () => { if (isPlaying) { isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; } else { if (audioCtx.state === 'suspended') audioCtx.resume(); isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; runDrumLoop(); runSynthLoop(); } }; }
-    console.log("UI Logic : Prêt (Memory Bank Ready).");
+    console.log("UI Logic : Prêt (Save Fix).");
 });
