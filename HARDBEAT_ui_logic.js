@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (SWING SAVE FIX)
+   HARDBEAT PRO - UI LOGIC (CLEAR FUNCTION ADDED)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -49,8 +49,7 @@ document.addEventListener('input', (e) => {
     }
 });
 
-// --- GESTION MEMOIRE (SAVE / LOAD) ---
-
+// --- GESTION MEMOIRE ---
 function savePattern(slot) {
     const data = {
         drums: {
@@ -81,24 +80,21 @@ function savePattern(slot) {
         global: {
             bpm1: document.getElementById('display-bpm1').innerText,
             bpm2: document.getElementById('display-bpm2').innerText,
-            swing: document.getElementById('global-swing').value, // Sauve "6" par exemple
+            swing: document.getElementById('global-swing').value,
             accent: document.getElementById('global-accent-amount').value,
             delay: globalDelay
         }
     };
-
     localStorage.setItem(`hardbeat_pattern_${slot}`, JSON.stringify(data));
-    console.log(`Pattern saved to Slot ${slot}`);
     updateMemoryUI(); 
 }
 
 function loadPattern(slot) {
     const json = localStorage.getItem(`hardbeat_pattern_${slot}`);
     if (!json) return; 
-    
     const data = JSON.parse(json);
     
-    // 1. DRUMS
+    // RESTORE DRUMS
     drumSequences = data.drums.seq;
     drumAccents = data.drums.accents;
     trackMutes = data.drums.mutes;
@@ -111,20 +107,16 @@ function loadPattern(slot) {
     setSlider('kick-pitch', data.drums.settings.kick.pitch);
     setSlider('kick-decay', data.drums.settings.kick.decay);
     setSlider('kick-level', data.drums.settings.kick.level);
-    
     setSlider('snare-steps', data.drums.settings.snare.steps);
     setSlider('snare-snappy', data.drums.settings.snare.snappy);
     setSlider('snare-tone', data.drums.settings.snare.tone);
     setSlider('snare-level', data.drums.settings.snare.level);
-    
     setSlider('hhc-steps', data.drums.settings.hhc.steps);
     setSlider('hhc-tone', data.drums.settings.hhc.tone);
     setSlider('hhc-level', data.drums.settings.hhc.levelClose);
-    
     setSlider('hho-steps', data.drums.settings.hho.steps);
     setSlider('hho-decay', data.drums.settings.hho.decayOpen);
     setSlider('hho-level', data.drums.settings.hho.levelOpen);
-    
     setSlider('fm-steps', data.drums.settings.fm.steps);
     setSlider('fm-carrier', data.drums.settings.fm.carrierPitch);
     setSlider('fm-mod', data.drums.settings.fm.modPitch);
@@ -132,42 +124,26 @@ function loadPattern(slot) {
     setSlider('fm-decay', data.drums.settings.fm.decay);
     setSlider('fm-level', data.drums.settings.fm.level);
 
-    document.querySelectorAll('.btn-mute').forEach((btn, i) => {
-        if (!btn.classList.contains('btn-synth-mute')) {
-            const track = parseInt(btn.dataset.track);
-            btn.classList.toggle('active', trackMutes[track]);
-        }
-    });
-    document.querySelectorAll('.btn-solo').forEach((btn, i) => {
-        const track = parseInt(btn.dataset.track);
-        btn.classList.toggle('active', trackSolos[track]);
-    });
+    document.querySelectorAll('.btn-mute').forEach((btn, i) => { if (!btn.classList.contains('btn-synth-mute')) { const track = parseInt(btn.dataset.track); btn.classList.toggle('active', trackMutes[track]); }});
+    document.querySelectorAll('.btn-solo').forEach((btn, i) => { const track = parseInt(btn.dataset.track); btn.classList.toggle('active', trackSolos[track]); });
 
-    // 2. SYNTHS
+    // RESTORE SYNTHS
     synthSequences.seq2 = data.synths.seq2;
     synthSequences.seq3 = data.synths.seq3;
-    
     const hasSeq3Data = data.synths.freqs3 && data.synths.freqs3.length > 0;
     const isSeq3Visible = document.getElementById('seq3-container');
-    if (hasSeq3Data && !isSeq3Visible) {
-        document.getElementById('add-seq-btn').click();
-    }
+    if (hasSeq3Data && !isSeq3Visible) document.getElementById('add-seq-btn').click();
 
     setSlider('vol-seq2', data.synths.vol2);
     setSlider('synth2-disto', data.synths.params2.disto);
     setSlider('synth2-res', data.synths.params2.res);
     setSlider('synth2-cutoff', data.synths.params2.cutoff);
     setSlider('synth2-decay', data.synths.params2.decay);
-    
     muteState2 = data.synths.mutes.seq2;
-    const btnMute2 = document.getElementById('btn-mute-seq2');
-    if(btnMute2) btnMute2.classList.toggle('active', muteState2);
+    const btnMute2 = document.getElementById('btn-mute-seq2'); if(btnMute2) btnMute2.classList.toggle('active', muteState2);
     if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2);
-
     const faders2 = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
-    if (data.synths.freqs2) {
-        faders2.forEach((f, i) => { f.value = data.synths.freqs2[i]; f.dispatchEvent(new Event('input')); });
-    }
+    if (data.synths.freqs2) faders2.forEach((f, i) => { f.value = data.synths.freqs2[i]; f.dispatchEvent(new Event('input')); });
 
     if (hasSeq3Data) {
         setSlider('vol-seq3', data.synths.vol3);
@@ -175,39 +151,29 @@ function loadPattern(slot) {
         setSlider('synth3-res', data.synths.params3.res);
         setSlider('synth3-cutoff', data.synths.params3.cutoff);
         setSlider('synth3-decay', data.synths.params3.decay);
-        
         muteState3 = data.synths.mutes.seq3;
-        const btnMute3 = document.getElementById('btn-mute-seq3');
-        if(btnMute3) btnMute3.classList.toggle('active', muteState3);
+        const btnMute3 = document.getElementById('btn-mute-seq3'); if(btnMute3) btnMute3.classList.toggle('active', muteState3);
         if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3);
-
         const faders3 = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
         faders3.forEach((f, i) => { f.value = data.synths.freqs3[i]; f.dispatchEvent(new Event('input')); });
     }
 
-    // 3. GLOBAL (LE FIX EST ICI)
+    // RESTORE GLOBAL
     document.getElementById('display-bpm1').innerText = data.global.bpm1;
     document.getElementById('display-bpm2').innerText = data.global.bpm2;
-    
-    // FIX SWING : On ne multiplie plus par 100, car on sauve la valeur brute du slider (ex: "6")
     setSlider('global-swing', data.global.swing); 
-    
     setSlider('global-accent-amount', data.global.accent);
     setSlider('global-delay-amt', data.global.delay.amt);
     setSlider('global-delay-time', data.global.delay.time);
 
     refreshGridVisuals();
-    console.log(`Pattern loaded from Slot ${slot}`);
 }
 
 function updateMemoryUI() {
     for (let i = 1; i <= 4; i++) {
         const slotBtn = document.querySelector(`.btn-mem-slot[data-slot="${i}"]`);
-        if (localStorage.getItem(`hardbeat_pattern_${i}`)) {
-            slotBtn.classList.add('has-data');
-        } else {
-            slotBtn.classList.remove('has-data');
-        }
+        if (localStorage.getItem(`hardbeat_pattern_${i}`)) slotBtn.classList.add('has-data');
+        else slotBtn.classList.remove('has-data');
     }
 }
 
@@ -237,12 +203,28 @@ function bindControls() {
     
     const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => masterGain.gain.value = parseFloat(e.target.value);
 
-    // MEMORY BANK
+    // MEMORY BANK & CLEAR
     const btnSave = document.getElementById('btn-save-mode');
-    btnSave.onclick = () => {
-        isSaveMode = !isSaveMode;
-        btnSave.classList.toggle('saving', isSaveMode);
-    };
+    btnSave.onclick = () => { isSaveMode = !isSaveMode; btnSave.classList.toggle('saving', isSaveMode); };
+
+    // --- LOGIQUE CLEAR (ICI) ---
+    const btnClear = document.getElementById('btn-clear-all');
+    if(btnClear) {
+        btnClear.onclick = () => {
+            // Reset Arrays
+            drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
+            drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
+            synthSequences.seq2 = Array(16).fill(false);
+            synthSequences.seq3 = Array(16).fill(false);
+            
+            // Visual Update
+            refreshGridVisuals();
+            
+            // Feedback visuel sur le bouton
+            btnClear.innerText = "OK";
+            setTimeout(() => btnClear.innerText = "CLR", 500);
+        };
+    }
 
     document.querySelectorAll('.btn-mem-slot').forEach(btn => {
         btn.onclick = () => {
@@ -430,5 +412,5 @@ window.addEventListener('load', () => {
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
     const playBtn = document.getElementById('master-play-stop'); if (playBtn) { playBtn.onclick = () => { if (isPlaying) { isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; } else { if (audioCtx.state === 'suspended') audioCtx.resume(); isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; runDrumLoop(); runSynthLoop(); } }; }
-    console.log("UI Logic : Prêt (Save Fix).");
+    console.log("UI Logic : Prêt (Clear & Fix).");
 });
