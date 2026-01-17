@@ -1,10 +1,10 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (REBOOT STABLE)
+   HARDBEAT PRO - UI LOGIC (RESTORED MASTER)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let isPlaying = false;
 
-// VARIABLES PRINCIPALES (Existent ICI)
+// --- VARIABLES MAITRESSES (L'Unique Vérité) ---
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
 let drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
@@ -34,7 +34,46 @@ let currentTrackIndex = 0;
 let freqCacheSeq2 = new Array(16).fill(440);
 let freqCacheSeq3 = new Array(16).fill(220);
 
-// --- SMART BRAINS (RANDOM) ---
+// --- INIT GRID ---
+function initGrid(idPrefix) {
+    const gridContainer = document.getElementById(idPrefix);
+    if (!gridContainer) return;
+    let htmlContent = '';
+    const isDrum = (idPrefix === 'grid-seq1');
+    for (let i = 0; i < 16; i++) {
+        let padHTML = '';
+        if (isDrum) {
+            padHTML = `<div class="step-column"><div class="step-pad" data-index="${i}" data-type="note"><span>${i+1}</span><div class="led"></div></div><div class="accent-pad" data-index="${i}" data-type="accent" title="Accent"></div></div>`;
+        } else {
+            padHTML = `<div class="step-pad" data-index="${i}" data-type="note"><div class="led"></div></div>`;
+        }
+        htmlContent += padHTML;
+    }
+    gridContainer.innerHTML = htmlContent;
+}
+
+function initFaders(idPrefix, seqId) {
+    const freqGrid = document.getElementById(idPrefix);
+    if (!freqGrid) return;
+    let htmlContent = '';
+    for (let i = 0; i < 16; i++) {
+        htmlContent += `<div class="fader-unit"><span class="hz-label">440Hz</span><input type="range" class="freq-fader" data-seq="${seqId}" data-index="${i}" min="50" max="880" value="440"></div>`;
+    }
+    freqGrid.innerHTML = htmlContent;
+}
+
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('freq-fader')) {
+        const val = parseFloat(e.target.value);
+        const idx = parseInt(e.target.dataset.index);
+        const seq = parseInt(e.target.dataset.seq);
+        if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
+        if (seq === 2) freqCacheSeq2[idx] = val;
+        if (seq === 3) freqCacheSeq3[idx] = val;
+    }
+});
+
+// --- SMART GENERATORS ---
 function generateSmartRhythm(trackIdx) {
     drumSequences[trackIdx] = Array(16).fill(false);
     drumAccents[trackIdx] = Array(16).fill(false);
@@ -81,45 +120,6 @@ function generateSmartSynth(seqId) {
     }
 }
 
-// --- INIT & UI ---
-function initGrid(idPrefix) {
-    const gridContainer = document.getElementById(idPrefix);
-    if (!gridContainer) return;
-    let htmlContent = '';
-    const isDrum = (idPrefix === 'grid-seq1');
-    for (let i = 0; i < 16; i++) {
-        let padHTML = '';
-        if (isDrum) {
-            padHTML = `<div class="step-column"><div class="step-pad" data-index="${i}" data-type="note"><span>${i+1}</span><div class="led"></div></div><div class="accent-pad" data-index="${i}" data-type="accent" title="Accent"></div></div>`;
-        } else {
-            padHTML = `<div class="step-pad" data-index="${i}" data-type="note"><div class="led"></div></div>`;
-        }
-        htmlContent += padHTML;
-    }
-    gridContainer.innerHTML = htmlContent;
-}
-
-function initFaders(idPrefix, seqId) {
-    const freqGrid = document.getElementById(idPrefix);
-    if (!freqGrid) return;
-    let htmlContent = '';
-    for (let i = 0; i < 16; i++) {
-        htmlContent += `<div class="fader-unit"><span class="hz-label">440Hz</span><input type="range" class="freq-fader" data-seq="${seqId}" data-index="${i}" min="50" max="880" value="440"></div>`;
-    }
-    freqGrid.innerHTML = htmlContent;
-}
-
-document.addEventListener('input', (e) => {
-    if (e.target.classList.contains('freq-fader')) {
-        const val = parseFloat(e.target.value);
-        const idx = parseInt(e.target.dataset.index);
-        const seq = parseInt(e.target.dataset.seq);
-        if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
-        if (seq === 2) freqCacheSeq2[idx] = val;
-        if (seq === 3) freqCacheSeq3[idx] = val;
-    }
-});
-
 // --- SAVE / LOAD ---
 function savePattern(slot) {
     const data = {
@@ -139,8 +139,7 @@ function savePattern(slot) {
             mutes: { seq2: muteState2, seq3: muteState3 },
             vol2: document.getElementById('vol-seq2').value,
             vol3: document.getElementById('vol-seq3') ? document.getElementById('vol-seq3').value : 0.6,
-            freqs2: Array.from(document.querySelectorAll('#grid-freq-seq2 .freq-fader')).map(f => f.value),
-            freqs3: Array.from(document.querySelectorAll('#grid-freq-seq3 .freq-fader')).map(f => f.value)
+            freqs2: freqCacheSeq2, freqs3: freqCacheSeq3
         },
         global: {
             bpm1: document.getElementById('display-bpm1').innerText,
@@ -180,7 +179,6 @@ function loadPattern(slot) {
     setSlider('synth2-disto', data.synths.params2.disto); setSlider('synth2-res', data.synths.params2.res); setSlider('synth2-cutoff', data.synths.params2.cutoff); setSlider('synth2-decay', data.synths.params2.decay);
     muteState2 = data.synths.mutes.seq2;
     const btnMute2 = document.getElementById('btn-mute-seq2'); if(btnMute2) btnMute2.classList.toggle('active', muteState2);
-    
     const faders2 = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
     if (data.synths.freqs2) faders2.forEach((f, i) => { f.value = data.synths.freqs2[i]; if(f.previousElementSibling) f.previousElementSibling.innerText = f.value + "Hz"; f.dispatchEvent(new Event('input')); });
 
@@ -208,6 +206,7 @@ function updateMemoryUI() {
     }
 }
 
+// --- BINDINGS ---
 function bindControls() {
     const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
     const bindSteps = (id, trackIdx) => { const el = document.getElementById(id); if (el) el.oninput = (e) => { trackLengths[trackIdx] = parseInt(e.target.value); if (trackPositions[trackIdx] >= trackLengths[trackIdx]) trackPositions[trackIdx] = 0; refreshGridVisuals(); }; };
@@ -231,12 +230,13 @@ function bindControls() {
     const dAmt = document.getElementById('global-delay-amt'); if(dAmt) dAmt.oninput = (e) => { globalDelay.amt = parseFloat(e.target.value); if(window.updateAudioEffect) window.updateAudioEffect('delayAmt', globalDelay.amt); };
     const dTime = document.getElementById('global-delay-time'); if(dTime) dTime.oninput = (e) => { globalDelay.time = parseFloat(e.target.value); if(window.updateAudioEffect) window.updateAudioEffect('delayTime', globalDelay.time); };
     
-    const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => { const g = parseFloat(e.target.value); const master = new (window.AudioContext || window.webkitAudioContext)().createGain(); /* Hack, real gain in core */ }; 
+    const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => masterGain.gain.value = parseFloat(e.target.value);
 
     // MEMORY BANK & CLEAR
     const btnSave = document.getElementById('btn-save-mode');
     btnSave.onclick = () => { isSaveMode = !isSaveMode; btnSave.classList.toggle('saving', isSaveMode); };
 
+    // --- FIX CLEAR ---
     const btnClear = document.getElementById('btn-clear-all');
     if(btnClear) {
         btnClear.onclick = () => {
