@@ -159,3 +159,26 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 #display-bpm1, #display-bpm2 {
     color: var(--accent-color); font-weight: bold; font-family: 'Courier New', monospace; cursor: ns-resize;
 }
+
+/* AJOUTE CECI A LA FIN : */
+
+/* --- STYLE POUR LES PAS HORS-BOUCLE --- */
+.step-pad.disabled {
+    opacity: 0.2;
+    pointer-events: none; /* Empêche de cliquer dessus */
+    border-color: #222;
+    background: #111;
+}
+
+.step-pad.disabled .led {
+    background: #110000;
+}
+
+.step-pad.disabled span {
+    color: #444 !important;
+}
+
+/* Le slider de Step Length peut avoir une couleur différente pour le repérer */
+.step-slider {
+    accent-color: #ffffff; /* Curseur blanc pour se démarquer */
+}
