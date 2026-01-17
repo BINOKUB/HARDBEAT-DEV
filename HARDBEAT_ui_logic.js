@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (SMART DRUM RANDOM)
+   HARDBEAT PRO - UI LOGIC (SMART SYNTH BRAIN)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -10,59 +10,31 @@ let trackSolos = [false, false, false, false, false];
 let muteState2 = false; let muteState3 = false;
 let isSaveMode = false;
 
-// --- LE CERVEAU RYTHMIQUE ---
+// --- CERVEAU INTELLIGENT (DRUMS) ---
 function generateSmartRhythm(trackIdx) {
-    // Reset de la piste
     drumSequences[trackIdx] = Array(16).fill(false);
     drumAccents[trackIdx] = Array(16).fill(false);
-
-    // Algorithmes par instrument
     for (let i = 0; i < 16; i++) {
         let p = Math.random();
-        
         switch(trackIdx) {
-            case 0: // KICK (Techno focus)
-                // 90% chance sur 1, 5, 9, 13 (Four on the floor)
-                if (i % 4 === 0) { 
-                    if (p > 0.1) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; }
-                } else if (i % 2 !== 0) {
-                    // 10% chance de contre-temps syncopé (offbeat 16th)
-                    if (p > 0.9) drumSequences[trackIdx][i] = true; 
-                }
+            case 0: // KICK
+                if (i % 4 === 0) { if (p > 0.1) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; } }
+                else if (i % 2 !== 0) { if (p > 0.9) drumSequences[trackIdx][i] = true; }
                 break;
-
-            case 1: // SNARE (Backbeat focus)
-                // Temps 5 et 13 (Le Clap Classique)
-                if (i === 4 || i === 12) {
-                    if (p > 0.05) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; }
-                } else if (i % 2 === 0) {
-                    // Petits Ghost notes sur les croches
-                    if (p > 0.85) drumSequences[trackIdx][i] = true;
-                } else {
-                    // Rares Ghost notes sur les doubles
-                    if (p > 0.95) drumSequences[trackIdx][i] = true;
-                }
+            case 1: // SNARE
+                if (i === 4 || i === 12) { if (p > 0.05) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; } }
+                else if (i % 2 === 0) { if (p > 0.85) drumSequences[trackIdx][i] = true; }
+                else { if (p > 0.95) drumSequences[trackIdx][i] = true; }
                 break;
-
-            case 2: // HH CLOSED (Motor)
-                // Presque tout le temps, avec des trous
+            case 2: // HHC
                 if (p > 0.3) drumSequences[trackIdx][i] = true;
-                // Accent sur les temps forts pour driver
                 if (i % 4 === 0 && Math.random() > 0.5) drumAccents[trackIdx][i] = true;
                 break;
-
-            case 3: // HH OPEN (Offbeat)
-                // Classique sur le "Et" (2, 6, 10, 14)
-                if (i === 2 || i === 6 || i === 10 || i === 14) {
-                    if (p > 0.2) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; }
-                } else {
-                    // Rare open hat syncopé
-                    if (p > 0.92) drumSequences[trackIdx][i] = true;
-                }
+            case 3: // HHO
+                if (i === 2 || i === 6 || i === 10 || i === 14) { if (p > 0.2) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; } }
+                else { if (p > 0.92) drumSequences[trackIdx][i] = true; }
                 break;
-
-            case 4: // FM (Chaos contrôlé)
-                // Polyrhythmie 3/16 ou aléatoire pur
+            case 4: // FM
                 if (p > 0.7) drumSequences[trackIdx][i] = true;
                 if (p > 0.85) drumAccents[trackIdx][i] = true;
                 break;
@@ -70,8 +42,67 @@ function generateSmartRhythm(trackIdx) {
     }
 }
 
-// ... (Garde tout le reste du code Standard : InitGrid, Faders, Save/Load, Clear...) ...
-// JE REMETS LE BLOC STANDARD POUR ETRE SUR QUE TU AS TOUT :
+// --- CERVEAU INTELLIGENT (SYNTHS) ---
+function generateSmartSynth(seqId) {
+    // 1. Reset Rhythm Grid
+    const targetSeq = (seqId === 2) ? synthSequences.seq2 : synthSequences.seq3;
+    for(let i=0; i<16; i++) targetSeq[i] = false;
+
+    // 2. Determine Scale & Frequencies
+    const faders = document.querySelectorAll(seqId === 2 ? '#grid-freq-seq2 .freq-fader' : '#grid-freq-seq3 .freq-fader');
+    
+    if (seqId === 2) {
+        // --- SEQ 2: LEAD / BLEEP (Musical Scale) ---
+        // Gamme Techno : Fondamentale, Tierce Mineure, Quinte, Octave
+        const root = 440; 
+        const scale = [root, root * 1.2, root * 1.5, root * 2.0]; 
+        
+        // Génération Rythme (Clairsemé, Offbeat)
+        for(let i=0; i<16; i++) {
+            // Plus de chance sur les contre-temps (i impairs)
+            let chance = (i % 2 !== 0) ? 0.4 : 0.1;
+            if (Math.random() < chance) {
+                targetSeq[i] = true;
+            }
+        }
+
+        // Génération Mélodie (Faders)
+        faders.forEach(f => {
+            // Choisir une note de la gamme au hasard
+            const note = scale[Math.floor(Math.random() * scale.length)];
+            // Ajouter un peu de "Detune" analogique (+/- 5Hz)
+            const detune = (Math.random() * 10) - 5;
+            f.value = Math.floor(note + detune);
+            f.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+    } else {
+        // --- SEQ 3: RUMBLE / BASS (Low & Rolling) ---
+        // Gamme : Fondamentale basse (ex: 55Hz) + Quinte (82Hz)
+        const root = 55;
+        const scale = [root, root, root * 1.5]; // Beaucoup de root, peu de quinte
+
+        // Génération Rythme (Rolling, éviter le Kick sur 0, 4, 8, 12)
+        for(let i=0; i<16; i++) {
+            if (i % 4 === 0) {
+                // Temps fort (Kick) : on évite le Rumble pour laisser la place au Kick (Sidechain feel)
+                if (Math.random() > 0.8) targetSeq[i] = true; 
+            } else {
+                // Temps faibles : on remplit pour le "Rumble"
+                if (Math.random() > 0.3) targetSeq[i] = true;
+            }
+        }
+
+        // Génération Mélodie (Stable)
+        faders.forEach(f => {
+            const note = scale[Math.floor(Math.random() * scale.length)];
+            f.value = Math.floor(note);
+            f.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+}
+
+// ... (LE RESTE EST STANDARD - InitGrid, Save, Load, Boucles, Clics...) ...
 
 function initGrid(idPrefix) {
     const gridContainer = document.getElementById(idPrefix);
@@ -270,22 +301,11 @@ function bindControls() {
             drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
             synthSequences.seq2 = Array(16).fill(false);
             synthSequences.seq3 = Array(16).fill(false);
-            
             const allFaders = document.querySelectorAll('.freq-fader');
-            allFaders.forEach(f => {
-                f.value = 440; 
-                if(f.previousElementSibling) f.previousElementSibling.innerText = "440Hz"; 
-                f.dispatchEvent(new Event('input', { bubbles: true })); 
-            });
-
-            const accSlider = document.getElementById('global-accent-amount');
-            if(accSlider) { accSlider.value = 1.4; accSlider.dispatchEvent(new Event('input')); }
-            
-            const swingSlider = document.getElementById('global-swing');
-            if(swingSlider) { swingSlider.value = 6; swingSlider.dispatchEvent(new Event('input')); }
-
+            allFaders.forEach(f => { f.value = 440; if(f.previousElementSibling) f.previousElementSibling.innerText = "440Hz"; f.dispatchEvent(new Event('input', { bubbles: true })); });
+            const accSlider = document.getElementById('global-accent-amount'); if(accSlider) { accSlider.value = 1.4; accSlider.dispatchEvent(new Event('input')); }
+            const swingSlider = document.getElementById('global-swing'); if(swingSlider) { swingSlider.value = 6; swingSlider.dispatchEvent(new Event('input')); }
             refreshGridVisuals();
-            
             btnClear.innerText = "OK"; setTimeout(() => btnClear.innerText = "CLR", 500);
         };
     }
@@ -293,25 +313,11 @@ function bindControls() {
     document.querySelectorAll('.btn-mem-slot').forEach(btn => {
         btn.onclick = () => {
             const slot = btn.dataset.slot;
-            if (isSaveMode) {
-                savePattern(slot);
-                btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200);
-                isSaveMode = false; btnSave.classList.remove('saving');
-            } else {
-                if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
-                    loadPattern(slot);
-                    btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200);
-                }
-            }
+            if (isSaveMode) { savePattern(slot); btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200); isSaveMode = false; btnSave.classList.remove('saving'); } 
+            else { if (localStorage.getItem(`hardbeat_pattern_${slot}`)) { loadPattern(slot); btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200); } }
         };
     });
     updateMemoryUI();
-}
-
-function showParamsForTrack(idx) {
-    document.querySelectorAll('.instr-params').forEach(p => p.style.display = 'none');
-    const target = document.getElementById(`params-track-${idx}`);
-    if (target) target.style.display = 'flex';
 }
 
 function refreshGridVisuals() {
@@ -327,7 +333,6 @@ function refreshGridVisuals() {
         if (i >= currentLen) { acc.style.opacity = "0.2"; acc.style.pointerEvents = "none"; } else { acc.style.opacity = "1"; acc.style.pointerEvents = "auto"; }
         if(drumAccents && drumAccents[currentTrackIndex]) { const isActive = drumAccents[currentTrackIndex][i]; acc.classList.toggle('active', isActive); }
     });
-    
     const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
     if (pads2.length > 0) pads2.forEach((pad, i) => { const isActive = synthSequences.seq2[i]; pad.classList.toggle('active', isActive); const led = pad.querySelector('.led'); if (led) led.style.background = isActive ? "cyan" : "#330000"; });
     const pads3 = document.querySelectorAll('#grid-seq3 .step-pad');
@@ -348,7 +353,6 @@ function initSeq3Extension() {
     btn.addEventListener('click', () => {
         btn.disabled = true; btn.style.opacity = "0.3"; btn.innerText = "SEQ 3 ACTIVE";
         const zone = document.getElementById('extension-zone');
-        
         zone.innerHTML = `
         <section id="seq3-container" class="rack-section synth-instance">
             <div class="section-header">
@@ -358,7 +362,6 @@ function initSeq3Extension() {
                     <div class="bpm-control"><label>SYNC</label><span style="color:#666; font-size:10px;">LOCKED TO TEMPO 2</span></div>
                 </div>
             </div>
-            
             <div class="synth-master-fixed" style="margin-bottom:15px; border-color:#a855f7;">
                 <span class="label-cyan" style="color:#a855f7;">SEQ 3 PARAM ></span>
                 <div class="group"><label>DISTO</label><input type="range" id="synth3-disto" min="0" max="1000" value="200"></div>
@@ -366,27 +369,19 @@ function initSeq3Extension() {
                 <div class="group"><label>CUTOFF</label><input type="range" id="synth3-cutoff" min="1" max="10" step="0.1" value="2"></div>
                 <div class="group"><label>DECAY</label><input type="range" id="synth3-decay" min="0.1" max="1.0" step="0.05" value="0.4"></div>
             </div>
-
             <div class="freq-sliders-container" id="grid-freq-seq3"></div>
             <div class="step-grid" id="grid-seq3"></div>
-            
             <div class="synth-controls" style="display:flex; gap:10px; margin-top:10px; align-items:center;">
                 <button id="btn-mute-seq3" class="btn-synth-mute" data-target="3">MUTE SEQ 3</button>
-                <div class="random-unit">
-                    <button class="btn-random" data-target="3">RANDOMIZE SEQ 3</button>
-                </div>
+                <div class="random-unit"><button class="btn-random" data-target="3">RANDOMIZE SEQ 3</button></div>
             </div>
         </section>`;
-        
-        initGrid('grid-seq3');
-        initFaders('grid-freq-seq3', 3);
-        
+        initGrid('grid-seq3'); initFaders('grid-freq-seq3', 3);
         document.getElementById('vol-seq3').oninput = (e) => synthVol3 = parseFloat(e.target.value);
         document.getElementById('synth3-disto').oninput = (e) => { if(window.updateSynth3Disto) window.updateSynth3Disto(parseFloat(e.target.value)); };
         document.getElementById('synth3-res').oninput = (e) => { if(window.updateSynth3Res) window.updateSynth3Res(parseFloat(e.target.value)); };
         document.getElementById('synth3-cutoff').oninput = (e) => { if(window.updateSynth3Cutoff) window.updateSynth3Cutoff(parseFloat(e.target.value)); };
         document.getElementById('synth3-decay').oninput = (e) => { if(window.updateSynth3Decay) window.updateSynth3Decay(parseFloat(e.target.value)); };
-
         document.getElementById('seq3-container').scrollIntoView({ behavior: 'smooth' });
     });
 }
@@ -469,22 +464,23 @@ document.addEventListener('mousedown', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-    // DRUM RANDOM
     if (e.target.classList.contains('btn-drum-rand')) {
-        const track = parseInt(e.target.dataset.track);
-        generateSmartRhythm(track);
-        refreshGridVisuals();
-        // Visual flash
-        const btn = e.target;
-        btn.style.background = "#fff"; btn.style.color = "#000";
-        setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100);
-        return;
+        const track = parseInt(e.target.dataset.track); generateSmartRhythm(track); refreshGridVisuals();
+        const btn = e.target; btn.style.background = "#fff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); return;
     }
-
     if (e.target.classList.contains('btn-mute') && !e.target.classList.contains('btn-synth-mute')) { const track = parseInt(e.target.dataset.track); trackMutes[track] = !trackMutes[track]; e.target.classList.toggle('active', trackMutes[track]); if(trackMutes[track]) { trackSolos[track] = false; const soloBtn = e.target.parentElement.querySelector('.btn-solo'); if(soloBtn) soloBtn.classList.remove('active'); } return; }
     if (e.target.classList.contains('btn-solo')) { const track = parseInt(e.target.dataset.track); trackSolos[track] = !trackSolos[track]; e.target.classList.toggle('active', trackSolos[track]); if(trackSolos[track]) { trackMutes[track] = false; const muteBtn = e.target.parentElement.querySelector('.btn-mute'); if(muteBtn) muteBtn.classList.remove('active'); } return; }
     if (e.target.classList.contains('btn-synth-mute')) { const target = parseInt(e.target.dataset.target); if (target === 2) { muteState2 = !muteState2; e.target.classList.toggle('active', muteState2); if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2); } else if (target === 3) { muteState3 = !muteState3; e.target.classList.toggle('active', muteState3); if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3); } return; }
-    if (e.target.classList.contains('btn-random')) { const target = parseInt(e.target.dataset.target); const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader'; const faders = document.querySelectorAll(selector); const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); faders.forEach(fader => { const randomFreq = Math.floor(Math.random() * (880 - 50) + 50); fader.value = randomFreq; fader.dispatchEvent(new Event('input', { bubbles: true })); }); return; }
+    
+    // UPDATED SYNTH RANDOM
+    if (e.target.classList.contains('btn-random')) { 
+        const target = parseInt(e.target.dataset.target); 
+        generateSmartSynth(target); // THE NEW BRAIN
+        refreshGridVisuals();
+        const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); 
+        return; 
+    }
+
     if (e.target.classList.contains('track-btn')) { document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); currentTrackIndex = parseInt(e.target.dataset.track); showParamsForTrack(currentTrackIndex); refreshGridVisuals(); if (!trackMutes[currentTrackIndex]) { switch(currentTrackIndex) { case 0: if(window.playKick) playKick(); break; case 1: if(window.playSnare) playSnare(); break; case 2: if(window.playHiHat) playHiHat(false); break; case 3: if(window.playHiHat) playHiHat(true); break; case 4: if(window.playDrumFM) playDrumFM(); break; } } }
 });
 
@@ -492,35 +488,6 @@ window.addEventListener('load', () => {
     initGrid('grid-seq1'); initGrid('grid-seq2'); initFaders('grid-freq-seq2', 2);
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
-    const playBtn = document.getElementById('master-play-stop');
-    if (playBtn) {
-        playBtn.onclick = () => {
-            if (isPlaying) {
-                isPlaying = false; 
-                clearTimeout(timerDrums);
-                clearTimeout(timerSynths);
-                playBtn.innerText = "PLAY / STOP";
-                playBtn.style.background = "#222"; 
-                playBtn.style.color = "#fff";
-                trackPositions = [0,0,0,0,0];
-                globalTickCount = 0;
-                synthTickCount = 0;
-            } else {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                isPlaying = true; 
-                playBtn.innerText = "STOP";
-                playBtn.style.background = "#00f3ff"; 
-                playBtn.style.color = "#000";
-                
-                trackPositions = [0,0,0,0,0]; 
-                currentSynthStep = 0;
-                globalTickCount = 0;
-                synthTickCount = 0;
-
-                runDrumLoop();
-                runSynthLoop();
-            }
-        };
-    }
-    console.log("UI Logic : Prêt (Full Reset Fix).");
+    const playBtn = document.getElementById('master-play-stop'); if (playBtn) { playBtn.onclick = () => { if (isPlaying) { isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; trackPositions = [0,0,0,0,0]; currentSynthStep = 0; globalTickCount = 0; synthTickCount = 0; } else { if (audioCtx.state === 'suspended') audioCtx.resume(); isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; trackPositions = [0,0,0,0,0]; currentSynthStep = 0; globalTickCount = 0; synthTickCount = 0; runDrumLoop(); runSynthLoop(); } }; }
+    console.log("UI Logic : Prêt (Smart Synth Brain).");
 });
