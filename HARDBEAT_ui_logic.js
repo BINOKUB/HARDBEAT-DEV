@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (FULL RESET FIX)
+   HARDBEAT PRO - UI LOGIC (SMART DRUM RANDOM)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -8,9 +8,70 @@ let trackPositions = [0, 0, 0, 0, 0];
 let trackMutes = [false, false, false, false, false];
 let trackSolos = [false, false, false, false, false];
 let muteState2 = false; let muteState3 = false;
-
-// ETAT MEMOIRE
 let isSaveMode = false;
+
+// --- LE CERVEAU RYTHMIQUE ---
+function generateSmartRhythm(trackIdx) {
+    // Reset de la piste
+    drumSequences[trackIdx] = Array(16).fill(false);
+    drumAccents[trackIdx] = Array(16).fill(false);
+
+    // Algorithmes par instrument
+    for (let i = 0; i < 16; i++) {
+        let p = Math.random();
+        
+        switch(trackIdx) {
+            case 0: // KICK (Techno focus)
+                // 90% chance sur 1, 5, 9, 13 (Four on the floor)
+                if (i % 4 === 0) { 
+                    if (p > 0.1) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; }
+                } else if (i % 2 !== 0) {
+                    // 10% chance de contre-temps syncopé (offbeat 16th)
+                    if (p > 0.9) drumSequences[trackIdx][i] = true; 
+                }
+                break;
+
+            case 1: // SNARE (Backbeat focus)
+                // Temps 5 et 13 (Le Clap Classique)
+                if (i === 4 || i === 12) {
+                    if (p > 0.05) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; }
+                } else if (i % 2 === 0) {
+                    // Petits Ghost notes sur les croches
+                    if (p > 0.85) drumSequences[trackIdx][i] = true;
+                } else {
+                    // Rares Ghost notes sur les doubles
+                    if (p > 0.95) drumSequences[trackIdx][i] = true;
+                }
+                break;
+
+            case 2: // HH CLOSED (Motor)
+                // Presque tout le temps, avec des trous
+                if (p > 0.3) drumSequences[trackIdx][i] = true;
+                // Accent sur les temps forts pour driver
+                if (i % 4 === 0 && Math.random() > 0.5) drumAccents[trackIdx][i] = true;
+                break;
+
+            case 3: // HH OPEN (Offbeat)
+                // Classique sur le "Et" (2, 6, 10, 14)
+                if (i === 2 || i === 6 || i === 10 || i === 14) {
+                    if (p > 0.2) { drumSequences[trackIdx][i] = true; drumAccents[trackIdx][i] = true; }
+                } else {
+                    // Rare open hat syncopé
+                    if (p > 0.92) drumSequences[trackIdx][i] = true;
+                }
+                break;
+
+            case 4: // FM (Chaos contrôlé)
+                // Polyrhythmie 3/16 ou aléatoire pur
+                if (p > 0.7) drumSequences[trackIdx][i] = true;
+                if (p > 0.85) drumAccents[trackIdx][i] = true;
+                break;
+        }
+    }
+}
+
+// ... (Garde tout le reste du code Standard : InitGrid, Faders, Save/Load, Clear...) ...
+// JE REMETS LE BLOC STANDARD POUR ETRE SUR QUE TU AS TOUT :
 
 function initGrid(idPrefix) {
     const gridContainer = document.getElementById(idPrefix);
@@ -49,7 +110,6 @@ document.addEventListener('input', (e) => {
     }
 });
 
-// --- GESTION MEMOIRE ---
 function savePattern(slot) {
     const data = {
         drums: {
@@ -94,7 +154,6 @@ function loadPattern(slot) {
     if (!json) return; 
     const data = JSON.parse(json);
     
-    // RESTORE DRUMS
     drumSequences = data.drums.seq;
     drumAccents = data.drums.accents;
     trackMutes = data.drums.mutes;
@@ -127,7 +186,6 @@ function loadPattern(slot) {
     document.querySelectorAll('.btn-mute').forEach((btn, i) => { if (!btn.classList.contains('btn-synth-mute')) { const track = parseInt(btn.dataset.track); btn.classList.toggle('active', trackMutes[track]); }});
     document.querySelectorAll('.btn-solo').forEach((btn, i) => { const track = parseInt(btn.dataset.track); btn.classList.toggle('active', trackSolos[track]); });
 
-    // RESTORE SYNTHS
     synthSequences.seq2 = data.synths.seq2;
     synthSequences.seq3 = data.synths.seq3;
     const hasSeq3Data = data.synths.freqs3 && data.synths.freqs3.length > 0;
@@ -143,11 +201,7 @@ function loadPattern(slot) {
     const btnMute2 = document.getElementById('btn-mute-seq2'); if(btnMute2) btnMute2.classList.toggle('active', muteState2);
     if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2);
     const faders2 = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
-    if (data.synths.freqs2) faders2.forEach((f, i) => { 
-        f.value = data.synths.freqs2[i]; 
-        if(f.previousElementSibling) f.previousElementSibling.innerText = f.value + "Hz";
-        f.dispatchEvent(new Event('input')); 
-    });
+    if (data.synths.freqs2) faders2.forEach((f, i) => { f.value = data.synths.freqs2[i]; if(f.previousElementSibling) f.previousElementSibling.innerText = f.value + "Hz"; f.dispatchEvent(new Event('input')); });
 
     if (hasSeq3Data) {
         setSlider('vol-seq3', data.synths.vol3);
@@ -159,14 +213,9 @@ function loadPattern(slot) {
         const btnMute3 = document.getElementById('btn-mute-seq3'); if(btnMute3) btnMute3.classList.toggle('active', muteState3);
         if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3);
         const faders3 = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
-        faders3.forEach((f, i) => { 
-            f.value = data.synths.freqs3[i]; 
-            if(f.previousElementSibling) f.previousElementSibling.innerText = f.value + "Hz";
-            f.dispatchEvent(new Event('input')); 
-        });
+        faders3.forEach((f, i) => { f.value = data.synths.freqs3[i]; if(f.previousElementSibling) f.previousElementSibling.innerText = f.value + "Hz"; f.dispatchEvent(new Event('input')); });
     }
 
-    // RESTORE GLOBAL
     document.getElementById('display-bpm1').innerText = data.global.bpm1;
     document.getElementById('display-bpm2').innerText = data.global.bpm2;
     setSlider('global-swing', data.global.swing); 
@@ -185,7 +234,6 @@ function updateMemoryUI() {
     }
 }
 
-// --- INITIALISATION UI ---
 function bindControls() {
     const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
     const bindSteps = (id, trackIdx) => { const el = document.getElementById(id); if (el) el.oninput = (e) => { trackLengths[trackIdx] = parseInt(e.target.value); if (trackPositions[trackIdx] >= trackLengths[trackIdx]) trackPositions[trackIdx] = 0; refreshGridVisuals(); }; };
@@ -215,17 +263,14 @@ function bindControls() {
     const btnSave = document.getElementById('btn-save-mode');
     btnSave.onclick = () => { isSaveMode = !isSaveMode; btnSave.classList.toggle('saving', isSaveMode); };
 
-    // --- LOGIQUE CLEAR (MODIFIÉE POUR RESET CONTROLES) ---
     const btnClear = document.getElementById('btn-clear-all');
     if(btnClear) {
         btnClear.onclick = () => {
-            // 1. Reset Arrays (Notes)
             drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
             drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
             synthSequences.seq2 = Array(16).fill(false);
             synthSequences.seq3 = Array(16).fill(false);
             
-            // 2. Reset Faders Visuel + Texte + Audio
             const allFaders = document.querySelectorAll('.freq-fader');
             allFaders.forEach(f => {
                 f.value = 440; 
@@ -233,7 +278,6 @@ function bindControls() {
                 f.dispatchEvent(new Event('input', { bubbles: true })); 
             });
 
-            // 3. Reset Accent & Swing (Le Fix est ici !)
             const accSlider = document.getElementById('global-accent-amount');
             if(accSlider) { accSlider.value = 1.4; accSlider.dispatchEvent(new Event('input')); }
             
@@ -284,7 +328,6 @@ function refreshGridVisuals() {
         if(drumAccents && drumAccents[currentTrackIndex]) { const isActive = drumAccents[currentTrackIndex][i]; acc.classList.toggle('active', isActive); }
     });
     
-    // Refresh Synths Visuals
     const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
     if (pads2.length > 0) pads2.forEach((pad, i) => { const isActive = synthSequences.seq2[i]; pad.classList.toggle('active', isActive); const led = pad.querySelector('.led'); if (led) led.style.background = isActive ? "cyan" : "#330000"; });
     const pads3 = document.querySelectorAll('#grid-seq3 .step-pad');
@@ -426,6 +469,18 @@ document.addEventListener('mousedown', (e) => {
 });
 
 document.addEventListener('click', (e) => {
+    // DRUM RANDOM
+    if (e.target.classList.contains('btn-drum-rand')) {
+        const track = parseInt(e.target.dataset.track);
+        generateSmartRhythm(track);
+        refreshGridVisuals();
+        // Visual flash
+        const btn = e.target;
+        btn.style.background = "#fff"; btn.style.color = "#000";
+        setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100);
+        return;
+    }
+
     if (e.target.classList.contains('btn-mute') && !e.target.classList.contains('btn-synth-mute')) { const track = parseInt(e.target.dataset.track); trackMutes[track] = !trackMutes[track]; e.target.classList.toggle('active', trackMutes[track]); if(trackMutes[track]) { trackSolos[track] = false; const soloBtn = e.target.parentElement.querySelector('.btn-solo'); if(soloBtn) soloBtn.classList.remove('active'); } return; }
     if (e.target.classList.contains('btn-solo')) { const track = parseInt(e.target.dataset.track); trackSolos[track] = !trackSolos[track]; e.target.classList.toggle('active', trackSolos[track]); if(trackSolos[track]) { trackMutes[track] = false; const muteBtn = e.target.parentElement.querySelector('.btn-mute'); if(muteBtn) muteBtn.classList.remove('active'); } return; }
     if (e.target.classList.contains('btn-synth-mute')) { const target = parseInt(e.target.dataset.target); if (target === 2) { muteState2 = !muteState2; e.target.classList.toggle('active', muteState2); if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2); } else if (target === 3) { muteState3 = !muteState3; e.target.classList.toggle('active', muteState3); if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3); } return; }
@@ -467,5 +522,5 @@ window.addEventListener('load', () => {
             }
         };
     }
-    console.log("UI Logic : Prêt (Final Reset Fix).");
+    console.log("UI Logic : Prêt (Full Reset Fix).");
 });
