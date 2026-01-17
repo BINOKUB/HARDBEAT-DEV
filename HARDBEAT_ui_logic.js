@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (ACCENT BUTTONS)
+   HARDBEAT PRO - UI LOGIC (FULL)
    ========================================== */
 let timerDrums;
 let timerSynths;
@@ -14,9 +14,7 @@ function initGrid(idPrefix) {
     
     for (let i = 0; i < 16; i++) {
         let padHTML = '';
-        
         if (isDrum) {
-            // DRUMS : Pad + Bouton Accent en dessous
             padHTML = `
             <div class="step-column">
                 <div class="step-pad" data-index="${i}" data-type="note">
@@ -26,13 +24,11 @@ function initGrid(idPrefix) {
                 <div class="accent-pad" data-index="${i}" data-type="accent" title="Accent"></div>
             </div>`;
         } else {
-            // SYNTHS : Juste le Pad
             padHTML = `
             <div class="step-pad" data-index="${i}" data-type="note">
                 <div class="led"></div>
             </div>`;
         }
-        
         htmlContent += padHTML;
     }
     gridContainer.innerHTML = htmlContent;
@@ -52,7 +48,6 @@ function initFaders(idPrefix, seqId) {
     freqGrid.innerHTML = htmlContent;
 }
 
-// Mise à jour visuelle des Faders
 document.addEventListener('input', (e) => {
     if (e.target.classList.contains('freq-fader')) {
         const val = parseFloat(e.target.value);
@@ -85,6 +80,15 @@ function bindControls() {
     bind('fm-amt', fmSettings, 'fmAmount');
     bind('fm-decay', fmSettings, 'decay');
     bind('fm-level', fmSettings, 'level');
+
+    // NOUVEAU : GLOBAL ACCENT
+    const accSlider = document.getElementById('global-accent-amount');
+    if(accSlider) accSlider.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        if(window.updateAccentBoost) window.updateAccentBoost(val);
+        const label = document.getElementById('accent-val-display');
+        if(label) label.innerText = val.toFixed(1) + 'x';
+    };
 
     const metroBox = document.getElementById('metro-toggle');
     if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
@@ -120,7 +124,9 @@ function refreshGridVisuals() {
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
     
-    // MAJ des Notes
+    if(pads.length === 0) return;
+
+    // Notes
     pads.forEach((pad, i) => {
         if(drumSequences && drumSequences[currentTrackIndex]) {
             const isActive = drumSequences[currentTrackIndex][i];
@@ -130,7 +136,7 @@ function refreshGridVisuals() {
         }
     });
 
-    // MAJ des Accents
+    // Accents
     accents.forEach((acc, i) => {
         if(drumAccents && drumAccents[currentTrackIndex]) {
             const isActive = drumAccents[currentTrackIndex][i];
@@ -207,8 +213,7 @@ function runDrumLoop() {
     pads.forEach(p => p.style.borderColor = "#333");
     if (pads[currentDrumStep]) pads[currentDrumStep].style.borderColor = "#ffffff";
 
-    // LECTURE AVEC ACCENT
-    // On récupère l'accent pour chaque pas
+    // AUDIO AVEC ACCENT
     const acc = drumAccents;
     if (drumSequences[0][currentDrumStep]) playKick(acc[0][currentDrumStep]);
     if (drumSequences[1][currentDrumStep]) playSnare(acc[1][currentDrumStep]);
@@ -242,11 +247,11 @@ function runSynthLoop() {
 
 // --- ÉCOUTEURS ---
 document.addEventListener('mousedown', (e) => {
-    // 1. CLIC SUR NOTE
+    // PAD
     const pad = e.target.closest('.step-pad');
     if (pad) {
         const idx = parseInt(pad.dataset.index);
-        const pid = pad.closest('.step-grid').id; // Utiliser closest pour être sûr
+        const pid = pad.closest('.step-grid').id;
         
         if (pid === 'grid-seq1') {
             drumSequences[currentTrackIndex][idx] = !drumSequences[currentTrackIndex][idx];
@@ -264,11 +269,10 @@ document.addEventListener('mousedown', (e) => {
         }
     }
 
-    // 2. CLIC SUR ACCENT
+    // ACCENT
     const accentBtn = e.target.closest('.accent-pad');
     if (accentBtn) {
         const idx = parseInt(accentBtn.dataset.index);
-        // On inverse l'accent pour la piste courante
         drumAccents[currentTrackIndex][idx] = !drumAccents[currentTrackIndex][idx];
         refreshGridVisuals();
     }
@@ -333,5 +337,5 @@ window.addEventListener('load', () => {
             }
         };
     }
-    console.log("UI Logic : Prêt (Accent Buttons Added).");
+    console.log("UI Logic : Prêt (Full Features).");
 });
