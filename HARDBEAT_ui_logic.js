@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (FINAL RESET FIX)
+   HARDBEAT PRO - UI LOGIC (FULL RESET FIX)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -142,12 +142,9 @@ function loadPattern(slot) {
     muteState2 = data.synths.mutes.seq2;
     const btnMute2 = document.getElementById('btn-mute-seq2'); if(btnMute2) btnMute2.classList.toggle('active', muteState2);
     if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2);
-    
-    // FIX : Mise à jour explicite des textes
     const faders2 = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
     if (data.synths.freqs2) faders2.forEach((f, i) => { 
         f.value = data.synths.freqs2[i]; 
-        // Force update text label
         if(f.previousElementSibling) f.previousElementSibling.innerText = f.value + "Hz";
         f.dispatchEvent(new Event('input')); 
     });
@@ -161,7 +158,6 @@ function loadPattern(slot) {
         muteState3 = data.synths.mutes.seq3;
         const btnMute3 = document.getElementById('btn-mute-seq3'); if(btnMute3) btnMute3.classList.toggle('active', muteState3);
         if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3);
-        
         const faders3 = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
         faders3.forEach((f, i) => { 
             f.value = data.synths.freqs3[i]; 
@@ -219,23 +215,30 @@ function bindControls() {
     const btnSave = document.getElementById('btn-save-mode');
     btnSave.onclick = () => { isSaveMode = !isSaveMode; btnSave.classList.toggle('saving', isSaveMode); };
 
-    // --- LOGIQUE CLEAR AVEC RESET DES TEXTES ---
+    // --- LOGIQUE CLEAR (MODIFIÉE POUR RESET CONTROLES) ---
     const btnClear = document.getElementById('btn-clear-all');
     if(btnClear) {
         btnClear.onclick = () => {
-            // 1. Reset Arrays
+            // 1. Reset Arrays (Notes)
             drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
             drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
             synthSequences.seq2 = Array(16).fill(false);
             synthSequences.seq3 = Array(16).fill(false);
             
-            // 2. Reset Faders Visuel + Texte + Audio Cache
+            // 2. Reset Faders Visuel + Texte + Audio
             const allFaders = document.querySelectorAll('.freq-fader');
             allFaders.forEach(f => {
-                f.value = 440; // Retour au milieu
-                if(f.previousElementSibling) f.previousElementSibling.innerText = "440Hz"; // Reset Texte
-                f.dispatchEvent(new Event('input', { bubbles: true })); // Reset Audio
+                f.value = 440; 
+                if(f.previousElementSibling) f.previousElementSibling.innerText = "440Hz"; 
+                f.dispatchEvent(new Event('input', { bubbles: true })); 
             });
+
+            // 3. Reset Accent & Swing (Le Fix est ici !)
+            const accSlider = document.getElementById('global-accent-amount');
+            if(accSlider) { accSlider.value = 1.4; accSlider.dispatchEvent(new Event('input')); }
+            
+            const swingSlider = document.getElementById('global-swing');
+            if(swingSlider) { swingSlider.value = 6; swingSlider.dispatchEvent(new Event('input')); }
 
             refreshGridVisuals();
             
@@ -434,6 +437,35 @@ window.addEventListener('load', () => {
     initGrid('grid-seq1'); initGrid('grid-seq2'); initFaders('grid-freq-seq2', 2);
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
-    const playBtn = document.getElementById('master-play-stop'); if (playBtn) { playBtn.onclick = () => { if (isPlaying) { isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; } else { if (audioCtx.state === 'suspended') audioCtx.resume(); isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; runDrumLoop(); runSynthLoop(); } }; }
+    const playBtn = document.getElementById('master-play-stop');
+    if (playBtn) {
+        playBtn.onclick = () => {
+            if (isPlaying) {
+                isPlaying = false; 
+                clearTimeout(timerDrums);
+                clearTimeout(timerSynths);
+                playBtn.innerText = "PLAY / STOP";
+                playBtn.style.background = "#222"; 
+                playBtn.style.color = "#fff";
+                trackPositions = [0,0,0,0,0];
+                globalTickCount = 0;
+                synthTickCount = 0;
+            } else {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                isPlaying = true; 
+                playBtn.innerText = "STOP";
+                playBtn.style.background = "#00f3ff"; 
+                playBtn.style.color = "#000";
+                
+                trackPositions = [0,0,0,0,0]; 
+                currentSynthStep = 0;
+                globalTickCount = 0;
+                synthTickCount = 0;
+
+                runDrumLoop();
+                runSynthLoop();
+            }
+        };
+    }
     console.log("UI Logic : Prêt (Final Reset Fix).");
 });
