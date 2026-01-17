@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (DUAL SYNTH UI)
+   HARDBEAT PRO - UI LOGIC (MUTE & RANDOM FIX)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -7,6 +7,10 @@ let trackLengths = [16, 16, 16, 16, 16];
 let trackPositions = [0, 0, 0, 0, 0];
 let trackMutes = [false, false, false, false, false];
 let trackSolos = [false, false, false, false, false];
+
+// ETATS UI MUTE SYNTH
+let muteState2 = false;
+let muteState3 = false;
 
 function initGrid(idPrefix) {
     const gridContainer = document.getElementById(idPrefix);
@@ -59,14 +63,12 @@ function bindControls() {
     const accSlider = document.getElementById('global-accent-amount'); if(accSlider) accSlider.oninput = (e) => { const val = parseFloat(e.target.value); if(window.updateAccentBoost) window.updateAccentBoost(val); document.getElementById('accent-val-display').innerText = val.toFixed(1) + 'x'; };
     const metroBox = document.getElementById('metro-toggle'); if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
 
-    // SEQ 2 PARAMS (RENOMMÉS)
     const v2 = document.getElementById('vol-seq2'); if(v2) v2.oninput = (e) => synthVol2 = parseFloat(e.target.value);
     const s2disto = document.getElementById('synth2-disto'); if(s2disto) s2disto.oninput = (e) => { if(window.updateSynth2Disto) window.updateSynth2Disto(parseFloat(e.target.value)); };
     const s2res = document.getElementById('synth2-res'); if(s2res) s2res.oninput = (e) => { if(window.updateSynth2Res) window.updateSynth2Res(parseFloat(e.target.value)); };
     const s2cut = document.getElementById('synth2-cutoff'); if(s2cut) s2cut.oninput = (e) => { if(window.updateSynth2Cutoff) window.updateSynth2Cutoff(parseFloat(e.target.value)); };
     const s2dec = document.getElementById('synth2-decay'); if(s2dec) s2dec.oninput = (e) => { if(window.updateSynth2Decay) window.updateSynth2Decay(parseFloat(e.target.value)); };
 
-    // GLOBAL DELAY
     const dAmt = document.getElementById('global-delay-amt'); if(dAmt) dAmt.oninput = (e) => { if(window.updateDelayAmount) window.updateDelayAmount(parseFloat(e.target.value)); };
     const dTime = document.getElementById('global-delay-time'); if(dTime) dTime.oninput = (e) => { if(window.updateDelayTime) window.updateDelayTime(parseFloat(e.target.value)); };
     
@@ -109,7 +111,7 @@ function initSeq3Extension() {
         btn.disabled = true; btn.style.opacity = "0.3"; btn.innerText = "SEQ 3 ACTIVE";
         const zone = document.getElementById('extension-zone');
         
-        // ON INJECTE UNE NOUVELLE BARRE DE CONTROLES SPÉCIFIQUE SEQ 3
+        // --- INJECTION HTML SEQ 3 AVEC RANDOMIZE ET MUTE ---
         zone.innerHTML = `
         <section id="seq3-container" class="rack-section synth-instance">
             <div class="section-header">
@@ -130,12 +132,18 @@ function initSeq3Extension() {
 
             <div class="freq-sliders-container" id="grid-freq-seq3"></div>
             <div class="step-grid" id="grid-seq3"></div>
+            
+            <div class="synth-controls" style="display:flex; gap:10px; margin-top:10px; align-items:center;">
+                <button id="btn-mute-seq3" class="btn-synth-mute" data-target="3">MUTE SEQ 3</button>
+                <div class="random-unit">
+                    <button class="btn-random" data-target="3">RANDOMIZE SEQ 3</button>
+                </div>
+            </div>
         </section>`;
         
         initGrid('grid-seq3');
         initFaders('grid-freq-seq3', 3);
         
-        // BINDING IMMEDIAT DES NOUVEAUX CONTROLES SEQ 3
         document.getElementById('vol-seq3').oninput = (e) => synthVol3 = parseFloat(e.target.value);
         document.getElementById('synth3-disto').oninput = (e) => { if(window.updateSynth3Disto) window.updateSynth3Disto(parseFloat(e.target.value)); };
         document.getElementById('synth3-res').oninput = (e) => { if(window.updateSynth3Res) window.updateSynth3Res(parseFloat(e.target.value)); };
@@ -236,7 +244,8 @@ document.addEventListener('mousedown', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('btn-mute')) {
+    // DRUM MUTE/SOLO
+    if (e.target.classList.contains('btn-mute') && !e.target.classList.contains('btn-synth-mute')) {
         const track = parseInt(e.target.dataset.track); trackMutes[track] = !trackMutes[track]; e.target.classList.toggle('active', trackMutes[track]);
         if(trackMutes[track]) { trackSolos[track] = false; const soloBtn = e.target.parentElement.querySelector('.btn-solo'); if(soloBtn) soloBtn.classList.remove('active'); } return;
     }
@@ -244,6 +253,45 @@ document.addEventListener('click', (e) => {
         const track = parseInt(e.target.dataset.track); trackSolos[track] = !trackSolos[track]; e.target.classList.toggle('active', trackSolos[track]);
         if(trackSolos[track]) { trackMutes[track] = false; const muteBtn = e.target.parentElement.querySelector('.btn-mute'); if(muteBtn) muteBtn.classList.remove('active'); } return;
     }
+    
+    // SYNTH MUTE
+    if (e.target.classList.contains('btn-synth-mute')) {
+        const target = parseInt(e.target.dataset.target);
+        if (target === 2) {
+            muteState2 = !muteState2;
+            e.target.classList.toggle('active', muteState2);
+            if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2);
+        } else if (target === 3) {
+            muteState3 = !muteState3;
+            e.target.classList.toggle('active', muteState3);
+            if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3);
+        }
+        return;
+    }
+
+    // SYNTH RANDOMIZE (DYNAMIQUE)
+    if (e.target.classList.contains('btn-random')) {
+        const target = parseInt(e.target.dataset.target);
+        // On récupère le bon conteneur de faders
+        const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader';
+        const faders = document.querySelectorAll(selector);
+        
+        // Effet visuel sur le bouton
+        const btn = e.target;
+        btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; 
+        btn.style.color = "#000";
+        setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100);
+
+        faders.forEach(fader => {
+            const randomFreq = Math.floor(Math.random() * (880 - 50) + 50);
+            fader.value = randomFreq;
+            // IMPORTANT : On déclenche l'événement pour mettre à jour le cache audio et le label
+            fader.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        return;
+    }
+
+    // TRACK SELECT
     if (e.target.classList.contains('track-btn')) {
         document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active');
         currentTrackIndex = parseInt(e.target.dataset.track); showParamsForTrack(currentTrackIndex); refreshGridVisuals();
@@ -257,7 +305,6 @@ window.addEventListener('load', () => {
     initGrid('grid-seq1'); initGrid('grid-seq2'); initFaders('grid-freq-seq2', 2);
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
-    const btnRand = document.querySelector('.btn-random'); if(btnRand) btnRand.onclick = () => { document.querySelectorAll('#grid-freq-seq2 .freq-fader').forEach(f => { f.value = Math.floor(Math.random()*(880-50)+50); f.dispatchEvent(new Event('input', { bubbles: true })); }); };
     const playBtn = document.getElementById('master-play-stop'); if (playBtn) { playBtn.onclick = () => { if (isPlaying) { isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; } else { if (audioCtx.state === 'suspended') audioCtx.resume(); isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; runDrumLoop(); runSynthLoop(); } }; }
-    console.log("UI Logic : Prêt (Full Split).");
+    console.log("UI Logic : Prêt (Full Synth Controls).");
 });
