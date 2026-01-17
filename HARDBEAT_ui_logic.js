@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (METRONOME READY)
+   HARDBEAT PRO - UI LOGIC (AUDITION ADDED)
    ========================================== */
 let timerDrums;
 let timerSynths;
@@ -174,11 +174,9 @@ function runDrumLoop() {
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
     const stepDuration = (60 / bpm) / 4 * 1000;
 
-    // --- LOGIQUE METRONOME (NOUVEAU) ---
-    // Tous les 4 pas (temps 0, 4, 8, 12)
+    // --- LOGIQUE METRONOME ---
     if (isMetroOn && currentDrumStep % 4 === 0) {
-        // Si c'est le pas 0, c'est le premier temps (Downbeat) -> Bip aigu
-        playMetronome(currentDrumStep === 0);
+        if(window.playMetronome) playMetronome(currentDrumStep === 0);
     }
 
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
@@ -210,7 +208,7 @@ function runSynthLoop() {
         if (pads3[currentSynthStep]) pads3[currentSynthStep].style.borderColor = "#a855f7";
     }
 
-    checkSynthTick(currentSynthStep);
+    if(window.checkSynthTick) checkSynthTick(currentSynthStep);
     currentSynthStep = (currentSynthStep + 1) % 16;
     timerSynths = setTimeout(runSynthLoop, stepDuration);
 }
@@ -246,6 +244,16 @@ document.addEventListener('click', (e) => {
         currentTrackIndex = parseInt(e.target.dataset.track);
         showParamsForTrack(currentTrackIndex);
         refreshGridVisuals();
+
+        // --- FEATURE AJOUTÉE : AUDITION (PREVIEW) ---
+        // On joue le son immédiatement quand on clique sur le bouton
+        switch(currentTrackIndex) {
+            case 0: if(window.playKick) playKick(); break;
+            case 1: if(window.playSnare) playSnare(); break;
+            case 2: if(window.playHiHat) playHiHat(false); break; // HH Close
+            case 3: if(window.playHiHat) playHiHat(true); break;  // HH Open
+            case 4: if(window.playDrumFM) playDrumFM(); break;
+        }
     }
 });
 
@@ -289,5 +297,5 @@ window.addEventListener('load', () => {
             }
         };
     }
-    console.log("UI Logic : Prêt (V-Final).");
+    console.log("UI Logic : Prêt (Audition Ready).");
 });
