@@ -477,3 +477,71 @@ body { background-color: var(--bg-color); color: #e0e0e0; font-family: 'Segoe UI
 .fader-unit { display: flex; flex-direction: column; align-items: center; height: 160px; }
 .freq-fader { appearance: slider-vertical; width: 12px; height: 130px; background: #222; cursor: ns-resize; }
 .hz-label { font-size: 9px; color: var(--accent-color); margin-bottom: 5px; font-family: 'Courier New', monospace; font-weight: bold; text-shadow: 0 0 5px rgba(0, 243, 255, 0.4); }
+
+/* --- SYSTEME D'AIDE (TOOLTIPS) --- */
+
+/* Le point d'interrogation */
+.help-tip {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background-color: #333;
+    color: #888;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 14px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: help;
+    margin-left: 8px;
+    border: 1px solid #555;
+    position: relative;
+}
+
+.help-tip:hover {
+    background-color: var(--accent-color);
+    color: #000;
+    border-color: #fff;
+}
+
+/* La bulle de texte (cachée par défaut) */
+.help-tip:before {
+    content: attr(data-text); /* Prend le texte écrit dans le HTML */
+    position: absolute;
+    bottom: 25px; /* Au-dessus du point */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #000;
+    color: #fff;
+    font-size: 11px;
+    font-family: sans-serif;
+    border: 1px solid var(--accent-color);
+    box-shadow: 0 4px 10px rgba(0, 243, 255, 0.2);
+    display: none; /* Caché */
+    z-index: 1000;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.4;
+}
+
+/* La petite flèche en bas de la bulle */
+.help-tip:after {
+    content: "";
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--accent-color) transparent transparent transparent;
+    display: none;
+    z-index: 1000;
+}
+
+/* Affichage au survol */
+.help-tip:hover:before, .help-tip:hover:after {
+    display: block;
+}
