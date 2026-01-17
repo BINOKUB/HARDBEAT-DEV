@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO ENGINE
+   HARDBEAT PRO - CORE AUDIO ENGINE (FINAL)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = audioCtx.createGain();
@@ -9,6 +9,7 @@ masterGain.gain.value = 0.5;
 let isPlaying = false;
 let currentStep = 0;
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
+// On prépare SEQ 2 et SEQ 3
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
 
 // Paramètres
@@ -37,13 +38,11 @@ function createDistortionCurve(amount) {
     return curve;
 }
 
-// Fonction publique pour mettre à jour la disto en live
 window.updateDistortion = function(amount) {
     synthParams.disto = amount;
     distortionNode.curve = createDistortionCurve(amount);
 };
 
-// Initialisation Effets
 distortionNode.curve = createDistortionCurve(0);
 distortionNode.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode);
@@ -104,23 +103,19 @@ function playDrumFM() {
     const mod = audioCtx.createOscillator();
     const modG = audioCtx.createGain();
     const mainG = audioCtx.createGain();
-    
     mod.frequency.value = fmSettings.modPitch || 50;
     modG.gain.value = fmSettings.fmAmount || 100;
     car.frequency.value = fmSettings.carrierPitch || 100;
-    
     mod.connect(modG); modG.connect(car.frequency);
     car.connect(mainG); mainG.connect(masterGain);
-    
     const d = fmSettings.decay || 0.3;
     mainG.gain.setValueAtTime(fmSettings.level || 0.5, audioCtx.currentTime);
     mainG.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
-    
     car.start(); mod.start();
     car.stop(audioCtx.currentTime + d); mod.stop(audioCtx.currentTime + d);
 }
 
-// --- SYNTH (SECURISÉ) ---
+// --- SYNTH ---
 function playSynthNote(freq) {
     if (!freq || freq < 20) return;
     const osc = audioCtx.createOscillator();
@@ -140,9 +135,16 @@ function playSynthNote(freq) {
 }
 
 function checkSynthTick(step) {
-    if (synthSequences && synthSequences.seq2 && synthSequences.seq2[step]) {
+    // SEQ 2
+    if (synthSequences.seq2[step]) {
         const fader = document.querySelector(`#grid-freq-seq2 .fader-unit:nth-child(${step+1}) input`);
         if (fader) playSynthNote(parseFloat(fader.value));
     }
+    // SEQ 3 (HARDGROOVE - Une octave plus bas * 0.5)
+    if (synthSequences.seq3[step]) {
+        // On cherche le fader dans le container SEQ 3 s'il existe
+        const fader = document.querySelector(`#grid-freq-seq3 .fader-unit:nth-child(${step+1}) input`);
+        if (fader) playSynthNote(parseFloat(fader.value) * 0.5);
+    }
 }
-console.log("Audio Engine : Prêt (V3).");
+console.log("Audio Engine : Prêt (V4 - Seq3 Ready).");
