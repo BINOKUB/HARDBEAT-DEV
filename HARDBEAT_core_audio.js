@@ -1,9 +1,29 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO (DYNAMIC ACCENT)
+   HARDBEAT PRO - CORE AUDIO (ACOUSTIC DYNAMICS)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// --- MASTER BUS AVEC LIMITEUR (SOFT CLIPPER) ---
+// Pour empêcher la distorsion numérique quand l'accent est à fond
+const masterLimiter = audioCtx.createWaveShaper();
+function makeSoftClipCurve(amount = 0) {
+    let k = typeof amount === 'number' ? amount : 50;
+    let n_samples = 44100;
+    let curve = new Float32Array(n_samples);
+    let deg = Math.PI / 180;
+    for (let i = 0; i < n_samples; ++i ) {
+        let x = i * 2 / n_samples - 1;
+        // Formule de soft-clipping douce
+        curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) ); 
+    }
+    return curve;
+}
+masterLimiter.curve = makeSoftClipCurve(0); // Courbe neutre au départ, agit comme headroom
+masterLimiter.oversample = '4x';
+
 const masterGain = audioCtx.createGain();
-masterGain.connect(audioCtx.destination);
+masterGain.connect(masterLimiter); // Gain -> Limiter
+masterLimiter.connect(audioCtx.destination); // Limiter -> Sortie
 masterGain.gain.value = 0.5;
 
 let isPlaying = false;
@@ -16,8 +36,6 @@ let freqCacheSeq3 = new Array(16).fill(220);
 
 let synthVol2 = 0.6;
 let synthVol3 = 0.6;
-
-// VARIABLE GLOBALE D'ACCENT (Pilotée par le slider)
 let globalAccentBoost = 1.4;
 
 let kickSettings = { pitch: 150, decay: 0.5, level: 0.8 };
@@ -42,7 +60,6 @@ function createDistortionCurve(amount) {
     return curve;
 }
 
-// WINDOW EXPORTS (API)
 window.updateDistortion = function(amount) {
     synthParams.disto = amount;
     if(audioCtx.state === 'running') distortionNode.curve = createDistortionCurve(amount);
@@ -60,8 +77,6 @@ window.updateFreqCache = function(seqId, stepIndex, val) {
     if (seqId === 2) freqCacheSeq2[stepIndex] = val;
     if (seqId === 3) freqCacheSeq3[stepIndex] = val;
 };
-
-// MISE A JOUR DU BOOST ACCENT
 window.updateAccentBoost = function(val) {
     globalAccentBoost = val;
 };
@@ -83,22 +98,32 @@ function playMetronome(isDownbeat) {
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
 }
 
-// --- INSTRUMENTS AVEC BOOST DYNAMIQUE ---
+// --- INSTRUMENTS ACOUSTIQUES ---
+
 function playKick(isAccent) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.connect(g); g.connect(masterGain);
-    const p = kickSettings.pitch || 150;
-    const d = kickSettings.decay || 0.5;
     
+    // Si Accent : Plus fort + Pitch Envelope plus rapide (plus de "Click")
     let lvl = kickSettings.level;
-    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost);
+    let decayMod = kickSettings.decay;
+    
+    if (isAccent) {
+        lvl = Math.min(1.2, lvl * globalAccentBoost); // Volume Boost
+        decayMod += 0.1; // Un peu plus de corps
+    }
 
+    const p = kickSettings.pitch || 150;
     osc.frequency.setValueAtTime(p, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+    // Enveloppe de pitch plus agressive sur l'accent
+    const pitchTime = isAccent ? 0.05 : 0.01; 
+    osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + decayMod);
+
     g.gain.setValueAtTime(lvl, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
-    osc.start(); osc.stop(audioCtx.currentTime + d);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + decayMod);
+    
+    osc.start(); osc.stop(audioCtx.currentTime + decayMod);
 }
 
 function playSnare(isAccent) {
@@ -109,15 +134,24 @@ function playSnare(isAccent) {
     noise.buffer = buffer;
     const filt = audioCtx.createBiquadFilter();
     filt.type = 'highpass';
-    filt.frequency.value = snareSettings.tone || 1000;
+    
+    // Si Accent : Plus de brillance (Filtre plus haut) + Volume
+    let baseTone = snareSettings.tone || 1000;
+    let lvl = snareSettings.level;
+    let snap = snareSettings.snappy || 1;
+
+    if (isAccent) {
+        lvl = Math.min(1.2, lvl * globalAccentBoost);
+        baseTone += 200; // Son plus clair
+        snap += 0.2; // Plus de timbre
+    }
+
+    filt.frequency.value = baseTone;
     const g = audioCtx.createGain();
     noise.connect(filt); filt.connect(g); g.connect(masterGain);
     
-    let lvl = snareSettings.level;
-    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost);
-
     g.gain.setValueAtTime(lvl, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (0.2 * snap));
     noise.start();
 }
 
@@ -129,13 +163,20 @@ function playHiHat(isOpen, isAccent) {
     noise.buffer = buffer;
     const filt = audioCtx.createBiquadFilter();
     filt.type = 'highpass';
-    filt.frequency.value = hhSettings.tone || 8000;
+    
+    let tone = hhSettings.tone || 8000;
+    let d = isOpen ? (hhSettings.decayOpen || 0.3) : (hhSettings.decayClose || 0.05);
+    let l = isOpen ? (hhSettings.levelOpen || 0.5) : (hhSettings.levelClose || 0.4);
+
+    if (isAccent) {
+        l = Math.min(1.0, l * globalAccentBoost);
+        d += 0.05; // Le charley s'ouvre un peu plus sous la frappe
+        tone += 500; // Plus brillant
+    }
+
+    filt.frequency.value = tone;
     const g = audioCtx.createGain();
     noise.connect(filt); filt.connect(g); g.connect(masterGain);
-    const d = isOpen ? (hhSettings.decayOpen || 0.3) : (hhSettings.decayClose || 0.05);
-    
-    let l = isOpen ? (hhSettings.levelOpen || 0.5) : (hhSettings.levelClose || 0.4);
-    if (isAccent) l = Math.min(1.0, l * globalAccentBoost);
 
     g.gain.setValueAtTime(l, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
@@ -148,15 +189,22 @@ function playDrumFM(isAccent) {
     const modG = audioCtx.createGain();
     const mainG = audioCtx.createGain();
     mod.frequency.value = fmSettings.modPitch || 50;
-    modG.gain.value = fmSettings.fmAmount || 100;
+    
+    let amt = fmSettings.fmAmount || 100;
+    let lvl = fmSettings.level || 0.5;
+    let d = fmSettings.decay || 0.3;
+
+    if (isAccent) {
+        lvl = Math.min(1.0, lvl * globalAccentBoost);
+        amt += 50; // Plus de modulation métallique
+        d += 0.1;
+    }
+
+    modG.gain.value = amt;
     car.frequency.value = fmSettings.carrierPitch || 100;
     mod.connect(modG); modG.connect(car.frequency);
     car.connect(mainG); mainG.connect(masterGain);
-    const d = fmSettings.decay || 0.3;
     
-    let lvl = fmSettings.level || 0.5;
-    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost);
-
     mainG.gain.setValueAtTime(lvl, audioCtx.currentTime);
     mainG.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
     car.start(); mod.start();
@@ -187,4 +235,4 @@ function checkSynthTick(step) {
     if (synthSequences.seq3[step]) playSynthNote(freqCacheSeq3[step] * 0.5, synthVol3);
 }
 
-console.log("Audio Engine : Prêt (Full Features).");
+console.log("Audio Engine : Prêt (Acoustic Physics).");
