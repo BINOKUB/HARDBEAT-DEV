@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | POLYRHYTHM MASTER</title>
+    <title>HARDBEAT PRO | SWING MASTER</title>
     <link rel="stylesheet" href="HARDBEAT_style.css">
 </head>
 <body>
@@ -20,13 +20,20 @@
 
         <section id="seq1-container" class="rack-section">
             <div class="section-header">
-                <h2>SEQ 1 : POLYRHYTHM DRUM ENGINE</h2>
+                <h2>SEQ 1 : DRUM ENGINE</h2>
                 <div style="display:flex; gap:15px; align-items:center;">
                     <div class="bpm-control" style="border-right:1px solid #333; padding-right:15px;">
                         <label style="cursor:pointer; color:#00f3ff;">
                             CLICK <input type="checkbox" id="metro-toggle" style="vertical-align:middle;">
                         </label>
                     </div>
+                    
+                    <div class="bpm-control" style="border-right:1px solid #333; padding-right:15px;">
+                        <label>SWING</label>
+                        <input type="range" id="global-swing" min="0" max="50" value="0" style="width:60px; height:4px;">
+                        <span id="swing-val" style="font-size:10px; color:#888;">0%</span>
+                    </div>
+
                     <div class="bpm-control">
                         <label>TEMPO 1</label>
                         <span id="display-bpm1">120</span> BPM
