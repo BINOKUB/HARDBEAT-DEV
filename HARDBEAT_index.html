@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | DEV STABLE</title>
+    <title>HARDBEAT PRO | POLYRHYTHM UPDATE</title>
     <link rel="stylesheet" href="HARDBEAT_style.css">
 </head>
 <body>
@@ -78,9 +78,15 @@
         <section id="seq2-container" class="rack-section synth-instance" data-id="2">
             <div class="section-header">
                 <h2>SEQ 2 : FREQ SYNTH</h2>
-                <div class="bpm-control">
-                    <label>TEMPO 2</label>
-                    <span id="display-bpm2">122</span> BPM
+                <div style="display:flex; gap:20px; align-items:center;">
+                    <div class="bpm-control">
+                        <label>VOL</label>
+                        <input type="range" id="vol-seq2" min="0" max="1" step="0.01" value="0.6" style="width:60px">
+                    </div>
+                    <div class="bpm-control">
+                        <label>TEMPO 2</label>
+                        <span id="display-bpm2">122</span> BPM
+                    </div>
                 </div>
             </div>
 
@@ -90,7 +96,6 @@
             <div class="synth-controls">
                 <div class="random-unit">
                     <button class="btn-random">RANDOMIZE</button>
-                    <label>64 PAS <input type="checkbox" class="check-random-64"></label>
                 </div>
             </div>
         </section>
@@ -128,6 +133,5 @@
 
     <script src="HARDBEAT_core_audio.js"></script>
     <script src="HARDBEAT_ui_logic.js"></script>
-
 </body>
 </html>
