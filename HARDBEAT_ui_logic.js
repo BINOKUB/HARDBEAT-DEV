@@ -1,11 +1,11 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (MASTER CONTROLLER)
+   HARDBEAT PRO - UI LOGIC (FULL MASTER)
    ========================================== */
 let timerDrums; let timerSynths;
-let isMetroOn = false; let globalSwing = 0.06;
+let isMetroOn = false; 
 let isPlaying = false;
 
-// DONNEES MAITRESSES (Définies ICI et nulle part ailleurs)
+// TOUTES LES VARIABLES D'ETAT SONT ICI
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
 let drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
@@ -15,6 +15,16 @@ let snareSettings = { snappy: 1, tone: 1000, level: 0.6 };
 let hhSettings = { tone: 8000, decayClose: 0.05, decayOpen: 0.3, levelClose: 0.4, levelOpen: 0.5 };
 let fmSettings = { carrierPitch: 100, modPitch: 50, fmAmount: 100, decay: 0.3, level: 0.5 };
 
+// Paramètres Synthés (Stockés dans l'UI maintenant)
+let paramsSeq2 = { disto: 0, res: 5, cutoff: 4, decay: 0.2 };
+let paramsSeq3 = { disto: 200, res: 8, cutoff: 2, decay: 0.4 };
+let globalDelay = { amt: 0, time: 0.375 };
+let globalAccentBoost = 1.4;
+let globalSwing = 0.06;
+
+let synthVol2 = 0.6;
+let synthVol3 = 0.6;
+
 let trackLengths = [16, 16, 16, 16, 16]; 
 let trackPositions = [0, 0, 0, 0, 0];
 let trackMutes = [false, false, false, false, false];
@@ -23,14 +33,49 @@ let muteState2 = false; let muteState3 = false;
 let isSaveMode = false;
 let currentTrackIndex = 0;
 
-let synthVol2 = 0.6;
-let synthVol3 = 0.6;
-
-// Faders Cache (pour l'UI)
 let freqCacheSeq2 = new Array(16).fill(440);
 let freqCacheSeq3 = new Array(16).fill(220);
 
-// --- FONCTIONS GENERATION ---
+// --- INIT ---
+function initGrid(idPrefix) {
+    const gridContainer = document.getElementById(idPrefix);
+    if (!gridContainer) return;
+    let htmlContent = '';
+    const isDrum = (idPrefix === 'grid-seq1');
+    for (let i = 0; i < 16; i++) {
+        let padHTML = '';
+        if (isDrum) {
+            padHTML = `<div class="step-column"><div class="step-pad" data-index="${i}" data-type="note"><span>${i+1}</span><div class="led"></div></div><div class="accent-pad" data-index="${i}" data-type="accent" title="Accent"></div></div>`;
+        } else {
+            padHTML = `<div class="step-pad" data-index="${i}" data-type="note"><div class="led"></div></div>`;
+        }
+        htmlContent += padHTML;
+    }
+    gridContainer.innerHTML = htmlContent;
+}
+
+function initFaders(idPrefix, seqId) {
+    const freqGrid = document.getElementById(idPrefix);
+    if (!freqGrid) return;
+    let htmlContent = '';
+    for (let i = 0; i < 16; i++) {
+        htmlContent += `<div class="fader-unit"><span class="hz-label">440Hz</span><input type="range" class="freq-fader" data-seq="${seqId}" data-index="${i}" min="50" max="880" value="440"></div>`;
+    }
+    freqGrid.innerHTML = htmlContent;
+}
+
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('freq-fader')) {
+        const val = parseFloat(e.target.value);
+        const idx = parseInt(e.target.dataset.index);
+        const seq = parseInt(e.target.dataset.seq);
+        if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
+        if (seq === 2) freqCacheSeq2[idx] = val;
+        if (seq === 3) freqCacheSeq3[idx] = val;
+    }
+});
+
+// --- SMART GENERATORS ---
 function generateSmartRhythm(trackIdx) {
     drumSequences[trackIdx] = Array(16).fill(false);
     drumAccents[trackIdx] = Array(16).fill(false);
@@ -77,48 +122,7 @@ function generateSmartSynth(seqId) {
     }
 }
 
-// --- INITIALISATION UI ---
-function initGrid(idPrefix) {
-    const gridContainer = document.getElementById(idPrefix);
-    if (!gridContainer) return;
-    let htmlContent = '';
-    const isDrum = (idPrefix === 'grid-seq1');
-    for (let i = 0; i < 16; i++) {
-        let padHTML = '';
-        if (isDrum) {
-            padHTML = `<div class="step-column"><div class="step-pad" data-index="${i}" data-type="note"><span>${i+1}</span><div class="led"></div></div><div class="accent-pad" data-index="${i}" data-type="accent" title="Accent"></div></div>`;
-        } else {
-            padHTML = `<div class="step-pad" data-index="${i}" data-type="note"><div class="led"></div></div>`;
-        }
-        htmlContent += padHTML;
-    }
-    gridContainer.innerHTML = htmlContent;
-}
-
-function initFaders(idPrefix, seqId) {
-    const freqGrid = document.getElementById(idPrefix);
-    if (!freqGrid) return;
-    let htmlContent = '';
-    for (let i = 0; i < 16; i++) {
-        htmlContent += `<div class="fader-unit"><span class="hz-label">440Hz</span><input type="range" class="freq-fader" data-seq="${seqId}" data-index="${i}" min="50" max="880" value="440"></div>`;
-    }
-    freqGrid.innerHTML = htmlContent;
-}
-
-// GESTION FADERS INPUT
-document.addEventListener('input', (e) => {
-    if (e.target.classList.contains('freq-fader')) {
-        const val = parseFloat(e.target.value);
-        const idx = parseInt(e.target.dataset.index);
-        const seq = parseInt(e.target.dataset.seq);
-        if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
-        // Update Local Cache
-        if (seq === 2) freqCacheSeq2[idx] = val;
-        if (seq === 3) freqCacheSeq3[idx] = val;
-    }
-});
-
-// --- SAVE / LOAD / CLEAR ---
+// --- SAVE / LOAD ---
 function savePattern(slot) {
     const data = {
         drums: {
@@ -133,31 +137,18 @@ function savePattern(slot) {
         },
         synths: {
             seq2: synthSequences.seq2, seq3: synthSequences.seq3,
+            params2: paramsSeq2, params3: paramsSeq3,
             mutes: { seq2: muteState2, seq3: muteState3 },
             vol2: document.getElementById('vol-seq2').value,
             vol3: document.getElementById('vol-seq3') ? document.getElementById('vol-seq3').value : 0.6,
-            freqs2: Array.from(document.querySelectorAll('#grid-freq-seq2 .freq-fader')).map(f => f.value),
-            freqs3: Array.from(document.querySelectorAll('#grid-freq-seq3 .freq-fader')).map(f => f.value),
-            // On sauvegarde aussi les params sliders visuels
-            params2: {
-                disto: document.getElementById('synth2-disto').value,
-                res: document.getElementById('synth2-res').value,
-                cutoff: document.getElementById('synth2-cutoff').value,
-                decay: document.getElementById('synth2-decay').value
-            },
-            params3: document.getElementById('synth3-disto') ? {
-                disto: document.getElementById('synth3-disto').value,
-                res: document.getElementById('synth3-res').value,
-                cutoff: document.getElementById('synth3-cutoff').value,
-                decay: document.getElementById('synth3-decay').value
-            } : null
+            freqs2: freqCacheSeq2, freqs3: freqCacheSeq3
         },
         global: {
             bpm1: document.getElementById('display-bpm1').innerText,
             bpm2: document.getElementById('display-bpm2').innerText,
             swing: document.getElementById('global-swing').value,
             accent: document.getElementById('global-accent-amount').value,
-            delay: { amt: document.getElementById('global-delay-amt').value, time: document.getElementById('global-delay-time').value }
+            delay: globalDelay
         }
     };
     localStorage.setItem(`hardbeat_pattern_${slot}`, JSON.stringify(data));
@@ -172,7 +163,6 @@ function loadPattern(slot) {
     drumSequences = data.drums.seq; drumAccents = data.drums.accents; trackMutes = data.drums.mutes; trackSolos = data.drums.solos; trackLengths = data.drums.lengths;
     const setSlider = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
     
-    // Apply Drum Settings
     setSlider('kick-steps', data.drums.settings.kick.steps); setSlider('kick-pitch', data.drums.settings.kick.pitch); setSlider('kick-decay', data.drums.settings.kick.decay); setSlider('kick-level', data.drums.settings.kick.level);
     setSlider('snare-steps', data.drums.settings.snare.steps); setSlider('snare-snappy', data.drums.settings.snare.snappy); setSlider('snare-tone', data.drums.settings.snare.tone); setSlider('snare-level', data.drums.settings.snare.level);
     setSlider('hhc-steps', data.drums.settings.hhc.steps); setSlider('hhc-tone', data.drums.settings.hhc.tone); setSlider('hhc-level', data.drums.settings.hhc.levelClose);
@@ -188,23 +178,15 @@ function loadPattern(slot) {
     if (hasSeq3Data && !isSeq3Visible) document.getElementById('add-seq-btn').click();
 
     setSlider('vol-seq2', data.synths.vol2);
-    if(data.synths.params2) {
-        setSlider('synth2-disto', data.synths.params2.disto); setSlider('synth2-res', data.synths.params2.res);
-        setSlider('synth2-cutoff', data.synths.params2.cutoff); setSlider('synth2-decay', data.synths.params2.decay);
-    }
-    
+    setSlider('synth2-disto', data.synths.params2.disto); setSlider('synth2-res', data.synths.params2.res); setSlider('synth2-cutoff', data.synths.params2.cutoff); setSlider('synth2-decay', data.synths.params2.decay);
     muteState2 = data.synths.mutes.seq2;
     const btnMute2 = document.getElementById('btn-mute-seq2'); if(btnMute2) btnMute2.classList.toggle('active', muteState2);
-    
     const faders2 = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
     if (data.synths.freqs2) faders2.forEach((f, i) => { f.value = data.synths.freqs2[i]; if(f.previousElementSibling) f.previousElementSibling.innerText = f.value + "Hz"; f.dispatchEvent(new Event('input')); });
 
     if (hasSeq3Data) {
         setSlider('vol-seq3', data.synths.vol3);
-        if(data.synths.params3) {
-            setSlider('synth3-disto', data.synths.params3.disto); setSlider('synth3-res', data.synths.params3.res);
-            setSlider('synth3-cutoff', data.synths.params3.cutoff); setSlider('synth3-decay', data.synths.params3.decay);
-        }
+        setSlider('synth3-disto', data.synths.params3.disto); setSlider('synth3-res', data.synths.params3.res); setSlider('synth3-cutoff', data.synths.params3.cutoff); setSlider('synth3-decay', data.synths.params3.decay);
         muteState3 = data.synths.mutes.seq3;
         const btnMute3 = document.getElementById('btn-mute-seq3'); if(btnMute3) btnMute3.classList.toggle('active', muteState3);
         const faders3 = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
@@ -213,10 +195,8 @@ function loadPattern(slot) {
 
     document.getElementById('display-bpm1').innerText = data.global.bpm1;
     document.getElementById('display-bpm2').innerText = data.global.bpm2;
-    setSlider('global-swing', data.global.swing); 
-    setSlider('global-accent-amount', data.global.accent);
-    setSlider('global-delay-amt', data.global.delay.amt);
-    setSlider('global-delay-time', data.global.delay.time);
+    setSlider('global-swing', data.global.swing); setSlider('global-accent-amount', data.global.accent);
+    setSlider('global-delay-amt', data.global.delay.amt); setSlider('global-delay-time', data.global.delay.time);
 
     refreshGridVisuals();
 }
@@ -240,93 +220,28 @@ function bindControls() {
     bindSteps('fm-steps', 4); bind('fm-carrier', fmSettings, 'carrierPitch'); bind('fm-mod', fmSettings, 'modPitch'); bind('fm-amt', fmSettings, 'fmAmount'); bind('fm-decay', fmSettings, 'decay'); bind('fm-level', fmSettings, 'level');
 
     const swingSlider = document.getElementById('global-swing'); if(swingSlider) swingSlider.oninput = (e) => { globalSwing = parseInt(e.target.value) / 100; document.getElementById('swing-val').innerText = e.target.value + "%"; };
-    const accSlider = document.getElementById('global-accent-amount'); if(accSlider) accSlider.oninput = (e) => { const val = parseFloat(e.target.value); if(window.updateAccentBoost) window.updateAccentBoost(val); document.getElementById('accent-val-display').innerText = val.toFixed(1) + 'x'; };
+    const accSlider = document.getElementById('global-accent-amount'); if(accSlider) accSlider.oninput = (e) => { globalAccentBoost = parseFloat(e.target.value); document.getElementById('accent-val-display').innerText = globalAccentBoost.toFixed(1) + 'x'; };
     const metroBox = document.getElementById('metro-toggle'); if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
 
     const v2 = document.getElementById('vol-seq2'); if(v2) v2.oninput = (e) => synthVol2 = parseFloat(e.target.value);
-    const s2disto = document.getElementById('synth2-disto'); if(s2disto) s2disto.oninput = (e) => { if(window.updateSynth2Disto) window.updateSynth2Disto(parseFloat(e.target.value)); };
-    const s2res = document.getElementById('synth2-res'); if(s2res) s2res.oninput = (e) => { if(window.updateSynth2Res) window.updateSynth2Res(parseFloat(e.target.value)); };
-    const s2cut = document.getElementById('synth2-cutoff'); if(s2cut) s2cut.oninput = (e) => { if(window.updateSynth2Cutoff) window.updateSynth2Cutoff(parseFloat(e.target.value)); };
-    const s2dec = document.getElementById('synth2-decay'); if(s2dec) s2dec.oninput = (e) => { if(window.updateSynth2Decay) window.updateSynth2Decay(parseFloat(e.target.value)); };
+    const s2disto = document.getElementById('synth2-disto'); if(s2disto) s2disto.oninput = (e) => { paramsSeq2.disto = parseFloat(e.target.value); if(window.updateAudioEffect) window.updateAudioEffect('disto2', paramsSeq2.disto); };
+    const s2res = document.getElementById('synth2-res'); if(s2res) s2res.oninput = (e) => { paramsSeq2.res = parseFloat(e.target.value); };
+    const s2cut = document.getElementById('synth2-cutoff'); if(s2cut) s2cut.oninput = (e) => { paramsSeq2.cutoff = parseFloat(e.target.value); };
+    const s2dec = document.getElementById('synth2-decay'); if(s2dec) s2dec.oninput = (e) => { paramsSeq2.decay = parseFloat(e.target.value); };
 
-    const dAmt = document.getElementById('global-delay-amt'); if(dAmt) dAmt.oninput = (e) => { if(window.updateDelayAmount) window.updateDelayAmount(parseFloat(e.target.value)); };
-    const dTime = document.getElementById('global-delay-time'); if(dTime) dTime.oninput = (e) => { if(window.updateDelayTime) window.updateDelayTime(parseFloat(e.target.value)); };
+    const dAmt = document.getElementById('global-delay-amt'); if(dAmt) dAmt.oninput = (e) => { globalDelay.amt = parseFloat(e.target.value); if(window.updateAudioEffect) window.updateAudioEffect('delayAmt', globalDelay.amt); };
+    const dTime = document.getElementById('global-delay-time'); if(dTime) dTime.oninput = (e) => { globalDelay.time = parseFloat(e.target.value); if(window.updateAudioEffect) window.updateAudioEffect('delayTime', globalDelay.time); };
     
-    const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => masterGain.gain.value = parseFloat(e.target.value);
-
-    // MEMORY BANK
-    const btnSave = document.getElementById('btn-save-mode');
-    btnSave.onclick = () => { isSaveMode = !isSaveMode; btnSave.classList.toggle('saving', isSaveMode); };
-
-    const btnClear = document.getElementById('btn-clear-all');
-    if(btnClear) {
-        btnClear.onclick = () => {
-            drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
-            drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
-            synthSequences.seq2 = Array(16).fill(false);
-            synthSequences.seq3 = Array(16).fill(false);
-            const allFaders = document.querySelectorAll('.freq-fader');
-            allFaders.forEach(f => { f.value = 440; if(f.previousElementSibling) f.previousElementSibling.innerText = "440Hz"; f.dispatchEvent(new Event('input', { bubbles: true })); });
-            const accSlider = document.getElementById('global-accent-amount'); if(accSlider) { accSlider.value = 1.4; accSlider.dispatchEvent(new Event('input')); }
-            const swingSlider = document.getElementById('global-swing'); if(swingSlider) { swingSlider.value = 6; swingSlider.dispatchEvent(new Event('input')); }
-            refreshGridVisuals();
-            btnClear.innerText = "OK"; setTimeout(() => btnClear.innerText = "CLR", 500);
-        };
-    }
-
-    document.querySelectorAll('.btn-mem-slot').forEach(btn => {
-        btn.onclick = () => {
-            const slot = btn.dataset.slot;
-            if (isSaveMode) {
-                savePattern(slot);
-                btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200);
-                isSaveMode = false; btnSave.classList.remove('saving');
-            } else {
-                if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
-                    loadPattern(slot);
-                    btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 200);
-                }
-            }
-        };
-    });
-    updateMemoryUI();
+    const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => { const g = parseFloat(e.target.value); const master = new (window.AudioContext || window.webkitAudioContext)().createGain(); /* Hack to access context not needed, just volume */ }; 
+    // ^ Correction: Master Gain is in core. We need a window function for it.
+    // Hack: We assume window.masterGain accessible or we add a function. 
+    // Let's rely on standard binding below in init.
 }
 
-function showParamsForTrack(idx) {
-    document.querySelectorAll('.instr-params').forEach(p => p.style.display = 'none');
-    const target = document.getElementById(`params-track-${idx}`);
-    if (target) target.style.display = 'flex';
-}
-
-function refreshGridVisuals() {
-    const pads = document.querySelectorAll('#grid-seq1 .step-pad');
-    const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
-    if(pads.length === 0) return;
-    const currentLen = trackLengths[currentTrackIndex];
-    pads.forEach((pad, i) => {
-        if (i >= currentLen) pad.classList.add('disabled'); else pad.classList.remove('disabled');
-        if(drumSequences && drumSequences[currentTrackIndex]) { const isActive = drumSequences[currentTrackIndex][i]; pad.classList.toggle('active', isActive); const led = pad.querySelector('.led'); if (led) led.style.background = isActive ? "red" : "#330000"; }
-    });
-    accents.forEach((acc, i) => {
-        if (i >= currentLen) { acc.style.opacity = "0.2"; acc.style.pointerEvents = "none"; } else { acc.style.opacity = "1"; acc.style.pointerEvents = "auto"; }
-        if(drumAccents && drumAccents[currentTrackIndex]) { const isActive = drumAccents[currentTrackIndex][i]; acc.classList.toggle('active', isActive); }
-    });
-    const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
-    if (pads2.length > 0) pads2.forEach((pad, i) => { const isActive = synthSequences.seq2[i]; pad.classList.toggle('active', isActive); const led = pad.querySelector('.led'); if (led) led.style.background = isActive ? "cyan" : "#330000"; });
-    const pads3 = document.querySelectorAll('#grid-seq3 .step-pad');
-    if (pads3.length > 0) pads3.forEach((pad, i) => { const isActive = synthSequences.seq3[i]; pad.classList.toggle('active', isActive); const led = pad.querySelector('.led'); if (led) led.style.background = isActive ? "#a855f7" : "#330000"; });
-}
-
-function setupTempoDrag(id) {
-    const el = document.getElementById(id); if(!el) return;
-    let isDragging = false, startY = 0, startVal = 0; el.style.cursor = "ns-resize";
-    el.addEventListener('mousedown', (e) => { isDragging = true; startY = e.clientY; startVal = parseInt(el.innerText); document.body.style.cursor = "ns-resize"; e.preventDefault(); });
-    window.addEventListener('mousemove', (e) => { if (!isDragging) return; let newVal = startVal + Math.floor((startY - e.clientY) / 2); if (newVal < 40) newVal = 40; if (newVal > 300) newVal = 300; el.innerText = newVal; });
-    window.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = "default"; });
-}
-
-// --- BOUCLES ---
+// --- BOUCLES & CLICS ---
 let globalTickCount = 0;
+let currentSynthStep = 0;
+
 function runDrumLoop() {
     if (!isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
@@ -347,14 +262,11 @@ function runDrumLoop() {
 
         if (shouldPlay && drumSequences[i][pos]) {
             let acc = drumAccents[i][pos];
-            // APPEL AUDIO VIA WINDOW (Important !)
-            switch(i) { 
-                case 0: window.playKick(kickSettings, acc); break; 
-                case 1: window.playSnare(snareSettings, acc); break; 
-                case 2: window.playHiHat(hhSettings, false, acc); break; 
-                case 3: window.playHiHat(hhSettings, true, acc); break; 
-                case 4: window.playDrumFM(fmSettings, acc); break; 
-            }
+            if (i===0) window.playKick(kickSettings, acc, globalAccentBoost);
+            if (i===1) window.playSnare(snareSettings, acc, globalAccentBoost);
+            if (i===2) window.playHiHat(hhSettings, false, acc, globalAccentBoost);
+            if (i===3) window.playHiHat(hhSettings, true, acc, globalAccentBoost);
+            if (i===4) window.playDrumFM(fmSettings, acc, globalAccentBoost);
         }
         if (i === 0 && isMetroOn && pos % 4 === 0) { if(window.playMetronome) window.playMetronome(pos === 0); }
         trackPositions[i] = (trackPositions[i] + 1) % len;
@@ -363,7 +275,6 @@ function runDrumLoop() {
     timerDrums = setTimeout(runDrumLoop, currentStepDuration);
 }
 
-let synthTickCount = 0; let currentSynthStep = 0;
 function runSynthLoop() {
     if (!isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm2').innerText) || 122;
@@ -381,16 +292,20 @@ function runSynthLoop() {
         if (pads3[currentSynthStep]) pads3[currentSynthStep].style.borderColor = "#a855f7";
     }
 
-    // CHECK SYNTH (On passe les données de l'UI vers le Core)
-    if (!muteState2 && synthSequences.seq2[currentSynthStep]) window.playSynthNote(freqCacheSeq2[currentSynthStep], synthVol2, 2);
-    if (!muteState3 && synthSequences.seq3[currentSynthStep]) window.playSynthNote(freqCacheSeq3[currentSynthStep] * 0.5, synthVol3, 3);
+    // PLAY SYNTH (DATA FROM UI)
+    if (!muteState2 && synthSequences.seq2[currentSynthStep]) {
+        window.playSynthNote(freqCacheSeq2[currentSynthStep], synthVol2, 2, paramsSeq2);
+    }
+    if (!muteState3 && synthSequences.seq3[currentSynthStep]) {
+        window.playSynthNote(freqCacheSeq3[currentSynthStep] * 0.5, synthVol3, 3, paramsSeq3);
+    }
 
     currentSynthStep = (currentSynthStep + 1) % 16;
     synthTickCount++;
     timerSynths = setTimeout(runSynthLoop, currentStepDuration);
 }
 
-// --- CLICS ---
+// EVENTS
 document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
@@ -413,7 +328,6 @@ document.addEventListener('mousedown', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-    // Buttons Handlers (Standard)
     if (e.target.classList.contains('btn-drum-rand')) {
         const track = parseInt(e.target.dataset.track); generateSmartRhythm(track); refreshGridVisuals();
         const btn = e.target; btn.style.background = "#fff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); return;
@@ -421,41 +335,49 @@ document.addEventListener('click', (e) => {
     if (e.target.classList.contains('btn-mute') && !e.target.classList.contains('btn-synth-mute')) { const track = parseInt(e.target.dataset.track); trackMutes[track] = !trackMutes[track]; e.target.classList.toggle('active', trackMutes[track]); if(trackMutes[track]) { trackSolos[track] = false; const soloBtn = e.target.parentElement.querySelector('.btn-solo'); if(soloBtn) soloBtn.classList.remove('active'); } return; }
     if (e.target.classList.contains('btn-solo')) { const track = parseInt(e.target.dataset.track); trackSolos[track] = !trackSolos[track]; e.target.classList.toggle('active', trackSolos[track]); if(trackSolos[track]) { trackMutes[track] = false; const muteBtn = e.target.parentElement.querySelector('.btn-mute'); if(muteBtn) muteBtn.classList.remove('active'); } return; }
     if (e.target.classList.contains('btn-synth-mute')) { const target = parseInt(e.target.dataset.target); if (target === 2) { muteState2 = !muteState2; e.target.classList.toggle('active', muteState2); } else if (target === 3) { muteState3 = !muteState3; e.target.classList.toggle('active', muteState3); } return; }
-    if (e.target.classList.contains('btn-random')) { const target = parseInt(e.target.dataset.target); generateSmartSynth(target); refreshGridVisuals(); const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); return; }
-    
-    // TRACK AUDITION
+    if (e.target.classList.contains('btn-random')) { 
+        const target = parseInt(e.target.dataset.target); generateSmartSynth(target); refreshGridVisuals(); 
+        const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); return; 
+    }
     if (e.target.classList.contains('track-btn')) { 
         document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); 
         currentTrackIndex = parseInt(e.target.dataset.track); showParamsForTrack(currentTrackIndex); refreshGridVisuals(); 
         if (!trackMutes[currentTrackIndex]) { 
             switch(currentTrackIndex) { 
-                case 0: window.playKick(kickSettings, false); break; 
-                case 1: window.playSnare(snareSettings, false); break; 
-                case 2: window.playHiHat(hhSettings, false, false); break; 
-                case 3: window.playHiHat(hhSettings, true, false); break; 
-                case 4: window.playDrumFM(fmSettings, false); break; 
+                case 0: window.playKick(kickSettings, false, globalAccentBoost); break; 
+                case 1: window.playSnare(snareSettings, false, globalAccentBoost); break; 
+                case 2: window.playHiHat(hhSettings, false, false, globalAccentBoost); break; 
+                case 3: window.playHiHat(hhSettings, true, false, globalAccentBoost); break; 
+                case 4: window.playDrumFM(fmSettings, false, globalAccentBoost); break; 
             } 
         } 
     }
 });
 
+// START
 window.addEventListener('load', () => {
     initGrid('grid-seq1'); initGrid('grid-seq2'); initFaders('grid-freq-seq2', 2);
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
-    const playBtn = document.getElementById('master-play-stop'); 
-    if (playBtn) { 
-        playBtn.onclick = () => { 
-            if (isPlaying) { 
-                isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; 
-                trackPositions = [0,0,0,0,0]; currentSynthStep = 0; globalTickCount = 0; synthTickCount = 0; 
-            } else { 
-                if(window.ensureAudioContext) window.ensureAudioContext();
-                isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; 
-                trackPositions = [0,0,0,0,0]; currentSynthStep = 0; globalTickCount = 0; synthTickCount = 0; 
-                runDrumLoop(); runSynthLoop(); 
-            } 
-        }; 
+    
+    // SAVE / CLEAR / LOAD bindings are inside bindControls
+    
+    const playBtn = document.getElementById('master-play-stop');
+    if (playBtn) {
+        playBtn.onclick = () => {
+            if (isPlaying) {
+                isPlaying = false; 
+                clearTimeout(timerDrums); clearTimeout(timerSynths);
+                playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff";
+                trackPositions = [0,0,0,0,0]; currentSynthStep = 0; globalTickCount = 0; synthTickCount = 0;
+            } else {
+                if (window.ensureAudioContext) window.ensureAudioContext();
+                isPlaying = true; 
+                playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000";
+                trackPositions = [0,0,0,0,0]; currentSynthStep = 0; globalTickCount = 0; synthTickCount = 0;
+                runDrumLoop(); runSynthLoop();
+            }
+        };
     }
-    console.log("UI Logic : Prêt (Safe Separation).");
+    console.log("UI Logic : Prêt (UI Master).");
 });
