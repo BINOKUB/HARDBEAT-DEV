@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO ENGINE (FINAL FIXED)
+   HARDBEAT PRO - CORE AUDIO ENGINE (METRONOME)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = audioCtx.createGain();
@@ -10,15 +10,12 @@ let isPlaying = false;
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
 
-// CACHE AUDIO (Pour éviter le lag UI)
 let freqCacheSeq2 = new Array(16).fill(440);
 let freqCacheSeq3 = new Array(16).fill(220);
 
-// Volumes
 let synthVol2 = 0.6;
 let synthVol3 = 0.6;
 
-// Paramètres
 let kickSettings = { pitch: 150, decay: 0.5, level: 0.8 };
 let snareSettings = { snappy: 1, tone: 1000, level: 0.6 };
 let hhSettings = { tone: 8000, decayClose: 0.05, decayOpen: 0.3, levelClose: 0.4, levelOpen: 0.5 };
@@ -41,31 +38,24 @@ function createDistortionCurve(amount) {
     return curve;
 }
 
-// --- PORTES D'ACCÈS PUBLIQUES (POUR L'UI) ---
 window.updateDistortion = function(amount) {
     synthParams.disto = amount;
     if(audioCtx.state === 'running') distortionNode.curve = createDistortionCurve(amount);
 };
-
 window.updateDelayAmount = function(amount) {
     synthParams.delayAmt = amount;
-    // Mise à jour immédiate du volume du delay et du feedback
     delayMix.gain.setTargetAtTime(amount, audioCtx.currentTime, 0.02);
     feedback.gain.setTargetAtTime(amount * 0.7, audioCtx.currentTime, 0.02);
 };
-
 window.updateDelayTime = function(time) {
     synthParams.delayTime = time;
-    // Mise à jour immédiate du temps
     delayNode.delayTime.setTargetAtTime(time, audioCtx.currentTime, 0.02);
 };
-
 window.updateFreqCache = function(seqId, stepIndex, val) {
     if (seqId === 2) freqCacheSeq2[stepIndex] = val;
     if (seqId === 3) freqCacheSeq3[stepIndex] = val;
 };
 
-// Initialisation Chaîne Effets
 distortionNode.curve = createDistortionCurve(0);
 distortionNode.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode);
@@ -73,7 +63,22 @@ delayNode.connect(delayMix);
 distortionNode.connect(masterGain); delayMix.connect(masterGain);
 feedback.gain.value = 0; delayMix.gain.value = 0;
 
-// --- DRUMS ---
+// --- FONCTION METRONOME (NOUVEAU) ---
+function playMetronome(isDownbeat) {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.connect(g); g.connect(masterGain);
+    
+    // 1200Hz pour le temps fort (1), 800Hz pour les autres temps
+    osc.frequency.value = isDownbeat ? 1200 : 800;
+    
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05); // Bip très court
+    
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+}
+
+// --- INSTRUMENTS ---
 function playKick() {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
@@ -135,7 +140,6 @@ function playDrumFM() {
     car.stop(audioCtx.currentTime + d); mod.stop(audioCtx.currentTime + d);
 }
 
-// --- SYNTHS ---
 function playSynthNote(freq, volume) {
     if (!freq || freq < 20) return;
     const targetVol = (typeof volume === 'number') ? volume : 0.5;
@@ -159,4 +163,4 @@ function checkSynthTick(step) {
     if (synthSequences.seq2[step]) playSynthNote(freqCacheSeq2[step], synthVol2);
     if (synthSequences.seq3[step]) playSynthNote(freqCacheSeq3[step] * 0.5, synthVol3);
 }
-console.log("Audio Engine : Prêt (Delay Fix).");
+console.log("Audio Engine : Prêt (Metronome Added).");
