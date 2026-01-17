@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO ENGINE (OPTIMIZED)
+   HARDBEAT PRO - CORE AUDIO ENGINE (FINAL FIXED)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = audioCtx.createGain();
@@ -10,8 +10,7 @@ let isPlaying = false;
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
 
-// --- SYSTÈME DE CACHE (POUR ÉVITER LE LAG) ---
-// On stocke les valeurs ici pour ne pas avoir à lire le HTML en boucle
+// CACHE AUDIO (Pour éviter le lag UI)
 let freqCacheSeq2 = new Array(16).fill(440);
 let freqCacheSeq3 = new Array(16).fill(220);
 
@@ -34,12 +33,7 @@ const delayMix = audioCtx.createGain();
 
 function createDistortionCurve(amount) {
     let k = typeof amount === 'number' ? amount : 0;
-    // OPTIMISATION : On réduit les échantillons de 44100 à 2048. 
-    // C'est 20x plus rapide et le son est identique pour une disto.
-    let n_samples = 2048, 
-        curve = new Float32Array(n_samples),
-        deg = Math.PI / 180,
-        i = 0, x;
+    let n_samples = 2048, curve = new Float32Array(n_samples), deg = Math.PI / 180, i = 0, x;
     for ( ; i < n_samples; ++i ) {
         x = i * 2 / n_samples - 1;
         curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
@@ -47,22 +41,31 @@ function createDistortionCurve(amount) {
     return curve;
 }
 
-// Fonction publique optimisée
+// --- PORTES D'ACCÈS PUBLIQUES (POUR L'UI) ---
 window.updateDistortion = function(amount) {
     synthParams.disto = amount;
-    // On ne recalcule pas si l'audio context est suspendu pour économiser
-    if(audioCtx.state === 'running') {
-        distortionNode.curve = createDistortionCurve(amount);
-    }
+    if(audioCtx.state === 'running') distortionNode.curve = createDistortionCurve(amount);
 };
 
-// Fonctions de mise à jour du cache (appelées par UI)
+window.updateDelayAmount = function(amount) {
+    synthParams.delayAmt = amount;
+    // Mise à jour immédiate du volume du delay et du feedback
+    delayMix.gain.setTargetAtTime(amount, audioCtx.currentTime, 0.02);
+    feedback.gain.setTargetAtTime(amount * 0.7, audioCtx.currentTime, 0.02);
+};
+
+window.updateDelayTime = function(time) {
+    synthParams.delayTime = time;
+    // Mise à jour immédiate du temps
+    delayNode.delayTime.setTargetAtTime(time, audioCtx.currentTime, 0.02);
+};
+
 window.updateFreqCache = function(seqId, stepIndex, val) {
     if (seqId === 2) freqCacheSeq2[stepIndex] = val;
     if (seqId === 3) freqCacheSeq3[stepIndex] = val;
 };
 
-// Init Effets
+// Initialisation Chaîne Effets
 distortionNode.curve = createDistortionCurve(0);
 distortionNode.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode);
@@ -70,7 +73,7 @@ delayNode.connect(delayMix);
 distortionNode.connect(masterGain); delayMix.connect(masterGain);
 feedback.gain.value = 0; delayMix.gain.value = 0;
 
-// --- DRUMS (Inchangé) ---
+// --- DRUMS ---
 function playKick() {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
@@ -153,13 +156,7 @@ function playSynthNote(freq, volume) {
 }
 
 function checkSynthTick(step) {
-    // OPTIMISATION : On lit le CACHE au lieu de lire le HTML (beaucoup plus rapide)
-    if (synthSequences.seq2[step]) {
-        playSynthNote(freqCacheSeq2[step], synthVol2);
-    }
-    if (synthSequences.seq3[step]) {
-        // Pour seq3, on applique le ratio 0.5 directement ici si on veut l'effet grave
-        playSynthNote(freqCacheSeq3[step] * 0.5, synthVol3);
-    }
+    if (synthSequences.seq2[step]) playSynthNote(freqCacheSeq2[step], synthVol2);
+    if (synthSequences.seq3[step]) playSynthNote(freqCacheSeq3[step] * 0.5, synthVol3);
 }
-console.log("Audio Engine : Prêt (Optimized V5).");
+console.log("Audio Engine : Prêt (Delay Fix).");
