@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - STYLE (ACCENT UPDATE)
+   HARDBEAT PRO - GLOBAL STYLE
    ========================================== */
 
 :root {
@@ -8,7 +8,7 @@
     --accent-color: #00f3ff;
     --led-off: #330000;
     --led-on: #ff0000;
-    --accent-on: #ffaa00; /* Orange pour l'accent */
+    --accent-on: #ffaa00; /* Orange */
     --accent-off: #332200;
     --grid-gap: 8px;
     --col-width: 55px;
@@ -34,14 +34,9 @@ body {
     border-top: 5px solid #444;
 }
 
-/* --- HEADER --- */
 #master-control {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px;
 }
 .logo { font-size: 24px; font-weight: bold; letter-spacing: 3px; color: var(--accent-color); text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
 #master-play-stop {
@@ -50,18 +45,14 @@ body {
 }
 #master-play-stop:hover { background: var(--accent-color); color: #000; }
 
-/* --- SECTIONS --- */
 .rack-section {
     background: rgba(255,255,255,0.02);
-    border: 1px solid #222;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 4px;
+    border: 1px solid #222; padding: 15px; margin-bottom: 20px; border-radius: 4px;
 }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-spacing: 1px; }
 
-/* --- GRID & WRAPPERS (MODIFIÉ POUR ACCENT) --- */
+/* --- GRID & ACCENTS --- */
 .step-grid, .freq-sliders-container {
     display: grid;
     grid-template-columns: repeat(16, var(--col-width));
@@ -70,15 +61,11 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
     margin: 10px 0;
 }
 
-/* Conteneur vertical pour Pad + Accent */
+/* Structure en colonne pour Pad + Accent */
 .step-column {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px; /* Espace entre le pad et le bouton accent */
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
 
-/* PADS PRINCIPAUX */
 .step-pad {
     width: 50px; height: 50px;
     background: linear-gradient(145deg, #222, #111);
@@ -93,13 +80,14 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
     width: 8px; height: 8px; background: var(--led-off);
     border-radius: 50%; box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
 }
+/* Le pointer-events:none est vital pour le KICK */
 .step-pad span {
     position: absolute; top: 2px; left: 4px; font-size: 9px;
     font-family: 'Courier New', monospace; font-weight: bold; color: #fff !important;
     opacity: 0.6; pointer-events: none; z-index: 2;
 }
 
-/* BOUTON ACCENT (RECTANGLE DESSOUS) */
+/* BOUTON ACCENT */
 .accent-pad {
     width: 50px; height: 12px;
     background: var(--accent-off);
@@ -116,7 +104,21 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
     border-color: #ffcc00;
 }
 
-/* --- RESTE DU STYLE (INCHANGÉ) --- */
+/* --- SLIDER ACCENT GLOBAL (STYLE VERTICAL) --- */
+.accent-control-unit {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.3); padding: 10px 5px; border: 1px solid #444; border-radius: 4px;
+    height: auto;
+}
+.accent-control-unit label {
+    font-size: 10px; color: #ffaa00; font-weight: bold; margin-bottom: 8px;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+}
+.accent-control-unit input[type=range] {
+    appearance: slider-vertical; width: 8px; height: 100px; background: #333; cursor: ns-resize;
+}
+
+/* --- CONTROLES DIVERS --- */
 .track-selectors { display: flex; align-items: center; gap: 10px; margin: 10px 0; height: 55px; }
 .track-btn, .page-btn {
     background: #222; border: 1px solid #444; color: #888;
@@ -135,12 +137,10 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 .instr-params input[type="range"] { width: 45px !important; cursor: pointer; }
 .label-cyan { font-size: 9px; color: var(--accent-color); font-weight: bold; margin-right: 5px; }
 
-/* Faders Seq 2 */
 .fader-unit { display: flex; flex-direction: column; align-items: center; height: 160px; }
 .freq-fader { appearance: slider-vertical; width: 12px; height: 130px; background: #222; cursor: ns-resize; }
 .hz-label { font-size: 9px; color: #555; margin-bottom: 5px; }
 
-/* Synth Master */
 .synth-master-fixed {
     display: flex; gap: 20px; background: #111; padding: 10px;
     border: 1px solid #333; margin-top: 10px; align-items: center; border-radius: 4px;
@@ -148,7 +148,6 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 .synth-master-fixed .group label { font-size: 9px; color: #888; text-transform: uppercase; }
 .synth-master-fixed input[type="range"] { width: 70px; }
 
-/* Footer */
 #ui-footer { margin-top: 30px; }
 #add-seq-btn {
     width: 100%; padding: 15px; background: #1a1a1a; border: 1px dashed #444;
@@ -159,41 +158,4 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 .bpm-control { display: flex; align-items: center; gap: 10px; font-size: 12px; }
 #display-bpm1, #display-bpm2 {
     color: var(--accent-color); font-weight: bold; font-family: 'Courier New', monospace; cursor: ns-resize;
-}
-
-/* AJOUTE CECI À LA FIN DE TON CSS, OU REMPLACE TOUT : */
-
-/* --- STYLE DU SLIDER GLOBAL D'ACCENT --- */
-.accent-control-unit {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.3);
-    padding: 10px 5px;
-    border: 1px solid #444;
-    border-radius: 4px;
-    height: 100%; /* S'adapte à la hauteur de la grille */
-}
-
-.accent-control-unit label {
-    font-size: 10px;
-    color: #ffaa00; /* Orange */
-    font-weight: bold;
-    margin-bottom: 8px;
-    writing-mode: vertical-rl; /* Texte vertical pour le style */
-    transform: rotate(180deg);
-}
-
-.accent-control-unit input[type=range] {
-    appearance: slider-vertical; /* Fader Vertical natif */
-    width: 8px;
-    height: 100px;
-    background: #333;
-    cursor: ns-resize;
-}
-
-/* Modification pour que la grille s'aligne bien avec le slider */
-.drum-rack-row {
-    margin-top: 10px;
 }
