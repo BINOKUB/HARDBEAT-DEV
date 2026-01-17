@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | RESCUE MODE</title>
+    <title>HARDBEAT PRO | DEV STABLE</title>
     <link rel="stylesheet" href="HARDBEAT_style.css">
 </head>
 <body>
@@ -39,27 +39,31 @@
                         <span class="label-cyan">KIK &gt;</span>
                         <div class="group"><label>PITCH</label><input type="range" id="kick-pitch" min="50" max="300" value="150"></div>
                         <div class="group"><label>DECAY</label><input type="range" id="kick-decay" min="0.1" max="1" step="0.1" value="0.5"></div>
+                        <div class="group"><label>LEVEL</label><input type="range" id="kick-level" min="0" max="1" step="0.1" value="0.8"></div>
                     </div>
                     <div id="params-track-1" class="instr-params" style="display:none;">
                         <span class="label-cyan">SNR &gt;</span>
                         <div class="group"><label>SNAP</label><input type="range" id="snare-snappy" min="0.1" max="2" step="0.1" value="1"></div>
                         <div class="group"><label>TONE</label><input type="range" id="snare-tone" min="500" max="5000" step="100" value="1000"></div>
+                        <div class="group"><label>LEVEL</label><input type="range" id="snare-level" min="0" max="1" step="0.1" value="0.6"></div>
                     </div>
                     <div id="params-track-2" class="instr-params" style="display:none;">
                         <span class="label-cyan">HHC &gt;</span>
                         <div class="group"><label>TONE</label><input type="range" id="hhc-tone" min="4000" max="12000" step="100" value="8000"></div>
-                        <div class="group"><label>LVL</label><input type="range" id="hhc-level" min="0" max="1" step="0.1" value="0.4"></div>
+                        <div class="group"><label>LEVEL</label><input type="range" id="hhc-level" min="0" max="1" step="0.1" value="0.4"></div>
                     </div>
                     <div id="params-track-3" class="instr-params" style="display:none;">
                         <span class="label-cyan">HHO &gt;</span>
                         <div class="group"><label>DECAY</label><input type="range" id="hho-decay" min="0.1" max="0.8" step="0.05" value="0.3"></div>
-                        <div class="group"><label>LVL</label><input type="range" id="hho-level" min="0" max="1" step="0.1" value="0.5"></div>
+                        <div class="group"><label>LEVEL</label><input type="range" id="hho-level" min="0" max="1" step="0.1" value="0.5"></div>
                     </div>
                     <div id="params-track-4" class="instr-params" style="display:none;">
                         <span class="label-cyan">FM &gt;</span>
                         <div class="group"><label>CARR</label><input type="range" id="fm-carrier" min="20" max="1000" value="100"></div>
                         <div class="group"><label>MOD</label><input type="range" id="fm-mod" min="1" max="1000" value="50"></div>
                         <div class="group"><label>AMT</label><input type="range" id="fm-amt" min="0" max="2000" value="100"></div>
+                        <div class="group"><label>DECAY</label><input type="range" id="fm-decay" min="0.05" max="1.5" step="0.05" value="0.3"></div>
+                        <div class="group"><label>LEVEL</label><input type="range" id="fm-level" min="0" max="1" step="0.1" value="0.5"></div>
                     </div>
                 </div>
             </div>
@@ -95,7 +99,8 @@
             <span class="label-cyan">SYNTH MASTER ></span>
             <div class="group">
                 <label>DISTORTION</label>
-                <input type="range" id="synth-disto" min="0" max="1000" value="0"> </div>
+                <input type="range" id="synth-disto" min="0" max="1000" value="0">
+            </div>
             <div class="group">
                 <label>RESONANCE</label>
                 <input type="range" id="synth-res" min="1" max="25" value="5">
@@ -106,7 +111,8 @@
             </div>
             <div class="group">
                 <label>DELAY AMT</label>
-                <input type="range" id="synth-delay-amt" min="0" max="0.8" step="0.05" value="0"> </div>
+                <input type="range" id="synth-delay-amt" min="0" max="0.8" step="0.05" value="0">
+            </div>
             <div class="group">
                 <label>DELAY TIME</label>
                 <input type="range" id="synth-delay-time" min="0.1" max="1" step="0.05" value="0.375">
