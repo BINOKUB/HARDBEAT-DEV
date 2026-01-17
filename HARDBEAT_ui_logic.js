@@ -1,14 +1,13 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (POLYRHYTHM ENGINE)
+   HARDBEAT PRO - UI LOGIC (SWING ENABLED)
    ========================================== */
 let timerDrums;
 let timerSynths;
 let isMetroOn = false;
+let globalSwing = 0; // Valeur entre 0 et 0.5 (0% à 50%)
 
-// --- GESTION POLYRYTHMIE ---
-// Chaque piste a sa propre longueur (défaut 16) et sa propre position de lecture
 let trackLengths = [16, 16, 16, 16, 16]; 
-let trackPositions = [0, 0, 0, 0, 0]; // Remplace l'ancien currentDrumStep unique
+let trackPositions = [0, 0, 0, 0, 0];
 
 function initGrid(idPrefix) {
     const gridContainer = document.getElementById(idPrefix);
@@ -69,21 +68,16 @@ function bindControls() {
         if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value);
     };
 
-    // --- DRUMS & POLYRYTHMIE ---
-    // Fonction pour lier les sliders de longueur de pas
+    // --- BINDING DRUMS ---
     const bindSteps = (id, trackIdx) => {
         const el = document.getElementById(id);
         if (el) el.oninput = (e) => {
             trackLengths[trackIdx] = parseInt(e.target.value);
-            // Si on raccourcit, on reset la position pour éviter les bugs
-            if (trackPositions[trackIdx] >= trackLengths[trackIdx]) {
-                trackPositions[trackIdx] = 0;
-            }
-            refreshGridVisuals(); // Met à jour le grisé immédiatement
+            if (trackPositions[trackIdx] >= trackLengths[trackIdx]) trackPositions[trackIdx] = 0;
+            refreshGridVisuals();
         };
     };
 
-    // Bindings Instruments
     bindSteps('kick-steps', 0);
     bind('kick-pitch', kickSettings, 'pitch');
     bind('kick-decay', kickSettings, 'decay');
@@ -109,7 +103,15 @@ function bindControls() {
     bind('fm-decay', fmSettings, 'decay');
     bind('fm-level', fmSettings, 'level');
 
-    // Global Controls
+    // NOUVEAU : SWING CONTROL
+    const swingSlider = document.getElementById('global-swing');
+    if(swingSlider) swingSlider.oninput = (e) => {
+        // 0-50 sur le slider => 0.0 à 0.5 (50% de retard max)
+        globalSwing = parseInt(e.target.value) / 100;
+        const disp = document.getElementById('swing-val');
+        if(disp) disp.innerText = e.target.value + "%";
+    };
+
     const accSlider = document.getElementById('global-accent-amount');
     if(accSlider) accSlider.oninput = (e) => {
         const val = parseFloat(e.target.value);
@@ -121,7 +123,6 @@ function bindControls() {
     const metroBox = document.getElementById('metro-toggle');
     if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
 
-    // Synth Controls
     const v2 = document.getElementById('vol-seq2');
     if(v2) v2.oninput = (e) => synthVol2 = parseFloat(e.target.value);
     
@@ -152,21 +153,14 @@ function showParamsForTrack(idx) {
 function refreshGridVisuals() {
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
-    
     if(pads.length === 0) return;
 
-    // Récupérer la longueur de la piste ACTUELLE
     const currentLen = trackLengths[currentTrackIndex];
 
     pads.forEach((pad, i) => {
-        // GESTION DU GRISÉ (Hors Boucle)
-        if (i >= currentLen) {
-            pad.classList.add('disabled');
-        } else {
-            pad.classList.remove('disabled');
-        }
+        if (i >= currentLen) pad.classList.add('disabled');
+        else pad.classList.remove('disabled');
 
-        // GESTION NOTES
         if(drumSequences && drumSequences[currentTrackIndex]) {
             const isActive = drumSequences[currentTrackIndex][i];
             pad.classList.toggle('active', isActive);
@@ -175,9 +169,7 @@ function refreshGridVisuals() {
         }
     });
 
-    // GESTION ACCENTS
     accents.forEach((acc, i) => {
-        // On grise aussi les boutons d'accent hors boucle
         if (i >= currentLen) {
             acc.style.opacity = "0.2";
             acc.style.pointerEvents = "none";
@@ -185,7 +177,6 @@ function refreshGridVisuals() {
             acc.style.opacity = "1";
             acc.style.pointerEvents = "auto";
         }
-
         if(drumAccents && drumAccents[currentTrackIndex]) {
             const isActive = drumAccents[currentTrackIndex][i];
             acc.classList.toggle('active', isActive);
@@ -243,32 +234,44 @@ function initSeq3Extension() {
     });
 }
 
-// --- BOUCLE POLYRYTHMIQUE ---
+// --- BOUCLE AVEC SWING ---
+// Pour le swing, on utilise le compteur du KICK (Piste 0) comme référence temporelle globale
+let globalTickCount = 0;
+
 function runDrumLoop() {
     if (!isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
-    // On divise par 4 pour avoir des doubles-croches standards
-    const stepDuration = (60 / bpm) / 4 * 1000;
-
-    // --- VISUEL DE LA TÊTE DE LECTURE (Seulement pour la piste qu'on regarde) ---
-    const pads = document.querySelectorAll('#grid-seq1 .step-pad');
-    pads.forEach(p => p.style.borderColor = "#333");
     
-    // On récupère la position actuelle de la piste active
-    const activePos = trackPositions[currentTrackIndex];
+    // Calcul de base : 16ème de note
+    let baseDuration = (60 / bpm) / 4 * 1000;
     
-    // On n'affiche le carré blanc que si on est dans la zone active
-    if (pads[activePos]) {
-        pads[activePos].style.borderColor = "#ffffff";
+    // --- LOGIQUE SWING ---
+    // Si on est sur un pas PAIR (0, 2, 4...) -> On joue, et on attend LONGTEMPS
+    // Si on est sur un pas IMPAIR (1, 3, 5...) -> On joue, et on attend PEU
+    // Note: Dans un séquenceur 0-indexed, 0 est le temps fort. 
+    // Swing classique : Le temps fort dure plus longtemps.
+    
+    let currentStepDuration = baseDuration;
+    if (globalTickCount % 2 === 0) {
+        // Temps Fort : On rallonge
+        currentStepDuration += (baseDuration * globalSwing);
+    } else {
+        // Temps Faible (Off-beat) : On raccourcit pour rattraper
+        currentStepDuration -= (baseDuration * globalSwing);
     }
 
-    // --- LOGIQUE AUDIO INDÉPENDANTE (Cerveau Multiple) ---
-    // On boucle sur les 5 pistes (0=Kick, 1=Snare, 2=HHC, 3=HHO, 4=FM)
+    // --- VISUEL ---
+    const pads = document.querySelectorAll('#grid-seq1 .step-pad');
+    pads.forEach(p => p.style.borderColor = "#333");
+    // Visuel basé sur la piste active
+    const activePos = trackPositions[currentTrackIndex];
+    if (pads[activePos]) pads[activePos].style.borderColor = "#ffffff";
+
+    // --- AUDIO ---
     for (let i = 0; i < 5; i++) {
         let pos = trackPositions[i];
         let len = trackLengths[i];
         
-        // Si c'est le moment de jouer
         if (drumSequences[i][pos]) {
             let acc = drumAccents[i][pos];
             switch(i) {
@@ -279,26 +282,36 @@ function runDrumLoop() {
                 case 4: playDrumFM(acc); break;
             }
         }
-
-        // Métronome (Optionnel: basique, calé sur le kick pour l'instant)
+        
         if (i === 0 && isMetroOn && pos % 4 === 0) {
             if(window.playMetronome) playMetronome(pos === 0);
         }
 
-        // AVANCER LE CURSEUR DE CETTE PISTE
+        // Avance
         trackPositions[i] = (trackPositions[i] + 1) % len;
     }
+    
+    // On incrémente le compteur global pour gérer le swing pair/impair
+    globalTickCount++;
 
-    timerDrums = setTimeout(runDrumLoop, stepDuration);
+    timerDrums = setTimeout(runDrumLoop, currentStepDuration);
 }
 
-// --- BOUCLE SYNTHS (Reste synchrone pour l'instant) ---
-let currentSynthStep = 0;
+// --- SYNTHS (AVEC SWING AUSSI !) ---
+let synthTickCount = 0;
 
 function runSynthLoop() {
     if (!isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm2').innerText) || 122;
-    const stepDuration = (60 / bpm) / 4 * 1000;
+    let baseDuration = (60 / bpm) / 4 * 1000;
+
+    let currentStepDuration = baseDuration;
+    // On applique le MEME facteur de swing global
+    if (synthTickCount % 2 === 0) {
+        currentStepDuration += (baseDuration * globalSwing);
+    } else {
+        currentStepDuration -= (baseDuration * globalSwing);
+    }
 
     const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
     pads2.forEach(p => p.style.borderColor = "#333");
@@ -311,18 +324,17 @@ function runSynthLoop() {
     }
 
     if(window.checkSynthTick) checkSynthTick(currentSynthStep);
+    
     currentSynthStep = (currentSynthStep + 1) % 16;
-    timerSynths = setTimeout(runSynthLoop, stepDuration);
+    synthTickCount++;
+    timerSynths = setTimeout(runSynthLoop, currentStepDuration);
 }
 
 // --- ÉCOUTEURS ---
 document.addEventListener('mousedown', (e) => {
-    // PAD
     const pad = e.target.closest('.step-pad');
     if (pad) {
-        // Empêcher l'interaction si désactivé (hors boucle)
         if (pad.classList.contains('disabled')) return;
-
         const idx = parseInt(pad.dataset.index);
         const pid = pad.closest('.step-grid').id;
         
@@ -342,10 +354,8 @@ document.addEventListener('mousedown', (e) => {
         }
     }
 
-    // ACCENT
     const accentBtn = e.target.closest('.accent-pad');
     if (accentBtn) {
-        // Check disabled
         const parentCol = accentBtn.closest('.step-column');
         const padAbove = parentCol.querySelector('.step-pad');
         if (padAbove.classList.contains('disabled')) return;
@@ -364,7 +374,6 @@ document.addEventListener('click', (e) => {
         showParamsForTrack(currentTrackIndex);
         refreshGridVisuals();
 
-        // Audition
         switch(currentTrackIndex) {
             case 0: if(window.playKick) playKick(); break;
             case 1: if(window.playSnare) playSnare(); break;
@@ -405,19 +414,23 @@ window.addEventListener('load', () => {
                 clearTimeout(timerSynths);
                 playBtn.innerText = "PLAY / STOP";
                 playBtn.style.background = "#222"; playBtn.style.color = "#fff";
+                trackPositions = [0,0,0,0,0];
+                globalTickCount = 0;
+                synthTickCount = 0;
             } else {
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 isPlaying = true; 
                 playBtn.innerText = "STOP";
                 playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000";
                 
-                // RESET POSITIONS ON START (Optionnel, mais plus propre)
                 trackPositions = [0,0,0,0,0]; 
-                
+                globalTickCount = 0;
+                synthTickCount = 0;
+
                 runDrumLoop();
                 runSynthLoop();
             }
         };
     }
-    console.log("UI Logic : Prêt (Polyrhythms Active).");
+    console.log("UI Logic : Prêt (Swing Enabled).");
 });
