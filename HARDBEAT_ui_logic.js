@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (CLEAR FUNCTION ADDED)
+   HARDBEAT PRO - UI LOGIC (SYNC & VISUAL FIX)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -107,16 +107,20 @@ function loadPattern(slot) {
     setSlider('kick-pitch', data.drums.settings.kick.pitch);
     setSlider('kick-decay', data.drums.settings.kick.decay);
     setSlider('kick-level', data.drums.settings.kick.level);
+    
     setSlider('snare-steps', data.drums.settings.snare.steps);
     setSlider('snare-snappy', data.drums.settings.snare.snappy);
     setSlider('snare-tone', data.drums.settings.snare.tone);
     setSlider('snare-level', data.drums.settings.snare.level);
+    
     setSlider('hhc-steps', data.drums.settings.hhc.steps);
     setSlider('hhc-tone', data.drums.settings.hhc.tone);
     setSlider('hhc-level', data.drums.settings.hhc.levelClose);
+    
     setSlider('hho-steps', data.drums.settings.hho.steps);
     setSlider('hho-decay', data.drums.settings.hho.decayOpen);
     setSlider('hho-level', data.drums.settings.hho.levelOpen);
+    
     setSlider('fm-steps', data.drums.settings.fm.steps);
     setSlider('fm-carrier', data.drums.settings.fm.carrierPitch);
     setSlider('fm-mod', data.drums.settings.fm.modPitch);
@@ -166,6 +170,7 @@ function loadPattern(slot) {
     setSlider('global-delay-amt', data.global.delay.amt);
     setSlider('global-delay-time', data.global.delay.time);
 
+    // IMPORTANT : Met à jour TOUTES les grilles (Drums + Synths)
     refreshGridVisuals();
 }
 
@@ -207,7 +212,6 @@ function bindControls() {
     const btnSave = document.getElementById('btn-save-mode');
     btnSave.onclick = () => { isSaveMode = !isSaveMode; btnSave.classList.toggle('saving', isSaveMode); };
 
-    // --- LOGIQUE CLEAR (ICI) ---
     const btnClear = document.getElementById('btn-clear-all');
     if(btnClear) {
         btnClear.onclick = () => {
@@ -217,12 +221,9 @@ function bindControls() {
             synthSequences.seq2 = Array(16).fill(false);
             synthSequences.seq3 = Array(16).fill(false);
             
-            // Visual Update
             refreshGridVisuals();
             
-            // Feedback visuel sur le bouton
-            btnClear.innerText = "OK";
-            setTimeout(() => btnClear.innerText = "CLR", 500);
+            btnClear.innerText = "OK"; setTimeout(() => btnClear.innerText = "CLR", 500);
         };
     }
 
@@ -250,19 +251,44 @@ function showParamsForTrack(idx) {
     if (target) target.style.display = 'flex';
 }
 
+// --- FIX VISUEL (SYNTHS INCLUS) ---
 function refreshGridVisuals() {
+    // 1. DRUMS
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
-    if(pads.length === 0) return;
-    const currentLen = trackLengths[currentTrackIndex];
-    pads.forEach((pad, i) => {
-        if (i >= currentLen) pad.classList.add('disabled'); else pad.classList.remove('disabled');
-        if(drumSequences && drumSequences[currentTrackIndex]) { const isActive = drumSequences[currentTrackIndex][i]; pad.classList.toggle('active', isActive); const led = pad.querySelector('.led'); if (led) led.style.background = isActive ? "red" : "#330000"; }
-    });
-    accents.forEach((acc, i) => {
-        if (i >= currentLen) { acc.style.opacity = "0.2"; acc.style.pointerEvents = "none"; } else { acc.style.opacity = "1"; acc.style.pointerEvents = "auto"; }
-        if(drumAccents && drumAccents[currentTrackIndex]) { const isActive = drumAccents[currentTrackIndex][i]; acc.classList.toggle('active', isActive); }
-    });
+    if(pads.length > 0) {
+        const currentLen = trackLengths[currentTrackIndex];
+        pads.forEach((pad, i) => {
+            if (i >= currentLen) pad.classList.add('disabled'); else pad.classList.remove('disabled');
+            if(drumSequences && drumSequences[currentTrackIndex]) { const isActive = drumSequences[currentTrackIndex][i]; pad.classList.toggle('active', isActive); const led = pad.querySelector('.led'); if (led) led.style.background = isActive ? "red" : "#330000"; }
+        });
+        accents.forEach((acc, i) => {
+            if (i >= currentLen) { acc.style.opacity = "0.2"; acc.style.pointerEvents = "none"; } else { acc.style.opacity = "1"; acc.style.pointerEvents = "auto"; }
+            if(drumAccents && drumAccents[currentTrackIndex]) { const isActive = drumAccents[currentTrackIndex][i]; acc.classList.toggle('active', isActive); }
+        });
+    }
+
+    // 2. SYNTH 2 (AJOUTÉ)
+    const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
+    if (pads2.length > 0) {
+        pads2.forEach((pad, i) => {
+            const isActive = synthSequences.seq2[i];
+            pad.classList.toggle('active', isActive);
+            const led = pad.querySelector('.led');
+            if (led) led.style.background = isActive ? "cyan" : "#330000";
+        });
+    }
+
+    // 3. SYNTH 3 (AJOUTÉ)
+    const pads3 = document.querySelectorAll('#grid-seq3 .step-pad');
+    if (pads3.length > 0) {
+        pads3.forEach((pad, i) => {
+            const isActive = synthSequences.seq3[i];
+            pad.classList.toggle('active', isActive);
+            const led = pad.querySelector('.led');
+            if (led) led.style.background = isActive ? "#a855f7" : "#330000";
+        });
+    }
 }
 
 function setupTempoDrag(id) {
@@ -411,6 +437,36 @@ window.addEventListener('load', () => {
     initGrid('grid-seq1'); initGrid('grid-seq2'); initFaders('grid-freq-seq2', 2);
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
-    const playBtn = document.getElementById('master-play-stop'); if (playBtn) { playBtn.onclick = () => { if (isPlaying) { isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; } else { if (audioCtx.state === 'suspended') audioCtx.resume(); isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; runDrumLoop(); runSynthLoop(); } }; }
-    console.log("UI Logic : Prêt (Clear & Fix).");
+    const playBtn = document.getElementById('master-play-stop');
+    if (playBtn) {
+        playBtn.onclick = () => {
+            if (isPlaying) {
+                isPlaying = false; 
+                clearTimeout(timerDrums);
+                clearTimeout(timerSynths);
+                playBtn.innerText = "PLAY / STOP";
+                playBtn.style.background = "#222"; 
+                playBtn.style.color = "#fff";
+                trackPositions = [0,0,0,0,0];
+                globalTickCount = 0;
+                synthTickCount = 0;
+            } else {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                isPlaying = true; 
+                playBtn.innerText = "STOP";
+                playBtn.style.background = "#00f3ff"; 
+                playBtn.style.color = "#000";
+                
+                // FIX SYNC : ON REMET TOUT A ZERO
+                trackPositions = [0,0,0,0,0]; 
+                currentSynthStep = 0; // <--- LE FIX EST ICI !
+                globalTickCount = 0;
+                synthTickCount = 0;
+
+                runDrumLoop();
+                runSynthLoop();
+            }
+        };
+    }
+    console.log("UI Logic : Prêt (Final Sync Fix).");
 });
