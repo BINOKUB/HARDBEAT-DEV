@@ -366,3 +366,20 @@ body { background-color: var(--bg-color); color: #e0e0e0; font-family: 'Segoe UI
 .btn-random:hover { background: var(--accent-color); color: #000; }
 .btn-synth-mute { background: #222; border: 1px solid #444; color: #888; padding: 8px 15px; font-size: 10px; cursor: pointer; letter-spacing: 1px; font-weight: bold; transition: all 0.2s; }
 .btn-synth-mute.active { background: #cc0000; color: #fff; border-color: #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
+
+#btn-clear-all {
+    background: #443300;
+    color: #ccaa00; /* Or */
+    border-color: #665500;
+    margin-right: 5px; /* Petit espace avec Save */
+}
+
+#btn-clear-all:hover {
+    background: #ffcc00;
+    color: #000;
+    border-color: #ffdd00;
+}
+
+#btn-clear-all:active {
+    background: #fff;
+}
