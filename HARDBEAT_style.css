@@ -182,3 +182,68 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 .step-slider {
     accent-color: #ffffff; /* Curseur blanc pour se démarquer */
 }
+
+/* --- TRACK UNITS (Select + Mute/Solo) --- */
+.track-selectors {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+    height: 55px;
+}
+
+.track-unit {
+    display: flex;
+    gap: 2px; /* Colle les boutons M/S au selecteur */
+}
+
+/* Groupe Mute/Solo Vertical */
+.ms-group {
+    display: flex;
+    flex-direction: column;
+    width: 20px;
+}
+
+.btn-mute, .btn-solo {
+    height: 50%;
+    border: 1px solid #333;
+    background: #111;
+    color: #555;
+    font-size: 9px;
+    cursor: pointer;
+    padding: 0;
+    font-weight: bold;
+}
+
+/* MUTE ACTIVE : ROUGE */
+.btn-mute:hover { color: #fff; }
+.btn-mute.active {
+    background: #cc0000;
+    color: #fff;
+    border-color: #ff0000;
+}
+
+/* SOLO ACTIVE : VERT */
+.btn-solo:hover { color: #fff; }
+.btn-solo.active {
+    background: #00cc00;
+    color: #000;
+    border-color: #00ff00;
+}
+
+/* TRACK BTN (Ajustement) */
+.track-btn {
+    background: #222;
+    border: 1px solid #444;
+    color: #888;
+    padding: 0 12px; /* Ajusté */
+    font-size: 11px;
+    cursor: pointer;
+    height: 100%; /* Prend toute la hauteur */
+    width: 50px;
+}
+.track-btn.active {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background: #002a2d;
+}
