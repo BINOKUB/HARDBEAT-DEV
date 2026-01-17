@@ -1,13 +1,13 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO ENGINE
+   HARDBEAT PRO - CORE AUDIO ENGINE (STABLE)
    ========================================== */
+console.log("Audio Engine : Chargement...");
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = audioCtx.createGain();
 masterGain.connect(audioCtx.destination);
 masterGain.gain.value = 0.5;
 
-// État du séquenceur
 let isPlaying = false;
 let currentStep = 0;
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
@@ -18,7 +18,7 @@ let snareSettings = { snappy: 1, tone: 1000, level: 0.6 };
 let hhSettings = { tone: 8000, decayClose: 0.05, decayOpen: 0.3, levelClose: 0.4, levelOpen: 0.5 };
 let fmSettings = { carrierPitch: 100, modPitch: 50, fmAmount: 100, decay: 0.3, level: 0.5 };
 
-// --- FONCTIONS DE SYNTHÈSE PURE ---
+// --- FONCTIONS DE SYNTHÈSE ---
 function playKick() {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -33,7 +33,7 @@ function playKick() {
 function playSnare() {
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i++) { data[i] = Math.random() * 2 - 1; }
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     const noiseSource = audioCtx.createBufferSource();
     noiseSource.buffer = buffer;
     const filter = audioCtx.createBiquadFilter();
@@ -49,7 +49,7 @@ function playSnare() {
 function playHiHat(isOpen) {
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.5, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i++) { data[i] = Math.random() * 2 - 1; }
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     const noiseSource = audioCtx.createBufferSource();
     noiseSource.buffer = buffer;
     const filter = audioCtx.createBiquadFilter();
@@ -79,99 +79,11 @@ function playDrumFM() {
     carrier.start(); modulator.start();
     carrier.stop(audioCtx.currentTime + fmSettings.decay); modulator.stop(audioCtx.currentTime + fmSettings.decay);
 }
-🕹️ 2. La Logique : HARDBEAT_ui_logic.js
-C'est ici que l'on gère les clics, les sliders, le dessin des pads et le "tick" du séquenceur qui fait le pont avec le son.
 
-JavaScript
+/* --- SYNTH DATA & EFFECTS --- */
+let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
+let synthParams = { disto: 400, resonance: 12, cutoffEnv: 4, delayAmt: 0.3, delayTime: 0.375 };
 
-/* ==========================================
-   HARDBEAT PRO - UI & SEQUENCER LOGIC
-   ========================================== */
-
-let timerSeq1;
-let currentTrackIndex = 0;
-const stepsPerPage = 16;
-
-// --- GÉNÉRATION DE L'INTERFACE ---
-function generateSteps(containerId, className) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = ''; 
-    for (let i = 0; i < stepsPerPage; i++) {
-        const step = document.createElement('div');
-        step.classList.add(className);
-        step.dataset.index = i;
-        if (containerId === 'grid-seq1') {
-            const num = document.createElement('span');
-            num.innerText = i + 1;
-            step.appendChild(num);
-        }
-        const led = document.createElement('div');
-        led.classList.add('led');
-        step.appendChild(led);
-        container.appendChild(step);
-    }
-}
-
-// ... (Je garde ici tes fonctions generateFaders, initFaderLogic, generateDrumControls) ...
-
-function runTick() {
-    if (!isPlaying) return;
-    const bpm = parseInt(document.getElementById('display-bpm1').innerText);
-    const stepDuration = (60 / bpm) / 4 * 1000;
-
-    // Visuels de la tête de lecture
-    const allPads = document.querySelectorAll('#grid-seq1 .step-pad');
-    allPads.forEach(p => p.style.borderColor = "#333");
-    if (allPads[currentStep]) allPads[currentStep].style.borderColor = "#ffffff";
-
-    // Déclenchement Audio
-    if (drumSequences[0][currentStep]) playKick();
-    if (drumSequences[1][currentStep]) playSnare();
-    if (drumSequences[2][currentStep]) playHiHat(false);
-    if (drumSequences[3][currentStep]) playHiHat(true);
-    if (drumSequences[4][currentStep]) playDrumFM();
-
-    currentStep = (currentStep + 1) % 16;
-    timerSeq1 = setTimeout(runTick, stepDuration);
-}
-
-// --- ÉCOUTEURS D'ÉVÉNEMENTS ---
-document.getElementById('master-play-stop').addEventListener('click', (e) => {
-    if (isPlaying) {
-        isPlaying = false; 
-        clearTimeout(timerSeq1);
-        e.target.innerText = "PLAY / STOP";
-    } else {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        isPlaying = true; 
-        e.target.innerText = "STOP";
-        runTick();
-    }
-});
-
-// Initialisation au chargement
-window.addEventListener('load', () => {
-    generateSteps('grid-seq1', 'step-pad');
-    generateDrumControls();
-    // ... reste de l'initialisation
-});
-
-/* --- SYNTH DATA & EFFECTS CHAIN --- */
-let synthSequences = {
-    seq2: Array(16).fill(false),
-    seq3: Array(16).fill(false)
-};
-
-let synthParams = {
-    disto: 400,
-    resonance: 12,
-    cutoffEnv: 4,
-    delayAmt: 0.3,
-    delayTime: 0.375
-};
-
-// Nodes d'effets
 const distortionNode = audioCtx.createWaveShaper();
 const delayNode = audioCtx.createDelay(2.0);
 const feedback = audioCtx.createGain();
@@ -186,60 +98,36 @@ function createDistortionCurve(amount = 50) {
     return curve;
 }
 
-// Connexions de la chaîne d'effets
 distortionNode.curve = createDistortionCurve(synthParams.disto);
 distortionNode.connect(masterGain); 
 distortionNode.connect(delayNode);
-delayNode.connect(feedback);
-feedback.connect(delayNode);
-delayNode.connect(delayMix);
-delayMix.connect(masterGain);
+delayNode.connect(feedback); feedback.connect(delayNode);
+delayNode.connect(delayMix); delayMix.connect(masterGain);
 
-// Initialisation Audio
-delayMix.gain.value = synthParams.delayAmt;
-feedback.gain.value = synthParams.delayAmt * 0.7;
-delayNode.delayTime.value = synthParams.delayTime;
-
-/* --- SYNTHESIS ENGINE --- */
 function playSynthNote(frequency, duration = 0.2) {
     if (!frequency || frequency <= 0) return;
     const osc = audioCtx.createOscillator();
     const sub = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
     const vca = audioCtx.createGain();
-
-    osc.type = 'sawtooth';
-    sub.type = 'square';
+    osc.type = 'sawtooth'; sub.type = 'square';
     osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
     sub.frequency.setValueAtTime(frequency / 2, audioCtx.currentTime);
-
     filter.type = 'lowpass';
     filter.Q.value = synthParams.resonance; 
     filter.frequency.setValueAtTime(frequency * synthParams.cutoffEnv, audioCtx.currentTime);
     filter.frequency.exponentialRampToValueAtTime(frequency * 0.5, audioCtx.currentTime + duration);
-
-    osc.connect(filter);
-    sub.connect(filter);
-    filter.connect(vca);
-    vca.connect(distortionNode);
-
+    osc.connect(filter); sub.connect(filter); filter.connect(vca); vca.connect(distortionNode);
     vca.gain.setValueAtTime(0, audioCtx.currentTime);
     vca.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
     vca.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-
-    osc.start(); sub.start();
-    osc.stop(audioCtx.currentTime + duration);
-    sub.stop(audioCtx.currentTime + duration);
+    osc.start(); sub.start(); osc.stop(audioCtx.currentTime + duration); sub.stop(audioCtx.currentTime + duration);
 }
 
-// Fonction appelée par le séquenceur dans ui_logic.js
 function checkSynthTick(step) {
     if (synthSequences.seq2[step]) {
         const faders = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
         if (faders[step]) playSynthNote(parseFloat(faders[step].value));
     }
-    if (document.getElementById('grid-seq3') && synthSequences.seq3[step]) {
-        const faders = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
-        if (faders[step]) playSynthNote(parseFloat(faders[step].value) * 0.5);
-    }
 }
+console.log("Audio Engine : Prêt.");
