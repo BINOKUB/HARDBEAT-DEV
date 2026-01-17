@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO (ACCENT SUPPORT)
+   HARDBEAT PRO - CORE AUDIO (VARIABLE ACCENT)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = audioCtx.createGain();
@@ -7,12 +7,8 @@ masterGain.connect(audioCtx.destination);
 masterGain.gain.value = 0.5;
 
 let isPlaying = false;
-
-// SÉQUENCES
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
-// NOUVEAU : Mémoire des Accents (5 pistes x 16 pas)
 let drumAccents = Array.from({ length: 5 }, () => Array(16).fill(false));
-
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
 
 let freqCacheSeq2 = new Array(16).fill(440);
@@ -20,6 +16,9 @@ let freqCacheSeq3 = new Array(16).fill(220);
 
 let synthVol2 = 0.6;
 let synthVol3 = 0.6;
+
+// VARIABLE D'ACCENT (Modifiable par l'UI)
+let globalAccentBoost = 1.4; // Valeur par défaut
 
 let kickSettings = { pitch: 150, decay: 0.5, level: 0.8 };
 let snareSettings = { snappy: 1, tone: 1000, level: 0.6 };
@@ -43,6 +42,7 @@ function createDistortionCurve(amount) {
     return curve;
 }
 
+// WINDOW EXPORTS
 window.updateDistortion = function(amount) {
     synthParams.disto = amount;
     if(audioCtx.state === 'running') distortionNode.curve = createDistortionCurve(amount);
@@ -61,6 +61,11 @@ window.updateFreqCache = function(seqId, stepIndex, val) {
     if (seqId === 3) freqCacheSeq3[stepIndex] = val;
 };
 
+// NOUVEAU : Fonction pour mettre à jour la force de l'accent
+window.updateAccentBoost = function(val) {
+    globalAccentBoost = val;
+};
+
 distortionNode.curve = createDistortionCurve(0);
 distortionNode.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode);
@@ -68,7 +73,6 @@ delayNode.connect(delayMix);
 distortionNode.connect(masterGain); delayMix.connect(masterGain);
 feedback.gain.value = 0; delayMix.gain.value = 0;
 
-// --- METRONOME ---
 function playMetronome(isDownbeat) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
@@ -79,10 +83,7 @@ function playMetronome(isDownbeat) {
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
 }
 
-// --- DRUMS AVEC ACCENT ---
-// Le facteur accent est 1.4x le volume de base
-const ACCENT_BOOST = 1.4;
-
+// --- DRUMS (Utilisent globalAccentBoost) ---
 function playKick(isAccent) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
@@ -90,9 +91,8 @@ function playKick(isAccent) {
     const p = kickSettings.pitch || 150;
     const d = kickSettings.decay || 0.5;
     
-    // Calcul du volume avec Accent
     let lvl = kickSettings.level;
-    if (isAccent) lvl = Math.min(1.0, lvl * ACCENT_BOOST);
+    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost); // <--- ICI
 
     osc.frequency.setValueAtTime(p, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
@@ -114,7 +114,7 @@ function playSnare(isAccent) {
     noise.connect(filt); filt.connect(g); g.connect(masterGain);
     
     let lvl = snareSettings.level;
-    if (isAccent) lvl = Math.min(1.0, lvl * ACCENT_BOOST);
+    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost); // <--- ICI
 
     g.gain.setValueAtTime(lvl, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
@@ -135,7 +135,7 @@ function playHiHat(isOpen, isAccent) {
     const d = isOpen ? (hhSettings.decayOpen || 0.3) : (hhSettings.decayClose || 0.05);
     
     let l = isOpen ? (hhSettings.levelOpen || 0.5) : (hhSettings.levelClose || 0.4);
-    if (isAccent) l = Math.min(1.0, l * ACCENT_BOOST);
+    if (isAccent) l = Math.min(1.0, l * globalAccentBoost); // <--- ICI
 
     g.gain.setValueAtTime(l, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
@@ -155,7 +155,7 @@ function playDrumFM(isAccent) {
     const d = fmSettings.decay || 0.3;
     
     let lvl = fmSettings.level || 0.5;
-    if (isAccent) lvl = Math.min(1.0, lvl * ACCENT_BOOST);
+    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost); // <--- ICI
 
     mainG.gain.setValueAtTime(lvl, audioCtx.currentTime);
     mainG.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
@@ -188,4 +188,4 @@ function checkSynthTick(step) {
     if (synthSequences.seq3[step]) playSynthNote(freqCacheSeq3[step] * 0.5, synthVol3);
 }
 
-console.log("Audio Engine : Prêt (Accent Enabled).");
+console.log("Audio Engine : Prêt (Variable Accent).");
