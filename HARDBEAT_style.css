@@ -110,7 +110,7 @@ h2 {
     align-items: center;
     justify-content: center;
     transition: border 0.1s;
-    position: relative; /* Pour les numéros */
+    position: relative;
 }
 
 .step-pad:hover {
@@ -151,9 +151,10 @@ h2 {
 /* --- SÉLECTEURS TRACKS & PAGES --- */
 .track-selectors {
     display: flex;
-    align-items: center; /* Aligne les boutons et les paramètres sur la même ligne */
-    gap: 15px;
+    align-items: center;
+    gap: 10px;
     margin: 10px 0;
+    height: 55px; /* Aligne la hauteur pour éviter les sauts visuels */
 }
 
 .track-btn, .page-btn {
@@ -180,14 +181,16 @@ h2 {
 /* --- PARAMÈTRES DES INSTRUMENTS (DRUMS) --- */
 #instruments-params-container {
     display: flex;
-    margin-left: 20px;
+    flex-wrap: nowrap;
+    margin-left: 15px;
     border-left: 2px solid #333;
-    padding-left: 20px;
+    padding-left: 15px;
+    align-items: center;
 }
 
 .instr-params {
-    display: flex;
-    gap: 15px;
+    display: none; /* Géré par ui_logic.js */
+    gap: 12px;
     align-items: center;
 }
 
@@ -195,19 +198,51 @@ h2 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    min-width: 55px;
 }
 
 .instr-params label {
     font-size: 8px;
     color: #666;
+    margin-bottom: 2px;
+    text-transform: uppercase;
 }
 
 .instr-params input[type="range"] {
-    width: 60px;
+    width: 45px !important; /* Taille compacte pour éviter le débordement */
+    cursor: pointer;
 }
 
-/* --- SYNTH MASTER (FIXE EN BAS) --- */
+.label-cyan {
+    font-size: 9px;
+    color: var(--accent-color);
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+/* --- FADERS DE FRÉQUENCE (SEQ 2) --- */
+.fader-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 160px;
+}
+
+.freq-fader {
+    appearance: slider-vertical;
+    width: 12px;
+    height: 130px;
+    background: #222;
+    cursor: ns-resize;
+}
+
+.hz-label {
+    font-size: 9px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+/* --- SYNTH MASTER (BARRE FIXE) --- */
 .synth-master-fixed {
     display: flex;
     gap: 20px;
@@ -219,19 +254,17 @@ h2 {
     border-radius: 4px;
 }
 
-.label-cyan {
-    font-size: 9px;
-    color: var(--accent-color);
-    font-weight: bold;
-}
-
-.group label {
+.synth-master-fixed .group label {
     font-size: 9px;
     color: #888;
     text-transform: uppercase;
 }
 
-/* --- FOOTER --- */
+.synth-master-fixed input[type="range"] {
+    width: 70px;
+}
+
+/* --- FOOTER & EXTENSIONS --- */
 #ui-footer {
     margin-top: 30px;
 }
@@ -251,4 +284,19 @@ h2 {
     border-color: var(--accent-color);
     color: var(--accent-color);
     background: #001516;
+}
+
+/* --- CONTRÔLES BPM --- */
+.bpm-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+#display-bpm1, #display-bpm2 {
+    color: var(--accent-color);
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    cursor: ns-resize;
 }
