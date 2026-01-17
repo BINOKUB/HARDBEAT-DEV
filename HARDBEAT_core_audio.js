@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO (VARIABLE ACCENT)
+   HARDBEAT PRO - CORE AUDIO (DYNAMIC ACCENT)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = audioCtx.createGain();
@@ -17,8 +17,8 @@ let freqCacheSeq3 = new Array(16).fill(220);
 let synthVol2 = 0.6;
 let synthVol3 = 0.6;
 
-// VARIABLE D'ACCENT (Modifiable par l'UI)
-let globalAccentBoost = 1.4; // Valeur par défaut
+// VARIABLE GLOBALE D'ACCENT (Pilotée par le slider)
+let globalAccentBoost = 1.4;
 
 let kickSettings = { pitch: 150, decay: 0.5, level: 0.8 };
 let snareSettings = { snappy: 1, tone: 1000, level: 0.6 };
@@ -42,7 +42,7 @@ function createDistortionCurve(amount) {
     return curve;
 }
 
-// WINDOW EXPORTS
+// WINDOW EXPORTS (API)
 window.updateDistortion = function(amount) {
     synthParams.disto = amount;
     if(audioCtx.state === 'running') distortionNode.curve = createDistortionCurve(amount);
@@ -61,7 +61,7 @@ window.updateFreqCache = function(seqId, stepIndex, val) {
     if (seqId === 3) freqCacheSeq3[stepIndex] = val;
 };
 
-// NOUVEAU : Fonction pour mettre à jour la force de l'accent
+// MISE A JOUR DU BOOST ACCENT
 window.updateAccentBoost = function(val) {
     globalAccentBoost = val;
 };
@@ -83,7 +83,7 @@ function playMetronome(isDownbeat) {
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
 }
 
-// --- DRUMS (Utilisent globalAccentBoost) ---
+// --- INSTRUMENTS AVEC BOOST DYNAMIQUE ---
 function playKick(isAccent) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
@@ -92,7 +92,7 @@ function playKick(isAccent) {
     const d = kickSettings.decay || 0.5;
     
     let lvl = kickSettings.level;
-    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost); // <--- ICI
+    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost);
 
     osc.frequency.setValueAtTime(p, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
@@ -114,7 +114,7 @@ function playSnare(isAccent) {
     noise.connect(filt); filt.connect(g); g.connect(masterGain);
     
     let lvl = snareSettings.level;
-    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost); // <--- ICI
+    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost);
 
     g.gain.setValueAtTime(lvl, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
@@ -135,7 +135,7 @@ function playHiHat(isOpen, isAccent) {
     const d = isOpen ? (hhSettings.decayOpen || 0.3) : (hhSettings.decayClose || 0.05);
     
     let l = isOpen ? (hhSettings.levelOpen || 0.5) : (hhSettings.levelClose || 0.4);
-    if (isAccent) l = Math.min(1.0, l * globalAccentBoost); // <--- ICI
+    if (isAccent) l = Math.min(1.0, l * globalAccentBoost);
 
     g.gain.setValueAtTime(l, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
@@ -155,7 +155,7 @@ function playDrumFM(isAccent) {
     const d = fmSettings.decay || 0.3;
     
     let lvl = fmSettings.level || 0.5;
-    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost); // <--- ICI
+    if (isAccent) lvl = Math.min(1.0, lvl * globalAccentBoost);
 
     mainG.gain.setValueAtTime(lvl, audioCtx.currentTime);
     mainG.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
@@ -163,7 +163,6 @@ function playDrumFM(isAccent) {
     car.stop(audioCtx.currentTime + d); mod.stop(audioCtx.currentTime + d);
 }
 
-// --- SYNTHS ---
 function playSynthNote(freq, volume) {
     if (!freq || freq < 20) return;
     const targetVol = (typeof volume === 'number') ? volume : 0.5;
@@ -188,4 +187,4 @@ function checkSynthTick(step) {
     if (synthSequences.seq3[step]) playSynthNote(freqCacheSeq3[step] * 0.5, synthVol3);
 }
 
-console.log("Audio Engine : Prêt (Variable Accent).");
+console.log("Audio Engine : Prêt (Full Features).");
