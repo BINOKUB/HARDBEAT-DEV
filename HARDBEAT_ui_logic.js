@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (MUTE & RANDOM FIX)
+   HARDBEAT PRO - UI LOGIC (SAVE & LOAD)
    ========================================== */
 let timerDrums; let timerSynths;
 let isMetroOn = false; let globalSwing = 0.06;
@@ -7,10 +7,10 @@ let trackLengths = [16, 16, 16, 16, 16];
 let trackPositions = [0, 0, 0, 0, 0];
 let trackMutes = [false, false, false, false, false];
 let trackSolos = [false, false, false, false, false];
+let muteState2 = false; let muteState3 = false;
 
-// ETATS UI MUTE SYNTH
-let muteState2 = false;
-let muteState3 = false;
+// ETAT MEMOIRE
+let isSaveMode = false;
 
 function initGrid(idPrefix) {
     const gridContainer = document.getElementById(idPrefix);
@@ -49,6 +49,179 @@ document.addEventListener('input', (e) => {
     }
 });
 
+// --- GESTION MEMOIRE (SAVE / LOAD) ---
+
+// Sauvegarder dans le Slot X
+function savePattern(slot) {
+    // 1. Récolter toutes les données UI qui ne sont pas dans le core
+    const data = {
+        drums: {
+            seq: drumSequences,
+            accents: drumAccents,
+            mutes: trackMutes,
+            solos: trackSolos,
+            lengths: trackLengths,
+            settings: { // Sauver les valeurs des sliders instruments
+                kick: { ...kickSettings, steps: document.getElementById('kick-steps').value },
+                snare: { ...snareSettings, steps: document.getElementById('snare-steps').value },
+                hhc: { ...hhSettings, steps: document.getElementById('hhc-steps').value },
+                hho: { ...hhSettings, steps: document.getElementById('hho-steps').value }, // HH settings partagés mais steps séparés
+                fm: { ...fmSettings, steps: document.getElementById('fm-steps').value }
+            }
+        },
+        synths: {
+            seq2: synthSequences.seq2,
+            seq3: synthSequences.seq3, // Peut être vide si pas étendu
+            params2: paramsSeq2, // Venant du core (via getter ou supposé sync) - On va lire les sliders pour être sûr
+            params3: paramsSeq3,
+            mutes: { seq2: muteState2, seq3: muteState3 },
+            vol2: document.getElementById('vol-seq2').value,
+            vol3: document.getElementById('vol-seq3') ? document.getElementById('vol-seq3').value : 0.6,
+            // Pour les fréquences, on doit lire les sliders car freqCache est dans AudioCore inaccessible direct
+            // Astuce: On lit le cache simulé ici ou on lit le DOM
+            freqs2: Array.from(document.querySelectorAll('#grid-freq-seq2 .freq-fader')).map(f => f.value),
+            freqs3: Array.from(document.querySelectorAll('#grid-freq-seq3 .freq-fader')).map(f => f.value)
+        },
+        global: {
+            bpm1: document.getElementById('display-bpm1').innerText,
+            bpm2: document.getElementById('display-bpm2').innerText,
+            swing: document.getElementById('global-swing').value,
+            accent: document.getElementById('global-accent-amount').value,
+            delay: globalDelay
+        }
+    };
+
+    localStorage.setItem(`hardbeat_pattern_${slot}`, JSON.stringify(data));
+    console.log(`Pattern saved to Slot ${slot}`);
+    updateMemoryUI(); // Rafraîchir les couleurs des slots
+}
+
+// Charger depuis le Slot X
+function loadPattern(slot) {
+    const json = localStorage.getItem(`hardbeat_pattern_${slot}`);
+    if (!json) return; // Rien à charger
+    
+    const data = JSON.parse(json);
+    
+    // 1. RESTAURER DRUMS
+    drumSequences = data.drums.seq;
+    drumAccents = data.drums.accents;
+    trackMutes = data.drums.mutes;
+    trackSolos = data.drums.solos;
+    trackLengths = data.drums.lengths;
+    
+    // Appliquer Settings Drums (Sliders)
+    const setSlider = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
+    
+    setSlider('kick-steps', data.drums.settings.kick.steps);
+    setSlider('kick-pitch', data.drums.settings.kick.pitch);
+    setSlider('kick-decay', data.drums.settings.kick.decay);
+    setSlider('kick-level', data.drums.settings.kick.level);
+    
+    setSlider('snare-steps', data.drums.settings.snare.steps);
+    setSlider('snare-snappy', data.drums.settings.snare.snappy);
+    setSlider('snare-tone', data.drums.settings.snare.tone);
+    setSlider('snare-level', data.drums.settings.snare.level);
+    
+    setSlider('hhc-steps', data.drums.settings.hhc.steps);
+    setSlider('hhc-tone', data.drums.settings.hhc.tone);
+    setSlider('hhc-level', data.drums.settings.hhc.levelClose);
+    
+    setSlider('hho-steps', data.drums.settings.hho.steps);
+    setSlider('hho-decay', data.drums.settings.hho.decayOpen);
+    setSlider('hho-level', data.drums.settings.hho.levelOpen);
+    
+    setSlider('fm-steps', data.drums.settings.fm.steps);
+    setSlider('fm-carrier', data.drums.settings.fm.carrierPitch);
+    setSlider('fm-mod', data.drums.settings.fm.modPitch);
+    setSlider('fm-amt', data.drums.settings.fm.fmAmount);
+    setSlider('fm-decay', data.drums.settings.fm.decay);
+    setSlider('fm-level', data.drums.settings.fm.level);
+
+    // Mutes / Solos UI Update
+    document.querySelectorAll('.btn-mute').forEach((btn, i) => {
+        // Attention : les boutons mute synth sont à part
+        if (!btn.classList.contains('btn-synth-mute')) {
+            const track = parseInt(btn.dataset.track);
+            btn.classList.toggle('active', trackMutes[track]);
+        }
+    });
+    document.querySelectorAll('.btn-solo').forEach((btn, i) => {
+        const track = parseInt(btn.dataset.track);
+        btn.classList.toggle('active', trackSolos[track]);
+    });
+
+    // 2. RESTAURER SYNTHS
+    synthSequences.seq2 = data.synths.seq2;
+    synthSequences.seq3 = data.synths.seq3;
+    
+    // Si Seq 3 contient des données mais n'est pas affiché, on simule le clic Extend
+    const hasSeq3Data = data.synths.freqs3 && data.synths.freqs3.length > 0;
+    const isSeq3Visible = document.getElementById('seq3-container');
+    if (hasSeq3Data && !isSeq3Visible) {
+        document.getElementById('add-seq-btn').click();
+    }
+
+    // Paramètres Synth 2
+    setSlider('vol-seq2', data.synths.vol2);
+    setSlider('synth2-disto', data.synths.params2.disto);
+    setSlider('synth2-res', data.synths.params2.res);
+    setSlider('synth2-cutoff', data.synths.params2.cutoff);
+    setSlider('synth2-decay', data.synths.params2.decay);
+    
+    // Mute Synth 2
+    muteState2 = data.synths.mutes.seq2;
+    const btnMute2 = document.getElementById('btn-mute-seq2');
+    if(btnMute2) btnMute2.classList.toggle('active', muteState2);
+    if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2);
+
+    // Fréquences Synth 2
+    const faders2 = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
+    if (data.synths.freqs2) {
+        faders2.forEach((f, i) => { f.value = data.synths.freqs2[i]; f.dispatchEvent(new Event('input')); });
+    }
+
+    // Paramètres Synth 3 (si existent)
+    if (hasSeq3Data) {
+        setSlider('vol-seq3', data.synths.vol3);
+        setSlider('synth3-disto', data.synths.params3.disto);
+        setSlider('synth3-res', data.synths.params3.res);
+        setSlider('synth3-cutoff', data.synths.params3.cutoff);
+        setSlider('synth3-decay', data.synths.params3.decay);
+        
+        muteState3 = data.synths.mutes.seq3;
+        const btnMute3 = document.getElementById('btn-mute-seq3');
+        if(btnMute3) btnMute3.classList.toggle('active', muteState3);
+        if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3);
+
+        const faders3 = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
+        faders3.forEach((f, i) => { f.value = data.synths.freqs3[i]; f.dispatchEvent(new Event('input')); });
+    }
+
+    // 3. RESTAURER GLOBAL
+    document.getElementById('display-bpm1').innerText = data.global.bpm1;
+    document.getElementById('display-bpm2').innerText = data.global.bpm2;
+    setSlider('global-swing', data.global.swing * 100); // Storage en float (0.06), slider en int (6)
+    setSlider('global-accent-amount', data.global.accent);
+    setSlider('global-delay-amt', data.global.delay.amt);
+    setSlider('global-delay-time', data.global.delay.time);
+
+    refreshGridVisuals();
+    console.log(`Pattern loaded from Slot ${slot}`);
+}
+
+function updateMemoryUI() {
+    for (let i = 1; i <= 4; i++) {
+        const slotBtn = document.querySelector(`.btn-mem-slot[data-slot="${i}"]`);
+        if (localStorage.getItem(`hardbeat_pattern_${i}`)) {
+            slotBtn.classList.add('has-data');
+        } else {
+            slotBtn.classList.remove('has-data');
+        }
+    }
+}
+
+// --- INITIALISATION UI ---
 function bindControls() {
     const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
     const bindSteps = (id, trackIdx) => { const el = document.getElementById(id); if (el) el.oninput = (e) => { trackLengths[trackIdx] = parseInt(e.target.value); if (trackPositions[trackIdx] >= trackLengths[trackIdx]) trackPositions[trackIdx] = 0; refreshGridVisuals(); }; };
@@ -73,6 +246,40 @@ function bindControls() {
     const dTime = document.getElementById('global-delay-time'); if(dTime) dTime.oninput = (e) => { if(window.updateDelayTime) window.updateDelayTime(parseFloat(e.target.value)); };
     
     const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => masterGain.gain.value = parseFloat(e.target.value);
+
+    // --- MEMORY BANK BINDING ---
+    const btnSave = document.getElementById('btn-save-mode');
+    btnSave.onclick = () => {
+        isSaveMode = !isSaveMode;
+        btnSave.classList.toggle('saving', isSaveMode);
+    };
+
+    document.querySelectorAll('.btn-mem-slot').forEach(btn => {
+        btn.onclick = () => {
+            const slot = btn.dataset.slot;
+            if (isSaveMode) {
+                // SAVE
+                savePattern(slot);
+                // Flash effect
+                btn.classList.add('flash-success');
+                setTimeout(() => btn.classList.remove('flash-success'), 200);
+                // Exit save mode
+                isSaveMode = false;
+                btnSave.classList.remove('saving');
+            } else {
+                // LOAD
+                // Check if data exists
+                if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
+                    loadPattern(slot);
+                    // Flash effect
+                    btn.classList.add('flash-success');
+                    setTimeout(() => btn.classList.remove('flash-success'), 200);
+                }
+            }
+        };
+    });
+    // Check slots on startup
+    updateMemoryUI();
 }
 
 function showParamsForTrack(idx) {
@@ -111,7 +318,7 @@ function initSeq3Extension() {
         btn.disabled = true; btn.style.opacity = "0.3"; btn.innerText = "SEQ 3 ACTIVE";
         const zone = document.getElementById('extension-zone');
         
-        // --- INJECTION HTML SEQ 3 AVEC RANDOMIZE ET MUTE ---
+        // --- INJECTION HTML SEQ 3 ---
         zone.innerHTML = `
         <section id="seq3-container" class="rack-section synth-instance">
             <div class="section-header">
@@ -154,7 +361,7 @@ function initSeq3Extension() {
     });
 }
 
-// --- BOUCLES ---
+// --- BOUCLES & EVENTS (INCHANGÉS MAIS INCLUS POUR COMPLETUDE) ---
 let globalTickCount = 0;
 function runDrumLoop() {
     if (!isPlaying) return;
@@ -209,28 +416,15 @@ function runSynthLoop() {
     timerSynths = setTimeout(runSynthLoop, currentStepDuration);
 }
 
-// --- ÉCOUTEURS ---
 document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
         if (pad.classList.contains('disabled')) return;
         const idx = parseInt(pad.dataset.index);
         const pid = pad.closest('.step-grid').id;
-        
-        if (pid === 'grid-seq1') {
-            drumSequences[currentTrackIndex][idx] = !drumSequences[currentTrackIndex][idx];
-            refreshGridVisuals();
-        } else if (pid === 'grid-seq2') {
-            synthSequences.seq2[idx] = !synthSequences.seq2[idx];
-            pad.classList.toggle('active', synthSequences.seq2[idx]);
-            const led = pad.querySelector('.led');
-            if(led) led.style.background = synthSequences.seq2[idx] ? "cyan" : "#330000";
-        } else if (pid === 'grid-seq3') {
-            synthSequences.seq3[idx] = !synthSequences.seq3[idx];
-            pad.classList.toggle('active', synthSequences.seq3[idx]);
-            const led = pad.querySelector('.led');
-            if(led) led.style.background = synthSequences.seq3[idx] ? "#a855f7" : "#330000";
-        }
+        if (pid === 'grid-seq1') { drumSequences[currentTrackIndex][idx] = !drumSequences[currentTrackIndex][idx]; refreshGridVisuals(); } 
+        else if (pid === 'grid-seq2') { synthSequences.seq2[idx] = !synthSequences.seq2[idx]; pad.classList.toggle('active', synthSequences.seq2[idx]); const led = pad.querySelector('.led'); if(led) led.style.background = synthSequences.seq2[idx] ? "cyan" : "#330000"; } 
+        else if (pid === 'grid-seq3') { synthSequences.seq3[idx] = !synthSequences.seq3[idx]; pad.classList.toggle('active', synthSequences.seq3[idx]); const led = pad.querySelector('.led'); if(led) led.style.background = synthSequences.seq3[idx] ? "#a855f7" : "#330000"; }
     }
     const accentBtn = e.target.closest('.accent-pad');
     if (accentBtn) {
@@ -244,61 +438,11 @@ document.addEventListener('mousedown', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-    // DRUM MUTE/SOLO
-    if (e.target.classList.contains('btn-mute') && !e.target.classList.contains('btn-synth-mute')) {
-        const track = parseInt(e.target.dataset.track); trackMutes[track] = !trackMutes[track]; e.target.classList.toggle('active', trackMutes[track]);
-        if(trackMutes[track]) { trackSolos[track] = false; const soloBtn = e.target.parentElement.querySelector('.btn-solo'); if(soloBtn) soloBtn.classList.remove('active'); } return;
-    }
-    if (e.target.classList.contains('btn-solo')) {
-        const track = parseInt(e.target.dataset.track); trackSolos[track] = !trackSolos[track]; e.target.classList.toggle('active', trackSolos[track]);
-        if(trackSolos[track]) { trackMutes[track] = false; const muteBtn = e.target.parentElement.querySelector('.btn-mute'); if(muteBtn) muteBtn.classList.remove('active'); } return;
-    }
-    
-    // SYNTH MUTE
-    if (e.target.classList.contains('btn-synth-mute')) {
-        const target = parseInt(e.target.dataset.target);
-        if (target === 2) {
-            muteState2 = !muteState2;
-            e.target.classList.toggle('active', muteState2);
-            if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2);
-        } else if (target === 3) {
-            muteState3 = !muteState3;
-            e.target.classList.toggle('active', muteState3);
-            if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3);
-        }
-        return;
-    }
-
-    // SYNTH RANDOMIZE (DYNAMIQUE)
-    if (e.target.classList.contains('btn-random')) {
-        const target = parseInt(e.target.dataset.target);
-        // On récupère le bon conteneur de faders
-        const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader';
-        const faders = document.querySelectorAll(selector);
-        
-        // Effet visuel sur le bouton
-        const btn = e.target;
-        btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; 
-        btn.style.color = "#000";
-        setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100);
-
-        faders.forEach(fader => {
-            const randomFreq = Math.floor(Math.random() * (880 - 50) + 50);
-            fader.value = randomFreq;
-            // IMPORTANT : On déclenche l'événement pour mettre à jour le cache audio et le label
-            fader.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-        return;
-    }
-
-    // TRACK SELECT
-    if (e.target.classList.contains('track-btn')) {
-        document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active');
-        currentTrackIndex = parseInt(e.target.dataset.track); showParamsForTrack(currentTrackIndex); refreshGridVisuals();
-        if (!trackMutes[currentTrackIndex]) {
-            switch(currentTrackIndex) { case 0: if(window.playKick) playKick(); break; case 1: if(window.playSnare) playSnare(); break; case 2: if(window.playHiHat) playHiHat(false); break; case 3: if(window.playHiHat) playHiHat(true); break; case 4: if(window.playDrumFM) playDrumFM(); break; }
-        }
-    }
+    if (e.target.classList.contains('btn-mute') && !e.target.classList.contains('btn-synth-mute')) { const track = parseInt(e.target.dataset.track); trackMutes[track] = !trackMutes[track]; e.target.classList.toggle('active', trackMutes[track]); if(trackMutes[track]) { trackSolos[track] = false; const soloBtn = e.target.parentElement.querySelector('.btn-solo'); if(soloBtn) soloBtn.classList.remove('active'); } return; }
+    if (e.target.classList.contains('btn-solo')) { const track = parseInt(e.target.dataset.track); trackSolos[track] = !trackSolos[track]; e.target.classList.toggle('active', trackSolos[track]); if(trackSolos[track]) { trackMutes[track] = false; const muteBtn = e.target.parentElement.querySelector('.btn-mute'); if(muteBtn) muteBtn.classList.remove('active'); } return; }
+    if (e.target.classList.contains('btn-synth-mute')) { const target = parseInt(e.target.dataset.target); if (target === 2) { muteState2 = !muteState2; e.target.classList.toggle('active', muteState2); if(window.toggleMuteSynth) window.toggleMuteSynth(2, muteState2); } else if (target === 3) { muteState3 = !muteState3; e.target.classList.toggle('active', muteState3); if(window.toggleMuteSynth) window.toggleMuteSynth(3, muteState3); } return; }
+    if (e.target.classList.contains('btn-random')) { const target = parseInt(e.target.dataset.target); const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader'; const faders = document.querySelectorAll(selector); const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); faders.forEach(fader => { const randomFreq = Math.floor(Math.random() * (880 - 50) + 50); fader.value = randomFreq; fader.dispatchEvent(new Event('input', { bubbles: true })); }); return; }
+    if (e.target.classList.contains('track-btn')) { document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); currentTrackIndex = parseInt(e.target.dataset.track); showParamsForTrack(currentTrackIndex); refreshGridVisuals(); if (!trackMutes[currentTrackIndex]) { switch(currentTrackIndex) { case 0: if(window.playKick) playKick(); break; case 1: if(window.playSnare) playSnare(); break; case 2: if(window.playHiHat) playHiHat(false); break; case 3: if(window.playHiHat) playHiHat(true); break; case 4: if(window.playDrumFM) playDrumFM(); break; } } }
 });
 
 window.addEventListener('load', () => {
@@ -306,5 +450,5 @@ window.addEventListener('load', () => {
     bindControls(); setupTempoDrag('display-bpm1'); setupTempoDrag('display-bpm2'); initSeq3Extension();
     currentTrackIndex = 0; showParamsForTrack(0); setTimeout(() => refreshGridVisuals(), 50);
     const playBtn = document.getElementById('master-play-stop'); if (playBtn) { playBtn.onclick = () => { if (isPlaying) { isPlaying = false; clearTimeout(timerDrums); clearTimeout(timerSynths); playBtn.innerText = "PLAY / STOP"; playBtn.style.background = "#222"; playBtn.style.color = "#fff"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; } else { if (audioCtx.state === 'suspended') audioCtx.resume(); isPlaying = true; playBtn.innerText = "STOP"; playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000"; trackPositions = [0,0,0,0,0]; globalTickCount = 0; synthTickCount = 0; runDrumLoop(); runSynthLoop(); } }; }
-    console.log("UI Logic : Prêt (Full Synth Controls).");
+    console.log("UI Logic : Prêt (Memory Bank Ready).");
 });
