@@ -1,21 +1,39 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (AUDITION ADDED)
+   HARDBEAT PRO - UI LOGIC (ACCENT BUTTONS)
    ========================================== */
 let timerDrums;
 let timerSynths;
-
-// Variable d'état du métronome
 let isMetroOn = false;
 
 function initGrid(idPrefix) {
     const gridContainer = document.getElementById(idPrefix);
     if (!gridContainer) return;
+    
     let htmlContent = '';
     const isDrum = (idPrefix === 'grid-seq1');
+    
     for (let i = 0; i < 16; i++) {
-        let inner = `<div class="led"></div>`;
-        if (isDrum) inner = `<span>${i+1}</span>` + inner;
-        htmlContent += `<div class="step-pad" data-index="${i}">${inner}</div>`;
+        let padHTML = '';
+        
+        if (isDrum) {
+            // DRUMS : Pad + Bouton Accent en dessous
+            padHTML = `
+            <div class="step-column">
+                <div class="step-pad" data-index="${i}" data-type="note">
+                    <span>${i+1}</span>
+                    <div class="led"></div>
+                </div>
+                <div class="accent-pad" data-index="${i}" data-type="accent" title="Accent"></div>
+            </div>`;
+        } else {
+            // SYNTHS : Juste le Pad
+            padHTML = `
+            <div class="step-pad" data-index="${i}" data-type="note">
+                <div class="led"></div>
+            </div>`;
+        }
+        
+        htmlContent += padHTML;
     }
     gridContainer.innerHTML = htmlContent;
 }
@@ -34,6 +52,7 @@ function initFaders(idPrefix, seqId) {
     freqGrid.innerHTML = htmlContent;
 }
 
+// Mise à jour visuelle des Faders
 document.addEventListener('input', (e) => {
     if (e.target.classList.contains('freq-fader')) {
         const val = parseFloat(e.target.value);
@@ -67,11 +86,9 @@ function bindControls() {
     bind('fm-decay', fmSettings, 'decay');
     bind('fm-level', fmSettings, 'level');
 
-    // Metro Toggle
     const metroBox = document.getElementById('metro-toggle');
     if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
 
-    // Synth Vol & Master
     const v2 = document.getElementById('vol-seq2');
     if(v2) v2.oninput = (e) => synthVol2 = parseFloat(e.target.value);
     
@@ -79,7 +96,6 @@ function bindControls() {
     if (disto) disto.oninput = (e) => { 
         if(window.updateDistortion) window.updateDistortion(parseFloat(e.target.value)); 
     };
-    
     const dAmt = document.getElementById('synth-delay-amt');
     if(dAmt) dAmt.oninput = (e) => {
         if(window.updateDelayAmount) window.updateDelayAmount(parseFloat(e.target.value));
@@ -88,7 +104,6 @@ function bindControls() {
     if(dTime) dTime.oninput = (e) => {
         if(window.updateDelayTime) window.updateDelayTime(parseFloat(e.target.value));
     };
-
     bind('synth-res', synthParams, 'resonance');
     bind('synth-cutoff', synthParams, 'cutoffEnv');
     const vol = document.getElementById('master-gain');
@@ -103,13 +118,23 @@ function showParamsForTrack(idx) {
 
 function refreshGridVisuals() {
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
-    if(pads.length === 0) return;
+    const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
+    
+    // MAJ des Notes
     pads.forEach((pad, i) => {
         if(drumSequences && drumSequences[currentTrackIndex]) {
             const isActive = drumSequences[currentTrackIndex][i];
             pad.classList.toggle('active', isActive);
             const led = pad.querySelector('.led');
             if (led) led.style.background = isActive ? "red" : "#330000";
+        }
+    });
+
+    // MAJ des Accents
+    accents.forEach((acc, i) => {
+        if(drumAccents && drumAccents[currentTrackIndex]) {
+            const isActive = drumAccents[currentTrackIndex][i];
+            acc.classList.toggle('active', isActive);
         }
     });
 }
@@ -174,7 +199,6 @@ function runDrumLoop() {
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
     const stepDuration = (60 / bpm) / 4 * 1000;
 
-    // --- LOGIQUE METRONOME ---
     if (isMetroOn && currentDrumStep % 4 === 0) {
         if(window.playMetronome) playMetronome(currentDrumStep === 0);
     }
@@ -183,11 +207,14 @@ function runDrumLoop() {
     pads.forEach(p => p.style.borderColor = "#333");
     if (pads[currentDrumStep]) pads[currentDrumStep].style.borderColor = "#ffffff";
 
-    if (drumSequences[0][currentDrumStep]) playKick();
-    if (drumSequences[1][currentDrumStep]) playSnare();
-    if (drumSequences[2][currentDrumStep]) playHiHat(false);
-    if (drumSequences[3][currentDrumStep]) playHiHat(true);
-    if (drumSequences[4][currentDrumStep]) playDrumFM();
+    // LECTURE AVEC ACCENT
+    // On récupère l'accent pour chaque pas
+    const acc = drumAccents;
+    if (drumSequences[0][currentDrumStep]) playKick(acc[0][currentDrumStep]);
+    if (drumSequences[1][currentDrumStep]) playSnare(acc[1][currentDrumStep]);
+    if (drumSequences[2][currentDrumStep]) playHiHat(false, acc[2][currentDrumStep]);
+    if (drumSequences[3][currentDrumStep]) playHiHat(true, acc[3][currentDrumStep]);
+    if (drumSequences[4][currentDrumStep]) playDrumFM(acc[4][currentDrumStep]);
 
     currentDrumStep = (currentDrumStep + 1) % 16;
     timerDrums = setTimeout(runDrumLoop, stepDuration);
@@ -215,10 +242,11 @@ function runSynthLoop() {
 
 // --- ÉCOUTEURS ---
 document.addEventListener('mousedown', (e) => {
+    // 1. CLIC SUR NOTE
     const pad = e.target.closest('.step-pad');
     if (pad) {
         const idx = parseInt(pad.dataset.index);
-        const pid = pad.parentElement.id;
+        const pid = pad.closest('.step-grid').id; // Utiliser closest pour être sûr
         
         if (pid === 'grid-seq1') {
             drumSequences[currentTrackIndex][idx] = !drumSequences[currentTrackIndex][idx];
@@ -235,6 +263,15 @@ document.addEventListener('mousedown', (e) => {
             if(led) led.style.background = synthSequences.seq3[idx] ? "#a855f7" : "#330000";
         }
     }
+
+    // 2. CLIC SUR ACCENT
+    const accentBtn = e.target.closest('.accent-pad');
+    if (accentBtn) {
+        const idx = parseInt(accentBtn.dataset.index);
+        // On inverse l'accent pour la piste courante
+        drumAccents[currentTrackIndex][idx] = !drumAccents[currentTrackIndex][idx];
+        refreshGridVisuals();
+    }
 });
 
 document.addEventListener('click', (e) => {
@@ -245,13 +282,12 @@ document.addEventListener('click', (e) => {
         showParamsForTrack(currentTrackIndex);
         refreshGridVisuals();
 
-        // --- FEATURE AJOUTÉE : AUDITION (PREVIEW) ---
-        // On joue le son immédiatement quand on clique sur le bouton
+        // Audition
         switch(currentTrackIndex) {
             case 0: if(window.playKick) playKick(); break;
             case 1: if(window.playSnare) playSnare(); break;
-            case 2: if(window.playHiHat) playHiHat(false); break; // HH Close
-            case 3: if(window.playHiHat) playHiHat(true); break;  // HH Open
+            case 2: if(window.playHiHat) playHiHat(false); break;
+            case 3: if(window.playHiHat) playHiHat(true); break;
             case 4: if(window.playDrumFM) playDrumFM(); break;
         }
     }
@@ -297,5 +333,5 @@ window.addEventListener('load', () => {
             }
         };
     }
-    console.log("UI Logic : Prêt (Audition Ready).");
+    console.log("UI Logic : Prêt (Accent Buttons Added).");
 });
