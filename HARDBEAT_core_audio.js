@@ -1,6 +1,9 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO (RESTORED ENGINE)
+   HARDBEAT PRO - CORE AUDIO (NEUTRAL SLAVE)
    ========================================== */
+// Ce fichier ne contient QUE les outils audio.
+// Il ne stocke AUCUNE donnée pour ne pas entrer en conflit avec le Logic.
+
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 // --- MASTER CHAIN ---
@@ -19,7 +22,7 @@ const masterGain = audioCtx.createGain();
 masterGain.connect(masterLimiter); masterLimiter.connect(audioCtx.destination);
 masterGain.gain.value = 0.5;
 
-// --- EFFETS ---
+// --- EFFETS (Disto & Delay) ---
 const distoNode2 = audioCtx.createWaveShaper();
 const distoNode3 = audioCtx.createWaveShaper();
 const delayNode = audioCtx.createDelay(2.0);
@@ -36,6 +39,7 @@ function createDistortionCurve(amount) {
     return curve;
 }
 
+// Init Effets
 distoNode2.curve = createDistortionCurve(0);
 distoNode3.curve = createDistortionCurve(200);
 distoNode2.connect(masterGain); distoNode2.connect(delayNode);
@@ -43,7 +47,8 @@ distoNode3.connect(masterGain); distoNode3.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode); delayNode.connect(delayMix); delayMix.connect(masterGain);
 feedback.gain.value = 0; delayMix.gain.value = 0;
 
-// --- API MISE A JOUR TEMPS REEL ---
+// --- API MISE A JOUR (Appelée par le Logic quand tu bouges un bouton) ---
+// Note: On ne stocke pas la valeur ici, on l'applique directement.
 window.updateAudioEffect = function(type, val) {
     if (type === 'disto2') distoNode2.curve = createDistortionCurve(val);
     if (type === 'disto3') distoNode3.curve = createDistortionCurve(val);
@@ -60,7 +65,7 @@ window.ensureAudioContext = function() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
 };
 
-// --- PLAYBACK FUNCTIONS (Reçoivent TOUT en argument) ---
+// --- FONCTIONS DE JEU (Reçoivent TOUT du Logic) ---
 
 window.playMetronome = function(isDownbeat) { 
     const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); osc.connect(g); g.connect(masterGain); 
@@ -69,8 +74,10 @@ window.playMetronome = function(isDownbeat) {
 
 window.playKick = function(settings, isAccent, boost) { 
     const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); osc.connect(g); g.connect(masterGain); 
+    // Sécurité si boost n'est pas défini par le Logic
+    let safeBoost = (typeof boost === 'number') ? boost : 1.4; 
     let lvl = settings.level; let decayMod = settings.decay; 
-    if (isAccent) { lvl = Math.min(1.2, lvl * boost); decayMod += 0.1; } 
+    if (isAccent) { lvl = Math.min(1.2, lvl * safeBoost); decayMod += 0.1; } 
     osc.frequency.setValueAtTime(settings.pitch, audioCtx.currentTime); 
     osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + decayMod); 
     g.gain.setValueAtTime(lvl, audioCtx.currentTime); 
@@ -81,8 +88,9 @@ window.playKick = function(settings, isAccent, boost) {
 window.playSnare = function(settings, isAccent, boost) { 
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; 
     const noise = audioCtx.createBufferSource(); noise.buffer = buffer; const filt = audioCtx.createBiquadFilter(); filt.type = 'highpass'; 
+    let safeBoost = (typeof boost === 'number') ? boost : 1.4;
     let baseTone = settings.tone; let lvl = settings.level; let snap = settings.snappy; 
-    if (isAccent) { lvl = Math.min(1.2, lvl * boost); baseTone += 200; snap += 0.2; } 
+    if (isAccent) { lvl = Math.min(1.2, lvl * safeBoost); baseTone += 200; snap += 0.2; } 
     filt.frequency.value = baseTone; const g = audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); 
     g.gain.setValueAtTime(lvl, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (0.2 * snap)); noise.start(); 
 };
@@ -90,16 +98,18 @@ window.playSnare = function(settings, isAccent, boost) {
 window.playHiHat = function(settings, isOpen, isAccent, boost) { 
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.5, audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; 
     const noise = audioCtx.createBufferSource(); noise.buffer = buffer; const filt = audioCtx.createBiquadFilter(); filt.type = 'highpass'; 
+    let safeBoost = (typeof boost === 'number') ? boost : 1.4;
     let tone = settings.tone; let d = isOpen ? settings.decayOpen : settings.decayClose; let l = isOpen ? settings.levelOpen : settings.levelClose; 
-    if (isAccent) { l = Math.min(1.0, l * boost); d += 0.05; tone += 500; } 
+    if (isAccent) { l = Math.min(1.0, l * safeBoost); d += 0.05; tone += 500; } 
     filt.frequency.value = tone; const g = audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); 
     g.gain.setValueAtTime(l, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d); noise.start(); 
 };
 
 window.playDrumFM = function(settings, isAccent, boost) { 
     const car = audioCtx.createOscillator(); const mod = audioCtx.createOscillator(); const modG = audioCtx.createGain(); const mainG = audioCtx.createGain(); 
+    let safeBoost = (typeof boost === 'number') ? boost : 1.4;
     mod.frequency.value = settings.modPitch; let amt = settings.fmAmount; let lvl = settings.level; let d = settings.decay; 
-    if (isAccent) { lvl = Math.min(1.0, lvl * boost); amt += 50; d += 0.1; } 
+    if (isAccent) { lvl = Math.min(1.0, lvl * safeBoost); amt += 50; d += 0.1; } 
     modG.gain.value = amt; car.frequency.value = settings.carrierPitch; mod.connect(modG); modG.connect(car.frequency); car.connect(mainG); mainG.connect(masterGain); 
     mainG.gain.setValueAtTime(lvl, audioCtx.currentTime); mainG.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d); car.start(); mod.start(); car.stop(audioCtx.currentTime + d); mod.stop(audioCtx.currentTime + d); 
 };
@@ -111,21 +121,24 @@ window.playSynthNote = function(freq, volume, seqId, params) {
     const vca = audioCtx.createGain();
     const filter = audioCtx.createBiquadFilter();
     
+    // Si params n'est pas fourni (cas d'erreur UI), on met des valeurs par défaut pour éviter le crash
+    const safeParams = params || { res: 5, cutoff: 4, decay: 0.2 };
+
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     
     filter.type = 'lowpass';
-    filter.Q.value = params.res;
-    filter.frequency.setValueAtTime(freq * params.cutoff, audioCtx.currentTime);
+    filter.Q.value = safeParams.res;
+    filter.frequency.setValueAtTime(freq * safeParams.cutoff, audioCtx.currentTime);
     filter.frequency.exponentialRampToValueAtTime(freq, audioCtx.currentTime + 0.1);
 
     osc.connect(filter); filter.connect(vca); vca.connect(targetNode);
     
     vca.gain.setValueAtTime(0, audioCtx.currentTime);
     vca.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.01);
-    vca.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + params.decay);
+    vca.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + safeParams.decay);
     
-    osc.start(); osc.stop(audioCtx.currentTime + params.decay + 0.1);
+    osc.start(); osc.stop(audioCtx.currentTime + safeParams.decay + 0.1);
 };
 
-console.log("Audio Engine : Prêt (Passive Mode).");
+console.log("Audio Engine : Prêt (Mode Neutre - Aucun conflit).");
