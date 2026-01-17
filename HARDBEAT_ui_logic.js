@@ -1,32 +1,28 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (ATOMIC GRID FIX)
+   HARDBEAT PRO - UI LOGIC (METRONOME READY)
    ========================================== */
 let timerDrums;
 let timerSynths;
 
-// --- 1. GÉNÉRATION ATOMIQUE (DOM STABLE) ---
+// Variable d'état du métronome
+let isMetroOn = false;
+
 function initGrid(idPrefix) {
     const gridContainer = document.getElementById(idPrefix);
     if (!gridContainer) return;
-    
-    // On construit toute la chaîne HTML d'un coup pour éviter le "reflow"
     let htmlContent = '';
     const isDrum = (idPrefix === 'grid-seq1');
-    
     for (let i = 0; i < 16; i++) {
         let inner = `<div class="led"></div>`;
         if (isDrum) inner = `<span>${i+1}</span>` + inner;
         htmlContent += `<div class="step-pad" data-index="${i}">${inner}</div>`;
     }
-    
-    // Injection unique = DOM immédiatement stable
     gridContainer.innerHTML = htmlContent;
 }
 
 function initFaders(idPrefix, seqId) {
     const freqGrid = document.getElementById(idPrefix);
     if (!freqGrid) return;
-    
     let htmlContent = '';
     for (let i = 0; i < 16; i++) {
         htmlContent += `
@@ -38,9 +34,6 @@ function initFaders(idPrefix, seqId) {
     freqGrid.innerHTML = htmlContent;
 }
 
-// --- 2. GESTIONNAIRES D'ÉVÉNEMENTS ---
-
-// Faders (Mise à jour Cache + Visuel)
 document.addEventListener('input', (e) => {
     if (e.target.classList.contains('freq-fader')) {
         const val = parseFloat(e.target.value);
@@ -51,7 +44,6 @@ document.addEventListener('input', (e) => {
     }
 });
 
-// Liaison des paramètres audio
 function bindControls() {
     const bind = (id, obj, prop) => {
         const el = document.getElementById(id);
@@ -75,6 +67,10 @@ function bindControls() {
     bind('fm-decay', fmSettings, 'decay');
     bind('fm-level', fmSettings, 'level');
 
+    // Metro Toggle
+    const metroBox = document.getElementById('metro-toggle');
+    if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
+
     // Synth Vol & Master
     const v2 = document.getElementById('vol-seq2');
     if(v2) v2.oninput = (e) => synthVol2 = parseFloat(e.target.value);
@@ -84,7 +80,6 @@ function bindControls() {
         if(window.updateDistortion) window.updateDistortion(parseFloat(e.target.value)); 
     };
     
-    // Delay Direct Access
     const dAmt = document.getElementById('synth-delay-amt');
     if(dAmt) dAmt.oninput = (e) => {
         if(window.updateDelayAmount) window.updateDelayAmount(parseFloat(e.target.value));
@@ -108,10 +103,8 @@ function showParamsForTrack(idx) {
 
 function refreshGridVisuals() {
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
-    if(pads.length === 0) return; // Sécurité
-    
+    if(pads.length === 0) return;
     pads.forEach((pad, i) => {
-        // On s'assure que drumSequences est prêt
         if(drumSequences && drumSequences[currentTrackIndex]) {
             const isActive = drumSequences[currentTrackIndex][i];
             pad.classList.toggle('active', isActive);
@@ -166,14 +159,13 @@ function initSeq3Extension() {
         
         initGrid('grid-seq3');
         initFaders('grid-freq-seq3', 3);
-        
         const v3 = document.getElementById('vol-seq3');
         if(v3) v3.oninput = (e) => synthVol3 = parseFloat(e.target.value);
         document.getElementById('seq3-container').scrollIntoView({ behavior: 'smooth' });
     });
 }
 
-// --- BOUCLES DE LECTURE ---
+// --- BOUCLES ---
 let currentDrumStep = 0;
 let currentSynthStep = 0;
 
@@ -181,6 +173,13 @@ function runDrumLoop() {
     if (!isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
     const stepDuration = (60 / bpm) / 4 * 1000;
+
+    // --- LOGIQUE METRONOME (NOUVEAU) ---
+    // Tous les 4 pas (temps 0, 4, 8, 12)
+    if (isMetroOn && currentDrumStep % 4 === 0) {
+        // Si c'est le pas 0, c'est le premier temps (Downbeat) -> Bip aigu
+        playMetronome(currentDrumStep === 0);
+    }
 
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     pads.forEach(p => p.style.borderColor = "#333");
@@ -217,7 +216,6 @@ function runSynthLoop() {
 }
 
 // --- ÉCOUTEURS ---
-// Utilisation de Mousedown pour réactivité immédiate
 document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
@@ -251,28 +249,19 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// --- INITIALISATION FINALE (ORDRE CRITIQUE) ---
 window.addEventListener('load', () => {
-    console.log("UI Logic : Initialisation...");
-    
-    // 1. Création du DOM (Grilles)
     initGrid('grid-seq1');
     initGrid('grid-seq2');
     initFaders('grid-freq-seq2', 2);
-    
-    // 2. Liaisons
     bindControls();
     setupTempoDrag('display-bpm1');
     setupTempoDrag('display-bpm2');
     initSeq3Extension();
     
-    // 3. FORCE LE TRACK 0 (KICK) ET LE VISUEL
-    // On simule le "click" interne sur le Track 0 pour être sûr que tout est aligné
     currentTrackIndex = 0;
     showParamsForTrack(0);
-    setTimeout(() => refreshGridVisuals(), 50); // Petit délai de sécurité (50ms) pour être sûr que le DOM est peint
+    setTimeout(() => refreshGridVisuals(), 50);
     
-    // Randomize
     const btnRand = document.querySelector('.btn-random');
     if(btnRand) btnRand.onclick = () => {
         document.querySelectorAll('#grid-freq-seq2 .freq-fader').forEach(f => {
@@ -281,7 +270,6 @@ window.addEventListener('load', () => {
         });
     };
     
-    // Play Button
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) {
         playBtn.onclick = () => {
@@ -301,6 +289,5 @@ window.addEventListener('load', () => {
             }
         };
     }
-    
-    console.log("UI Logic : Prêt.");
+    console.log("UI Logic : Prêt (V-Final).");
 });
