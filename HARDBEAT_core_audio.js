@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - CORE AUDIO (PASSIVE TOOLBOX)
+   HARDBEAT PRO - CORE AUDIO (RESTORED ENGINE)
    ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -43,7 +43,7 @@ distoNode3.connect(masterGain); distoNode3.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode); delayNode.connect(delayMix); delayMix.connect(masterGain);
 feedback.gain.value = 0; delayMix.gain.value = 0;
 
-// --- API EFFETS ---
+// --- API MISE A JOUR TEMPS REEL ---
 window.updateAudioEffect = function(type, val) {
     if (type === 'disto2') distoNode2.curve = createDistortionCurve(val);
     if (type === 'disto3') distoNode3.curve = createDistortionCurve(val);
@@ -60,7 +60,7 @@ window.ensureAudioContext = function() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
 };
 
-// --- FONCTIONS DE JEU (Reçoivent tout en argument) ---
+// --- PLAYBACK FUNCTIONS (Reçoivent TOUT en argument) ---
 
 window.playMetronome = function(isDownbeat) { 
     const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); osc.connect(g); g.connect(masterGain); 
