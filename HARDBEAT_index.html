@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | LIVE PERFORMANCE MODE</title>
+    <title>HARDBEAT PRO | DUAL SYNTH ENGINE</title>
     <link rel="stylesheet" href="HARDBEAT_style.css">
 </head>
 <body>
@@ -20,7 +20,7 @@
 
         <section id="seq1-container" class="rack-section">
             <div class="section-header">
-                <h2>SEQ 1 : LIVE DRUM ENGINE</h2>
+                <h2>SEQ 1 : DRUM ENGINE</h2>
                 <div style="display:flex; gap:15px; align-items:center;">
                     <div class="bpm-control" style="border-right:1px solid #333; padding-right:15px;">
                         <label style="cursor:pointer; color:#00f3ff;">
@@ -40,46 +40,11 @@
             </div>
 
             <div class="track-selectors">
-                
-                <div class="track-unit">
-                    <div class="ms-group">
-                        <button class="btn-mute" data-track="0">M</button>
-                        <button class="btn-solo" data-track="0">S</button>
-                    </div>
-                    <button class="track-btn active" data-track="0">KIK</button>
-                </div>
-
-                <div class="track-unit">
-                    <div class="ms-group">
-                        <button class="btn-mute" data-track="1">M</button>
-                        <button class="btn-solo" data-track="1">S</button>
-                    </div>
-                    <button class="track-btn" data-track="1">SNR</button>
-                </div>
-
-                <div class="track-unit">
-                    <div class="ms-group">
-                        <button class="btn-mute" data-track="2">M</button>
-                        <button class="btn-solo" data-track="2">S</button>
-                    </div>
-                    <button class="track-btn" data-track="2">HHC</button>
-                </div>
-
-                <div class="track-unit">
-                    <div class="ms-group">
-                        <button class="btn-mute" data-track="3">M</button>
-                        <button class="btn-solo" data-track="3">S</button>
-                    </div>
-                    <button class="track-btn" data-track="3">HHO</button>
-                </div>
-
-                <div class="track-unit">
-                    <div class="ms-group">
-                        <button class="btn-mute" data-track="4">M</button>
-                        <button class="btn-solo" data-track="4">S</button>
-                    </div>
-                    <button class="track-btn" data-track="4">FM</button>
-                </div>
+                <div class="track-unit"><div class="ms-group"><button class="btn-mute" data-track="0">M</button><button class="btn-solo" data-track="0">S</button></div><button class="track-btn active" data-track="0">KIK</button></div>
+                <div class="track-unit"><div class="ms-group"><button class="btn-mute" data-track="1">M</button><button class="btn-solo" data-track="1">S</button></div><button class="track-btn" data-track="1">SNR</button></div>
+                <div class="track-unit"><div class="ms-group"><button class="btn-mute" data-track="2">M</button><button class="btn-solo" data-track="2">S</button></div><button class="track-btn" data-track="2">HHC</button></div>
+                <div class="track-unit"><div class="ms-group"><button class="btn-mute" data-track="3">M</button><button class="btn-solo" data-track="3">S</button></div><button class="track-btn" data-track="3">HHO</button></div>
+                <div class="track-unit"><div class="ms-group"><button class="btn-mute" data-track="4">M</button><button class="btn-solo" data-track="4">S</button></div><button class="track-btn" data-track="4">FM</button></div>
                 
                 <div id="instruments-params-container">
                     <div id="params-track-0" class="instr-params" style="display:flex;">
@@ -136,7 +101,7 @@
 
         <section id="seq2-container" class="rack-section synth-instance" data-id="2">
             <div class="section-header">
-                <h2>SEQ 2 : FREQ SYNTH</h2>
+                <h2>SEQ 2 : FREQ SYNTH (LEAD)</h2>
                 <div style="display:flex; gap:20px; align-items:center;">
                     <div class="bpm-control">
                         <label>VOL</label>
@@ -148,21 +113,23 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="synth-master-fixed" style="margin-bottom:15px;">
+                <span class="label-cyan">SEQ 2 PARAM ></span>
+                <div class="group"><label>DISTO</label><input type="range" id="synth2-disto" min="0" max="1000" value="0"></div>
+                <div class="group"><label>RES</label><input type="range" id="synth2-res" min="1" max="25" value="5"></div>
+                <div class="group"><label>CUTOFF</label><input type="range" id="synth2-cutoff" min="1" max="10" step="0.1" value="4"></div>
+                <div class="group"><label>DECAY</label><input type="range" id="synth2-decay" min="0.1" max="1.0" step="0.05" value="0.2"></div>
+                <div class="group" style="border-left:1px solid #444; padding-left:10px;"><label>DELAY AMT</label><input type="range" id="global-delay-amt" min="0" max="0.8" step="0.05" value="0"></div>
+                <div class="group"><label>DELAY TIME</label><input type="range" id="global-delay-time" min="0.1" max="1" step="0.05" value="0.375"></div>
+            </div>
+
             <div class="freq-sliders-container" id="grid-freq-seq2"></div>
             <div class="step-grid" id="grid-seq2"></div>
             <div class="synth-controls">
                 <div class="random-unit"><button class="btn-random">RANDOMIZE</button></div>
             </div>
         </section>
-
-        <div id="synth-global-params" class="synth-master-fixed">
-            <span class="label-cyan">SYNTH MASTER ></span>
-            <div class="group"><label>DISTORTION</label><input type="range" id="synth-disto" min="0" max="1000" value="0"></div>
-            <div class="group"><label>RESONANCE</label><input type="range" id="synth-res" min="1" max="25" value="5"></div>
-            <div class="group"><label>CUTOFF ENV</label><input type="range" id="synth-cutoff" min="1" max="10" step="0.1" value="4"></div>
-            <div class="group"><label>DELAY AMT</label><input type="range" id="synth-delay-amt" min="0" max="0.8" step="0.05" value="0"></div>
-            <div class="group"><label>DELAY TIME</label><input type="range" id="synth-delay-time" min="0.1" max="1" step="0.05" value="0.375"></div>
-        </div>
         
         <div id="extension-zone"></div>
         <footer id="ui-footer"><button id="add-seq-btn">+ EXTEND TO SEQ 3 (HARDGROOVE LAYER)</button></footer>
