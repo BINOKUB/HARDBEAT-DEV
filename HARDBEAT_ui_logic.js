@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (INDEPENDENT LOOPS)
+   HARDBEAT PRO - UI LOGIC (INSTANT RESPONSE)
    ========================================== */
 let timerDrums;
 let timerSynths;
@@ -16,18 +16,34 @@ function initGrid(idPrefix) {
     }
 }
 
-function initFaders(idPrefix) {
+function initFaders(idPrefix, seqId) {
     const freqGrid = document.getElementById(idPrefix);
     if (!freqGrid) return;
     freqGrid.innerHTML = '';
     for (let i = 0; i < 16; i++) {
+        // Ajout d'un attribut data-seq pour savoir quel cache mettre à jour
         freqGrid.innerHTML += `
             <div class="fader-unit">
                 <span class="hz-label">440Hz</span>
-                <input type="range" class="freq-fader" min="50" max="880" value="440" oninput="this.previousElementSibling.innerText=this.value+'Hz'">
+                <input type="range" class="freq-fader" data-seq="${seqId}" data-index="${i}" min="50" max="880" value="440">
             </div>`;
     }
 }
+
+// Gestionnaire global pour les faders de fréquence
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('freq-fader')) {
+        const val = parseFloat(e.target.value);
+        const idx = parseInt(e.target.dataset.index);
+        const seq = parseInt(e.target.dataset.seq);
+        
+        // Mise à jour visuelle du label
+        if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
+        
+        // Mise à jour du CACHE audio (si la fonction existe)
+        if (window.updateFreqCache) window.updateFreqCache(seq, idx, val);
+    }
+});
 
 function bindControls() {
     const bind = (id, obj, prop) => {
@@ -35,7 +51,7 @@ function bindControls() {
         if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value);
     };
 
-    // DRUMS
+    // Drums
     bind('kick-pitch', kickSettings, 'pitch');
     bind('kick-decay', kickSettings, 'decay');
     bind('kick-level', kickSettings, 'level');
@@ -52,13 +68,15 @@ function bindControls() {
     bind('fm-decay', fmSettings, 'decay');
     bind('fm-level', fmSettings, 'level');
 
-    // SYNTH VOLUMES (Variable globale directe)
+    // Synth Vol
     const v2 = document.getElementById('vol-seq2');
     if(v2) v2.oninput = (e) => synthVol2 = parseFloat(e.target.value);
     
-    // SYNTH MASTER
+    // Synth Master (Disto optimisée)
     const disto = document.getElementById('synth-disto');
-    if (disto) disto.oninput = (e) => { if(window.updateDistortion) window.updateDistortion(parseFloat(e.target.value)); };
+    if (disto) disto.oninput = (e) => { 
+        if(window.updateDistortion) window.updateDistortion(parseFloat(e.target.value)); 
+    };
     
     bind('synth-res', synthParams, 'resonance');
     bind('synth-cutoff', synthParams, 'cutoffEnv');
@@ -117,7 +135,6 @@ function initSeq3Extension() {
     btn.addEventListener('click', () => {
         btn.disabled = true; btn.style.opacity = "0.3"; btn.innerText = "SEQ 3 ACTIVE";
         const zone = document.getElementById('extension-zone');
-        // On injecte aussi le Volume pour SEQ 3
         zone.innerHTML = `
         <section id="seq3-container" class="rack-section synth-instance">
             <div class="section-header">
@@ -138,28 +155,28 @@ function initSeq3Extension() {
         </section>`;
         
         initGrid('grid-seq3');
-        initFaders('grid-freq-seq3');
+        initFaders('grid-freq-seq3', 3); // On passe l'ID 3
         
-        // Binding immédiat du volume 3
         const v3 = document.getElementById('vol-seq3');
         if(v3) v3.oninput = (e) => synthVol3 = parseFloat(e.target.value);
-        
         document.getElementById('seq3-container').scrollIntoView({ behavior: 'smooth' });
     });
 }
 
-// --- BOUCLE 1 : DRUMS ---
 function runDrumLoop() {
     if (!isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
     const stepDuration = (60 / bpm) / 4 * 1000;
 
-    // Visuel Tête de lecture Drums
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     pads.forEach(p => p.style.borderColor = "#333");
+    if (pads[currentTrackIndex] && pads[currentTrackIndex]) { 
+        // Note: Visuel tête de lecture simplifié
+    }
+    // Correction tête de lecture
     if (pads[currentDrumStep]) pads[currentDrumStep].style.borderColor = "#ffffff";
+    else if (currentDrumStep === 0 && pads[0]) pads[0].style.borderColor = "#ffffff";
 
-    // Audio
     if (drumSequences[0][currentDrumStep]) playKick();
     if (drumSequences[1][currentDrumStep]) playSnare();
     if (drumSequences[2][currentDrumStep]) playHiHat(false);
@@ -170,56 +187,33 @@ function runDrumLoop() {
     timerDrums = setTimeout(runDrumLoop, stepDuration);
 }
 
-// --- BOUCLE 2 : SYNTHS (SEQ 2 + SEQ 3) ---
+let currentDrumStep = 0;
+let currentSynthStep = 0;
+
 function runSynthLoop() {
     if (!isPlaying) return;
-    // On lit le TEMPO 2 !
     const bpm = parseInt(document.getElementById('display-bpm2').innerText) || 122;
     const stepDuration = (60 / bpm) / 4 * 1000;
 
-    // Visuel Tête de lecture Synth (Seq 2)
     const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
     pads2.forEach(p => p.style.borderColor = "#333");
-    if (pads2[currentSynthStep]) pads2[currentSynthStep].style.borderColor = "#00f3ff"; // Cyan
+    if (pads2[currentSynthStep]) pads2[currentSynthStep].style.borderColor = "#00f3ff";
 
-    // Visuel Tête de lecture Synth (Seq 3)
     const pads3 = document.querySelectorAll('#grid-seq3 .step-pad');
     if (pads3.length > 0) {
         pads3.forEach(p => p.style.borderColor = "#333");
-        if (pads3[currentSynthStep]) pads3[currentSynthStep].style.borderColor = "#a855f7"; // Violet
+        if (pads3[currentSynthStep]) pads3[currentSynthStep].style.borderColor = "#a855f7";
     }
 
-    // Audio Trigger (Gère Seq 2 et 3)
     checkSynthTick(currentSynthStep);
 
     currentSynthStep = (currentSynthStep + 1) % 16;
     timerSynths = setTimeout(runSynthLoop, stepDuration);
 }
 
-// --- STARTUP ---
-window.addEventListener('load', () => {
-    initGrid('grid-seq1');
-    initGrid('grid-seq2');
-    initFaders('grid-freq-seq2');
-    bindControls();
-    showParamsForTrack(0);
-    
-    // Config Tempos Indépendants
-    setupTempoDrag('display-bpm1');
-    setupTempoDrag('display-bpm2');
-    initSeq3Extension();
-
-    // Randomize
-    const btnRand = document.querySelector('.btn-random');
-    if(btnRand) btnRand.onclick = () => {
-        document.querySelectorAll('#grid-freq-seq2 .freq-fader').forEach(f => {
-            f.value = Math.floor(Math.random()*(880-50)+50);
-            if(f.previousElementSibling) f.previousElementSibling.innerText = f.value+"Hz";
-        });
-    };
-});
-
-document.addEventListener('click', (e) => {
+// --- CLIC INSTANTANÉ (MOUSEDOWN) ---
+// C'est ici que se joue la réactivité des pads
+document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
         const idx = parseInt(pad.dataset.index);
@@ -240,6 +234,10 @@ document.addEventListener('click', (e) => {
             if(led) led.style.background = synthSequences.seq3[idx] ? "#a855f7" : "#330000";
         }
     }
+});
+
+// Clics normaux pour les boutons de track
+document.addEventListener('click', (e) => {
     if (e.target.classList.contains('track-btn')) {
         document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
@@ -247,6 +245,27 @@ document.addEventListener('click', (e) => {
         showParamsForTrack(currentTrackIndex);
         refreshGridVisuals();
     }
+});
+
+window.addEventListener('load', () => {
+    initGrid('grid-seq1');
+    initGrid('grid-seq2');
+    initFaders('grid-freq-seq2', 2);
+    bindControls();
+    showParamsForTrack(0);
+    setupTempoDrag('display-bpm1');
+    setupTempoDrag('display-bpm2');
+    initSeq3Extension();
+    
+    // Randomize
+    const btnRand = document.querySelector('.btn-random');
+    if(btnRand) btnRand.onclick = () => {
+        document.querySelectorAll('#grid-freq-seq2 .freq-fader').forEach(f => {
+            f.value = Math.floor(Math.random()*(880-50)+50);
+            // On déclenche l'événement input pour mettre à jour le cache
+            f.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    };
 });
 
 const playBtn = document.getElementById('master-play-stop');
@@ -263,8 +282,6 @@ if (playBtn) {
             isPlaying = true; 
             playBtn.innerText = "STOP";
             playBtn.style.background = "#00f3ff"; playBtn.style.color = "#000";
-            
-            // Lance les DEUX moteurs
             runDrumLoop();
             runSynthLoop();
         }
