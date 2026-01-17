@@ -11,14 +11,14 @@ let currentStep = 0;
 let drumSequences = Array.from({ length: 5 }, () => Array(16).fill(false));
 let synthSequences = { seq2: Array(16).fill(false), seq3: Array(16).fill(false) };
 
-// Paramètres de synthèse sécurisés
+// Paramètres de synthèse
 let kickSettings = { pitch: 150, decay: 0.5, level: 0.8 };
 let snareSettings = { snappy: 1, tone: 1000, level: 0.6 };
 let hhSettings = { tone: 8000, decayClose: 0.05, decayOpen: 0.3, levelClose: 0.4, levelOpen: 0.5 };
 let fmSettings = { carrierPitch: 100, modPitch: 50, fmAmount: 100, decay: 0.3, level: 0.5 };
 let synthParams = { disto: 400, resonance: 12, cutoffEnv: 4, delayAmt: 0.3, delayTime: 0.375 };
 
-// --- CHAINE D'EFFETS SYNTH ---
+// --- EFFETS ---
 const distortionNode = audioCtx.createWaveShaper();
 const delayNode = audioCtx.createDelay(2.0);
 const feedback = audioCtx.createGain();
@@ -32,49 +32,42 @@ function createDistortionCurve(amount = 50) {
     }
     return curve;
 }
-
 distortionNode.curve = createDistortionCurve(synthParams.disto);
-distortionNode.connect(masterGain); 
-distortionNode.connect(delayNode);
+distortionNode.connect(masterGain); distortionNode.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode);
 delayNode.connect(delayMix); delayMix.connect(masterGain);
 
-// --- FONCTIONS DE SYNTHÈSE ---
+// --- SYNTHÈSE DRUMS ---
 function playKick() {
     const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(masterGain);
+    const g = audioCtx.createGain();
+    osc.connect(g); g.connect(masterGain);
     osc.frequency.setValueAtTime(kickSettings.pitch, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + kickSettings.decay);
-    gain.gain.setValueAtTime(kickSettings.level, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + kickSettings.decay);
+    g.gain.setValueAtTime(kickSettings.level, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + kickSettings.decay);
     osc.start(); osc.stop(audioCtx.currentTime + kickSettings.decay);
 }
 
-function playSynthNote(frequency, duration = 0.2) {
-    if (!frequency || frequency <= 0) return;
+// --- SYNTHÈSE SYNTH (Avec enveloppe courte pour éviter le grincement) ---
+function playSynthNote(freq) {
+    if (!freq || freq <= 0) return;
     const osc = audioCtx.createOscillator();
-    const filter = audioCtx.createBiquadFilter();
     const vca = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
     
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     filter.type = 'lowpass';
     filter.Q.value = synthParams.resonance;
-    filter.frequency.setValueAtTime(frequency * synthParams.cutoffEnv, audioCtx.currentTime);
-    
+    filter.frequency.setValueAtTime(freq * synthParams.cutoffEnv, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(freq, audioCtx.currentTime + 0.1);
+
     osc.connect(filter); filter.connect(vca); vca.connect(distortionNode);
     
     vca.gain.setValueAtTime(0, audioCtx.currentTime);
     vca.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
-    vca.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    vca.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15); // Durée fixe courte
     
-    osc.start(); osc.stop(audioCtx.currentTime + duration);
-}
-
-function checkSynthTick(step) {
-    if (synthSequences.seq2[step]) {
-        const faders = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
-        if (faders[step]) playSynthNote(parseFloat(faders[step].value));
-    }
+    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
 }
