@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (INSTANT RESPONSE)
+   HARDBEAT PRO - UI LOGIC (KICK & DELAY FIX)
    ========================================== */
 let timerDrums;
 let timerSynths;
@@ -21,7 +21,6 @@ function initFaders(idPrefix, seqId) {
     if (!freqGrid) return;
     freqGrid.innerHTML = '';
     for (let i = 0; i < 16; i++) {
-        // Ajout d'un attribut data-seq pour savoir quel cache mettre à jour
         freqGrid.innerHTML += `
             <div class="fader-unit">
                 <span class="hz-label">440Hz</span>
@@ -30,17 +29,12 @@ function initFaders(idPrefix, seqId) {
     }
 }
 
-// Gestionnaire global pour les faders de fréquence
 document.addEventListener('input', (e) => {
     if (e.target.classList.contains('freq-fader')) {
         const val = parseFloat(e.target.value);
         const idx = parseInt(e.target.dataset.index);
         const seq = parseInt(e.target.dataset.seq);
-        
-        // Mise à jour visuelle du label
         if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
-        
-        // Mise à jour du CACHE audio (si la fonction existe)
         if (window.updateFreqCache) window.updateFreqCache(seq, idx, val);
     }
 });
@@ -72,25 +66,25 @@ function bindControls() {
     const v2 = document.getElementById('vol-seq2');
     if(v2) v2.oninput = (e) => synthVol2 = parseFloat(e.target.value);
     
-    // Synth Master (Disto optimisée)
+    // MASTER EFFECTS (CORRIGÉS)
     const disto = document.getElementById('synth-disto');
     if (disto) disto.oninput = (e) => { 
         if(window.updateDistortion) window.updateDistortion(parseFloat(e.target.value)); 
     };
     
-    bind('synth-res', synthParams, 'resonance');
-    bind('synth-cutoff', synthParams, 'cutoffEnv');
+    // Utilisation des nouvelles portes d'accès pour le Delay
     const dAmt = document.getElementById('synth-delay-amt');
     if(dAmt) dAmt.oninput = (e) => {
-        synthParams.delayAmt = parseFloat(e.target.value);
-        if(typeof delayMix!=='undefined') delayMix.gain.value = synthParams.delayAmt;
-        if(typeof feedback!=='undefined') feedback.gain.value = synthParams.delayAmt * 0.7;
+        if(window.updateDelayAmount) window.updateDelayAmount(parseFloat(e.target.value));
     };
+    
     const dTime = document.getElementById('synth-delay-time');
     if(dTime) dTime.oninput = (e) => {
-        synthParams.delayTime = parseFloat(e.target.value);
-        if(typeof delayNode!=='undefined') delayNode.delayTime.value = synthParams.delayTime;
+        if(window.updateDelayTime) window.updateDelayTime(parseFloat(e.target.value));
     };
+
+    bind('synth-res', synthParams, 'resonance');
+    bind('synth-cutoff', synthParams, 'cutoffEnv');
     const vol = document.getElementById('master-gain');
     if(vol) vol.oninput = (e) => masterGain.gain.value = parseFloat(e.target.value);
 }
@@ -155,7 +149,7 @@ function initSeq3Extension() {
         </section>`;
         
         initGrid('grid-seq3');
-        initFaders('grid-freq-seq3', 3); // On passe l'ID 3
+        initFaders('grid-freq-seq3', 3);
         
         const v3 = document.getElementById('vol-seq3');
         if(v3) v3.oninput = (e) => synthVol3 = parseFloat(e.target.value);
@@ -167,15 +161,9 @@ function runDrumLoop() {
     if (!isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
     const stepDuration = (60 / bpm) / 4 * 1000;
-
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     pads.forEach(p => p.style.borderColor = "#333");
-    if (pads[currentTrackIndex] && pads[currentTrackIndex]) { 
-        // Note: Visuel tête de lecture simplifié
-    }
-    // Correction tête de lecture
     if (pads[currentDrumStep]) pads[currentDrumStep].style.borderColor = "#ffffff";
-    else if (currentDrumStep === 0 && pads[0]) pads[0].style.borderColor = "#ffffff";
 
     if (drumSequences[0][currentDrumStep]) playKick();
     if (drumSequences[1][currentDrumStep]) playSnare();
@@ -206,13 +194,11 @@ function runSynthLoop() {
     }
 
     checkSynthTick(currentSynthStep);
-
     currentSynthStep = (currentSynthStep + 1) % 16;
     timerSynths = setTimeout(runSynthLoop, stepDuration);
 }
 
-// --- CLIC INSTANTANÉ (MOUSEDOWN) ---
-// C'est ici que se joue la réactivité des pads
+// Clics Instantanés
 document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
@@ -236,7 +222,6 @@ document.addEventListener('mousedown', (e) => {
     }
 });
 
-// Clics normaux pour les boutons de track
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('track-btn')) {
         document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
@@ -257,12 +242,14 @@ window.addEventListener('load', () => {
     setupTempoDrag('display-bpm2');
     initSeq3Extension();
     
+    // LA LIGNE MAGIQUE QUI CORRIGE LE KICK ENDORMI :
+    refreshGridVisuals(); 
+    
     // Randomize
     const btnRand = document.querySelector('.btn-random');
     if(btnRand) btnRand.onclick = () => {
         document.querySelectorAll('#grid-freq-seq2 .freq-fader').forEach(f => {
             f.value = Math.floor(Math.random()*(880-50)+50);
-            // On déclenche l'événement input pour mettre à jour le cache
             f.dispatchEvent(new Event('input', { bubbles: true }));
         });
     };
