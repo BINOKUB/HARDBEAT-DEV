@@ -545,3 +545,28 @@ body { background-color: var(--bg-color); color: #e0e0e0; font-family: 'Segoe UI
 .help-tip:hover:before, .help-tip:hover:after {
     display: block;
 }
+
+/* Nouvelle colonne pour M, S, R et ? */
+.track-controls-col {
+    display: flex;
+    flex-direction: column; /* Empile verticalement */
+    align-items: center;    /* CENTRE horizontalement (C'est la clé !) */
+    width: 20px;            /* Largeur fixe */
+    height: 100%;           /* Prend toute la hauteur */
+    gap: 1px;               /* Petit espace entre les boutons */
+}
+
+/* Ajustement pour que les boutons prennent bien la place */
+.track-controls-col .btn-mute,
+.track-controls-col .btn-solo,
+.track-controls-col .btn-drum-rand {
+    width: 100%;            /* Remplissent la largeur de 20px */
+    margin: 0;
+    flex-grow: 1;           /* Se partagent la hauteur */
+}
+
+/* Petit ajustement pour le ? */
+.track-controls-col .help-tip {
+    margin: 2px 0 0 0;      /* Un peu d'espace au-dessus, pas à gauche */
+    margin-left: 0 !important; /* Force le centrage (annule la marge précédente) */
+}
