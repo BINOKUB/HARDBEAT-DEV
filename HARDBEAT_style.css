@@ -300,3 +300,17 @@ h2 {
     font-family: 'Courier New', monospace;
     cursor: ns-resize;
 }
+
+/* --- NUMÉROS DE PADS --- */
+.step-pad span {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 9px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #ffffff !important;
+    opacity: 0.6;
+    pointer-events: none; /* <--- TRÈS IMPORTANT : Le clic passe à travers le texte */
+    z-index: 2;
+}
