@@ -160,3 +160,40 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 #display-bpm1, #display-bpm2 {
     color: var(--accent-color); font-weight: bold; font-family: 'Courier New', monospace; cursor: ns-resize;
 }
+
+/* AJOUTE CECI À LA FIN DE TON CSS, OU REMPLACE TOUT : */
+
+/* --- STYLE DU SLIDER GLOBAL D'ACCENT --- */
+.accent-control-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    padding: 10px 5px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    height: 100%; /* S'adapte à la hauteur de la grille */
+}
+
+.accent-control-unit label {
+    font-size: 10px;
+    color: #ffaa00; /* Orange */
+    font-weight: bold;
+    margin-bottom: 8px;
+    writing-mode: vertical-rl; /* Texte vertical pour le style */
+    transform: rotate(180deg);
+}
+
+.accent-control-unit input[type=range] {
+    appearance: slider-vertical; /* Fader Vertical natif */
+    width: 8px;
+    height: 100px;
+    background: #333;
+    cursor: ns-resize;
+}
+
+/* Modification pour que la grille s'aligne bien avec le slider */
+.drum-rack-row {
+    margin-top: 10px;
+}
