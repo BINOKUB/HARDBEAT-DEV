@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | SWING MASTER</title>
+    <title>HARDBEAT PRO | LIVE PERFORMANCE MODE</title>
     <link rel="stylesheet" href="HARDBEAT_style.css">
 </head>
 <body>
@@ -20,20 +20,18 @@
 
         <section id="seq1-container" class="rack-section">
             <div class="section-header">
-                <h2>SEQ 1 : DRUM ENGINE</h2>
+                <h2>SEQ 1 : LIVE DRUM ENGINE</h2>
                 <div style="display:flex; gap:15px; align-items:center;">
                     <div class="bpm-control" style="border-right:1px solid #333; padding-right:15px;">
                         <label style="cursor:pointer; color:#00f3ff;">
                             CLICK <input type="checkbox" id="metro-toggle" style="vertical-align:middle;">
                         </label>
                     </div>
-                    
                     <div class="bpm-control" style="border-right:1px solid #333; padding-right:15px;">
                         <label>SWING</label>
-                        <input type="range" id="global-swing" min="0" max="50" value="0" style="width:60px; height:4px;">
-                        <span id="swing-val" style="font-size:10px; color:#888;">0%</span>
+                        <input type="range" id="global-swing" min="0" max="50" value="6" style="width:60px; height:4px;">
+                        <span id="swing-val" style="font-size:10px; color:#888;">6%</span>
                     </div>
-
                     <div class="bpm-control">
                         <label>TEMPO 1</label>
                         <span id="display-bpm1">120</span> BPM
@@ -42,11 +40,46 @@
             </div>
 
             <div class="track-selectors">
-                <button class="track-btn active" data-track="0">KIK</button>
-                <button class="track-btn" data-track="1">SNARE</button>
-                <button class="track-btn" data-track="2">HH-CLOSE</button>
-                <button class="track-btn" data-track="3">HH-OPEN</button>
-                <button class="track-btn" data-track="4">FM-DRUM</button>
+                
+                <div class="track-unit">
+                    <div class="ms-group">
+                        <button class="btn-mute" data-track="0">M</button>
+                        <button class="btn-solo" data-track="0">S</button>
+                    </div>
+                    <button class="track-btn active" data-track="0">KIK</button>
+                </div>
+
+                <div class="track-unit">
+                    <div class="ms-group">
+                        <button class="btn-mute" data-track="1">M</button>
+                        <button class="btn-solo" data-track="1">S</button>
+                    </div>
+                    <button class="track-btn" data-track="1">SNR</button>
+                </div>
+
+                <div class="track-unit">
+                    <div class="ms-group">
+                        <button class="btn-mute" data-track="2">M</button>
+                        <button class="btn-solo" data-track="2">S</button>
+                    </div>
+                    <button class="track-btn" data-track="2">HHC</button>
+                </div>
+
+                <div class="track-unit">
+                    <div class="ms-group">
+                        <button class="btn-mute" data-track="3">M</button>
+                        <button class="btn-solo" data-track="3">S</button>
+                    </div>
+                    <button class="track-btn" data-track="3">HHO</button>
+                </div>
+
+                <div class="track-unit">
+                    <div class="ms-group">
+                        <button class="btn-mute" data-track="4">M</button>
+                        <button class="btn-solo" data-track="4">S</button>
+                    </div>
+                    <button class="track-btn" data-track="4">FM</button>
+                </div>
                 
                 <div id="instruments-params-container">
                     <div id="params-track-0" class="instr-params" style="display:flex;">
