@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | DUAL SYNTH ENGINE</title>
+    <title>HARDBEAT PRO | SYNTH MUTES</title>
     <link rel="stylesheet" href="HARDBEAT_style.css">
 </head>
 <body>
@@ -126,8 +126,12 @@
 
             <div class="freq-sliders-container" id="grid-freq-seq2"></div>
             <div class="step-grid" id="grid-seq2"></div>
-            <div class="synth-controls">
-                <div class="random-unit"><button class="btn-random">RANDOMIZE</button></div>
+            
+            <div class="synth-controls" style="display:flex; gap:10px; margin-top:10px; align-items:center;">
+                <button id="btn-mute-seq2" class="btn-synth-mute" data-target="2">MUTE SEQ 2</button>
+                <div class="random-unit">
+                    <button class="btn-random" data-target="2">RANDOMIZE SEQ 2</button>
+                </div>
             </div>
         </section>
         
