@@ -285,3 +285,66 @@ function updateMemoryUI() {
         }
     }
 }
+
+function loadFactoryPreset(key) {
+    const p = FACTORY_PRESETS[key];
+    if(!p) return;
+
+    // 1. Reset Clean
+    clearAllData();
+
+    // 2. Load Data from Preset
+    window.masterLength = p.masterLength;
+    document.getElementById('display-bpm1').innerText = p.bpm;
+    document.getElementById('display-bpm2').innerText = p.bpm; // Sync
+    
+    // Sliders Global
+    const setSlider = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
+    setSlider('global-swing', p.swing);
+
+    // Track Lengths
+    if(p.trackLengths) {
+        window.trackLengths = [...p.trackLengths]; // Clone
+        // Update sliders steps UI
+        setSlider('kick-steps', p.trackLengths[0]);
+        setSlider('snare-steps', p.trackLengths[1]);
+        setSlider('hhc-steps', p.trackLengths[2]);
+        setSlider('hho-steps', p.trackLengths[3]);
+        setSlider('fm-steps', p.trackLengths[4]);
+    }
+
+    // Drums
+    for(let i=0; i<5; i++) {
+        window.drumSequences[i] = [...p.drums.seq[i], ...Array(64-p.drums.seq[i].length).fill(false)];
+        if(p.drums.accents[i]) window.drumAccents[i] = [...p.drums.accents[i], ...Array(64-p.drums.accents[i].length).fill(false)];
+    }
+
+    // Synths
+    if(p.synths.seq2) window.synthSequences.seq2 = [...p.synths.seq2, ...Array(64-p.synths.seq2.length).fill(false)];
+    if(p.synths.seq3) window.synthSequences.seq3 = [...p.synths.seq3, ...Array(64-p.synths.seq3.length).fill(false)];
+
+    // Freqs
+    if(p.freqs2) window.freqDataSeq2 = [...p.freqs2];
+    else if(p.freqs && p.freqs.s2) window.freqDataSeq2.fill(p.freqs.s2); // Uniforme
+    
+    if(p.freqs3) window.freqDataSeq3 = [...p.freqs3];
+    else if(p.freqs && p.freqs.s3) window.freqDataSeq3.fill(p.freqs.s3); // Uniforme
+
+    // Update UI
+    document.querySelectorAll('.btn-length').forEach(b => { b.classList.toggle('active', parseInt(b.dataset.length) === window.masterLength); });
+    if(window.updateNavButtonsState) window.updateNavButtonsState();
+    if(window.refreshGridVisuals) window.refreshGridVisuals();
+    if(window.refreshFadersVisuals) {
+        window.refreshFadersVisuals(2);
+        if(document.getElementById('grid-seq3')) window.refreshFadersVisuals(3);
+    }
+    
+    // Si Seq 3 utilisé dans le preset, on ouvre le panneau
+    const seq3Used = p.synths.seq3.some(x => x === true);
+    const isSeq3Visible = document.getElementById('seq3-container');
+    if (seq3Used && !isSeq3Visible) {
+         const btnAdd = document.getElementById('add-seq-btn'); if(btnAdd) btnAdd.click();
+    }
+
+    console.log(`Preset ${p.name} loaded.`);
+}
