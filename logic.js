@@ -1,16 +1,16 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (MODULAR V5)
+   HARDBEAT PRO - UI LOGIC (V5 SAFE MODE)
    ========================================== */
 
 let timerDrums; let timerSynths;
 let isMetroOn = false; 
 let globalSwing = 0.06;
 
-// --- EXPOSITION DES VARIABLES GLOBALES (Pour storage.js) ---
+// --- VARIABLES GLOBALES ---
 window.masterLength = 16;      
 window.isSaveMode = false;
 
-// Mémoire des séquences (Attachée à window pour accès global)
+// Mémoire
 window.drumSequences = Array.from({ length: 5 }, () => Array(64).fill(false));
 window.drumAccents = Array.from({ length: 5 }, () => Array(64).fill(false));
 window.synthSequences = { seq2: Array(64).fill(false), seq3: Array(64).fill(false) };
@@ -21,7 +21,7 @@ window.trackLengths = [16, 16, 16, 16, 16];
 window.trackMutes = [false, false, false, false, false];
 window.trackSolos = [false, false, false, false, false];
 
-// Variables internes de navigation (pas besoin d'être globales)
+// Internes
 let currentPageSeq1 = 0;    
 let currentPageSeq2 = 0;    
 let currentPageSeq3 = 0; 
@@ -30,11 +30,22 @@ let currentTrackIndex = 0;
 
 // --- INIT ---
 window.addEventListener('load', () => {
+    console.log("Initializing Logic...");
+    
+    // Vérification AUDIO
+    if (!window.audioCtx) console.error("ERREUR CRITIQUE: audio.js ne semble pas chargé !");
+
     initGrid('grid-seq1'); 
     initGrid('grid-seq2'); 
     initFaders('grid-freq-seq2', 2);
     
-    bindControls(); 
+    // On lie les contrôles seulement si audio.js a bien créé les objets window.xxxx
+    if(window.kickSettings) {
+        bindControls(); 
+    } else {
+        alert("Attention: Le moteur audio ne répond pas. Vérifiez le fichier audio.js.");
+    }
+
     setupTempoDrag('display-bpm1'); 
     setupTempoDrag('display-bpm2'); 
     initSeq3Extension();
@@ -44,11 +55,9 @@ window.addEventListener('load', () => {
     currentTrackIndex = 0; 
     showParamsForTrack(0); 
     
-    // Initialisation du Module de Stockage (si présent)
+    // Storage check
     if(typeof initStorageSystem === 'function') {
         initStorageSystem();
-    } else {
-        console.warn("Storage.js non chargé !");
     }
     
     refreshGridVisuals();
@@ -57,10 +66,16 @@ window.addEventListener('load', () => {
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) playBtn.onclick = () => togglePlay(playBtn);
     
-    console.log("UI Logic V5: Ready.");
+    console.log("UI Logic V5 Safe: Ready.");
 });
 
 function togglePlay(btn) {
+    // Protection crash si audioCtx manque
+    if (!window.audioCtx) {
+        alert("Erreur: AudioContext non trouvé.");
+        return;
+    }
+
     if (window.isPlaying) {
         window.isPlaying = false; 
         clearTimeout(timerDrums);
@@ -68,6 +83,7 @@ function togglePlay(btn) {
         btn.innerText = "PLAY / STOP";
         btn.style.background = "#222"; 
         btn.style.color = "#fff";
+        
         trackPositions = [0,0,0,0,0];
         globalTickCount = 0;
         synthTickCount = 0;
@@ -79,6 +95,7 @@ function togglePlay(btn) {
         btn.innerText = "STOP";
         btn.style.background = "#00f3ff"; 
         btn.style.color = "#000";
+        
         trackPositions = [0,0,0,0,0]; 
         currentSynthStep = 0;
         globalTickCount = 0;
@@ -88,7 +105,7 @@ function togglePlay(btn) {
     }
 }
 
-// --- GESTION 64 PAS ---
+// --- GESTION 64 PAS & NAV ---
 function setupLengthControls() {
     const btns = document.querySelectorAll('.btn-length');
     btns.forEach(btn => {
@@ -96,15 +113,13 @@ function setupLengthControls() {
             btns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             window.masterLength = parseInt(btn.dataset.length);
-            // On met à jour l'indicateur UI global pour storage.js aussi
-            if(window.updateNavButtonsState) window.updateNavButtonsState();
             
-            // Sécurité pagination
+            // Reset des pages si on raccourcit
             if (currentPageSeq1 * 16 >= window.masterLength) { currentPageSeq1 = 0; updatePageIndicator('seq1'); }
             if (currentPageSeq2 * 16 >= window.masterLength) { currentPageSeq2 = 0; updatePageIndicator('seq2'); }
             if (currentPageSeq3 * 16 >= window.masterLength) { currentPageSeq3 = 0; updatePageIndicator('seq3'); }
             
-            updateNavButtonsState();
+            updateNavButtonsState(); // Force update des boutons grisés/actifs
             refreshGridVisuals();
             refreshFadersVisuals(2);
             if(document.getElementById('grid-seq3')) refreshFadersVisuals(3);
@@ -113,14 +128,20 @@ function setupLengthControls() {
 }
 
 function setupPageNavigation() {
-    document.getElementById('btn-prev-page-seq1').onclick = () => { if(currentPageSeq1 > 0) { currentPageSeq1--; updatePageIndicator('seq1'); refreshGridVisuals(); }};
-    document.getElementById('btn-next-page-seq1').onclick = () => { if((currentPageSeq1 + 1) * 16 < window.masterLength) { currentPageSeq1++; updatePageIndicator('seq1'); refreshGridVisuals(); }};
-    document.getElementById('btn-prev-page-seq2').onclick = () => { if(currentPageSeq2 > 0) { currentPageSeq2--; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
-    document.getElementById('btn-next-page-seq2').onclick = () => { if((currentPageSeq2 + 1) * 16 < window.masterLength) { currentPageSeq2++; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
+    const p1 = document.getElementById('btn-prev-page-seq1');
+    const n1 = document.getElementById('btn-next-page-seq1');
+    if(p1) p1.onclick = () => { if(currentPageSeq1 > 0) { currentPageSeq1--; updatePageIndicator('seq1'); refreshGridVisuals(); }};
+    if(n1) n1.onclick = () => { if((currentPageSeq1 + 1) * 16 < window.masterLength) { currentPageSeq1++; updatePageIndicator('seq1'); refreshGridVisuals(); }};
+
+    const p2 = document.getElementById('btn-prev-page-seq2');
+    const n2 = document.getElementById('btn-next-page-seq2');
+    if(p2) p2.onclick = () => { if(currentPageSeq2 > 0) { currentPageSeq2--; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
+    if(n2) n2.onclick = () => { if((currentPageSeq2 + 1) * 16 < window.masterLength) { currentPageSeq2++; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
 }
 
 function updatePageIndicator(seqId) {
     const indicator = document.getElementById(`page-indicator-${seqId}`);
+    if(!indicator) return;
     let page = (seqId === 'seq1') ? currentPageSeq1 : (seqId === 'seq2') ? currentPageSeq2 : currentPageSeq3;
     const start = (page * 16) + 1;
     const end = (page + 1) * 16;
@@ -128,22 +149,26 @@ function updatePageIndicator(seqId) {
     updateNavButtonsState();
 }
 
-// Exposer cette fonction pour storage.js
-window.updateNavButtonsState = function updateNavButtonsState() {
-    document.getElementById('btn-prev-page-seq1').disabled = (currentPageSeq1 === 0);
-    document.getElementById('btn-next-page-seq1').disabled = ((currentPageSeq1 + 1) * 16 >= window.masterLength);
-    document.getElementById('btn-prev-page-seq2').disabled = (currentPageSeq2 === 0);
-    document.getElementById('btn-next-page-seq2').disabled = ((currentPageSeq2 + 1) * 16 >= window.masterLength);
+window.updateNavButtonsState = function() {
+    const p1 = document.getElementById('btn-prev-page-seq1');
+    const n1 = document.getElementById('btn-next-page-seq1');
+    if(p1) p1.disabled = (currentPageSeq1 === 0);
+    if(n1) n1.disabled = ((currentPageSeq1 + 1) * 16 >= window.masterLength);
+
+    const p2 = document.getElementById('btn-prev-page-seq2');
+    const n2 = document.getElementById('btn-next-page-seq2');
+    if(p2) p2.disabled = (currentPageSeq2 === 0);
+    if(n2) n2.disabled = ((currentPageSeq2 + 1) * 16 >= window.masterLength);
+    
     const p3 = document.getElementById('btn-prev-page-seq3');
     const n3 = document.getElementById('btn-next-page-seq3');
     if(p3 && n3) {
         p3.disabled = (currentPageSeq3 === 0);
         n3.disabled = ((currentPageSeq3 + 1) * 16 >= window.masterLength);
     }
-}
+};
 
-// Exposer cette fonction pour storage.js
-window.refreshGridVisuals = function refreshGridVisuals() {
+window.refreshGridVisuals = function() {
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
     if(pads.length === 0) return;
@@ -152,6 +177,7 @@ window.refreshGridVisuals = function refreshGridVisuals() {
     pads.forEach((pad, i) => {
         const realIndex = i + offset1; 
         if (realIndex >= window.masterLength) pad.classList.add('disabled'); else pad.classList.remove('disabled');
+        
         if(window.drumSequences && window.drumSequences[currentTrackIndex]) { 
             const isActive = window.drumSequences[currentTrackIndex][realIndex]; 
             pad.classList.toggle('active', isActive); 
@@ -173,33 +199,27 @@ window.refreshGridVisuals = function refreshGridVisuals() {
         }
     });
     
-    const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
-    const offset2 = currentPageSeq2 * 16;
-    if (pads2.length > 0) pads2.forEach((pad, i) => { 
-        const realIndex = i + offset2;
-        pad.dataset.realIndex = realIndex;
-        if (realIndex >= window.masterLength) pad.classList.add('disabled'); else pad.classList.remove('disabled');
-        const isActive = window.synthSequences.seq2[realIndex]; 
-        pad.classList.toggle('active', isActive); 
-        const led = pad.querySelector('.led'); 
-        if (led) led.style.background = isActive ? "cyan" : "#330000"; 
+    // Synths
+    ['seq2', 'seq3'].forEach((seqKey, idx) => {
+        const seqNum = idx + 2; // 2 or 3
+        const padsS = document.querySelectorAll(`#grid-seq${seqNum} .step-pad`);
+        const offsetS = (seqNum === 2) ? currentPageSeq2 * 16 : currentPageSeq3 * 16;
+        
+        if (padsS.length > 0) padsS.forEach((pad, i) => { 
+            const realIndex = i + offsetS;
+            pad.dataset.realIndex = realIndex;
+            if (realIndex >= window.masterLength) pad.classList.add('disabled'); else pad.classList.remove('disabled');
+            
+            const isActive = window.synthSequences[seqKey][realIndex]; 
+            pad.classList.toggle('active', isActive); 
+            const led = pad.querySelector('.led'); 
+            const color = (seqNum === 2) ? "cyan" : "#a855f7";
+            if (led) led.style.background = isActive ? color : "#330000"; 
+        });
     });
+};
 
-    const pads3 = document.querySelectorAll('#grid-seq3 .step-pad');
-    const offset3 = currentPageSeq3 * 16;
-    if (pads3.length > 0) pads3.forEach((pad, i) => { 
-        const realIndex = i + offset3;
-        pad.dataset.realIndex = realIndex;
-        if (realIndex >= window.masterLength) pad.classList.add('disabled'); else pad.classList.remove('disabled');
-        const isActive = window.synthSequences.seq3[realIndex]; 
-        pad.classList.toggle('active', isActive); 
-        const led = pad.querySelector('.led'); 
-        if (led) led.style.background = isActive ? "#a855f7" : "#330000"; 
-    });
-}
-
-// Exposer cette fonction pour storage.js
-window.refreshFadersVisuals = function refreshFadersVisuals(seqId) {
+window.refreshFadersVisuals = function(seqId) {
     const containerId = (seqId === 3) ? 'grid-freq-seq3' : 'grid-freq-seq2';
     const faders = document.querySelectorAll(`#${containerId} .freq-fader`);
     const data = (seqId === 3) ? window.freqDataSeq3 : window.freqDataSeq2;
@@ -211,16 +231,15 @@ window.refreshFadersVisuals = function refreshFadersVisuals(seqId) {
         fader.value = data[realIndex] || 440; 
         if(fader.previousElementSibling) fader.previousElementSibling.innerText = fader.value + "Hz";
     });
-}
+};
 
-// --- BOUCLES (Optimisé avec window.) ---
+// --- BOUCLES ---
 let globalTickCount = 0;
 function runDrumLoop() {
     if (!window.isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
     let baseDuration = (60 / bpm) / 4 * 1000;
-    let currentStepDuration = baseDuration;
-    if (globalTickCount % 2 === 0) currentStepDuration += (baseDuration * globalSwing); else currentStepDuration -= (baseDuration * globalSwing);
+    let currentStepDuration = (globalTickCount % 2 === 0) ? baseDuration * (1 + globalSwing) : baseDuration * (1 - globalSwing);
 
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     const offset1 = currentPageSeq1 * 16;
@@ -234,22 +253,20 @@ function runDrumLoop() {
     const isAnySolo = window.trackSolos.includes(true);
     for (let i = 0; i < 5; i++) {
         let pos = trackPositions[i]; 
-        let len = window.masterLength; 
         let shouldPlay = true;
         if (isAnySolo) { if (!window.trackSolos[i]) shouldPlay = false; } else { if (window.trackMutes[i]) shouldPlay = false; }
 
         if (shouldPlay && window.drumSequences[i][pos]) {
             let acc = window.drumAccents[i][pos];
-            switch(i) { 
-                case 0: window.playKick(acc); break; 
-                case 1: window.playSnare(acc); break; 
-                case 2: window.playHiHat(false, acc); break; 
-                case 3: window.playHiHat(true, acc); break; 
-                case 4: window.playDrumFM(acc); break; 
-            }
+            // Protection si audio.js manque
+            if(i===0 && window.playKick) window.playKick(acc);
+            if(i===1 && window.playSnare) window.playSnare(acc);
+            if(i===2 && window.playHiHat) window.playHiHat(false, acc);
+            if(i===3 && window.playHiHat) window.playHiHat(true, acc);
+            if(i===4 && window.playDrumFM) window.playDrumFM(acc);
         }
         if (i === 0 && isMetroOn && pos % 4 === 0) { if(window.playMetronome) window.playMetronome(pos === 0); }
-        trackPositions[i] = (trackPositions[i] + 1) % len;
+        trackPositions[i] = (trackPositions[i] + 1) % window.masterLength;
     }
     globalTickCount++;
     timerDrums = setTimeout(runDrumLoop, currentStepDuration);
@@ -261,38 +278,36 @@ function runSynthLoop() {
     if (!window.isPlaying) return;
     const bpm = parseInt(document.getElementById('display-bpm2').innerText) || 122;
     let baseDuration = (60 / bpm) / 4 * 1000;
-    let currentStepDuration = baseDuration;
-    if (synthTickCount % 2 === 0) currentStepDuration += (baseDuration * globalSwing); else currentStepDuration -= (baseDuration * globalSwing);
+    let currentStepDuration = (synthTickCount % 2 === 0) ? baseDuration * (1 + globalSwing) : baseDuration * (1 - globalSwing);
 
-    const pads2 = document.querySelectorAll('#grid-seq2 .step-pad');
-    const offset2 = currentPageSeq2 * 16;
-    pads2.forEach(p => p.style.borderColor = "#333");
-    if (currentSynthStep >= offset2 && currentSynthStep < offset2 + 16) {
-        const localIndex = currentSynthStep - offset2;
-        if(pads2[localIndex]) pads2[localIndex].style.borderColor = "#00f3ff";
-    }
-    const pads3 = document.querySelectorAll('#grid-seq3 .step-pad');
-    const offset3 = currentPageSeq3 * 16;
-    if (pads3.length > 0) {
-        pads3.forEach(p => p.style.borderColor = "#333");
-        if (currentSynthStep >= offset3 && currentSynthStep < offset3 + 16) {
-            const localIndex = currentSynthStep - offset3;
-            if(pads3[localIndex]) pads3[localIndex].style.borderColor = "#a855f7";
+    // Visuel
+    ['seq2', 'seq3'].forEach((seqKey, idx) => {
+        const seqNum = idx + 2; 
+        const padsS = document.querySelectorAll(`#grid-seq${seqNum} .step-pad`);
+        const offsetS = (seqNum === 2) ? currentPageSeq2 * 16 : currentPageSeq3 * 16;
+        const color = (seqNum === 2) ? "#00f3ff" : "#a855f7";
+        
+        if (padsS.length > 0) {
+            padsS.forEach(p => p.style.borderColor = "#333");
+            if (currentSynthStep >= offsetS && currentSynthStep < offsetS + 16) {
+                const localIndex = currentSynthStep - offsetS;
+                if(padsS[localIndex]) padsS[localIndex].style.borderColor = color;
+            }
         }
-    }
+    });
 
     const isActive2 = window.synthSequences.seq2[currentSynthStep];
     const isActive3 = window.synthSequences.seq3[currentSynthStep];
     if(window.playSynthStep) {
         window.playSynthStep(currentSynthStep, window.freqDataSeq2[currentSynthStep], 2, isActive2);
-        if(pads3.length > 0) window.playSynthStep(currentSynthStep, window.freqDataSeq3[currentSynthStep], 3, isActive3);
+        if(window.freqDataSeq3) window.playSynthStep(currentSynthStep, window.freqDataSeq3[currentSynthStep], 3, isActive3);
     } 
     currentSynthStep = (currentSynthStep + 1) % window.masterLength;
     synthTickCount++;
     timerSynths = setTimeout(runSynthLoop, currentStepDuration);
 }
 
-// --- INPUTS & CONTROLS ---
+// --- CONTROLS ---
 document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
@@ -321,6 +336,42 @@ document.addEventListener('input', (e) => {
         if (seq === 3) window.freqDataSeq3[idx] = val;
     }
 });
+
+function bindControls() {
+    const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
+    bind('kick-pitch', window.kickSettings, 'pitch'); bind('kick-decay', window.kickSettings, 'decay'); bind('kick-level', window.kickSettings, 'level');
+    bind('snare-tone', window.snareSettings, 'tone'); bind('snare-snappy', window.snareSettings, 'snappy'); bind('snare-level', window.snareSettings, 'level');
+    bind('hhc-tone', window.hhSettings, 'tone'); bind('hhc-level', window.hhSettings, 'levelClose');
+    bind('hho-decay', window.hhSettings, 'decayOpen'); bind('hho-level', window.hhSettings, 'levelOpen');
+    bind('fm-carrier', window.fmSettings, 'carrierPitch'); bind('fm-mod', window.fmSettings, 'modPitch'); bind('fm-amt', window.fmSettings, 'fmAmount'); bind('fm-decay', window.fmSettings, 'decay'); bind('fm-level', window.fmSettings, 'level');
+
+    const swingSlider = document.getElementById('global-swing'); if(swingSlider) swingSlider.oninput = (e) => { globalSwing = parseInt(e.target.value) / 100; document.getElementById('swing-val').innerText = e.target.value + "%"; };
+    const accSlider = document.getElementById('global-accent-amount'); if(accSlider) accSlider.oninput = (e) => { const val = parseFloat(e.target.value); if(window.updateAccentBoost) window.updateAccentBoost(val); document.getElementById('accent-val-display').innerText = val.toFixed(1) + 'x'; };
+    const metroBox = document.getElementById('metro-toggle'); if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
+    
+    const v2 = document.getElementById('vol-seq2'); if(v2) v2.oninput = (e) => window.synthVol2 = parseFloat(e.target.value);
+    const s2disto = document.getElementById('synth2-disto'); if(s2disto) s2disto.oninput = (e) => { if(window.updateSynth2Disto) window.updateSynth2Disto(parseFloat(e.target.value)); };
+    const s2res = document.getElementById('synth2-res'); if(s2res) s2res.oninput = (e) => { if(window.updateSynth2Res) window.updateSynth2Res(parseFloat(e.target.value)); };
+    const s2cut = document.getElementById('synth2-cutoff'); if(s2cut) s2cut.oninput = (e) => { if(window.updateSynth2Cutoff) window.updateSynth2Cutoff(parseFloat(e.target.value)); };
+    const s2dec = document.getElementById('synth2-decay'); if(s2dec) s2dec.oninput = (e) => { if(window.updateSynth2Decay) window.updateSynth2Decay(parseFloat(e.target.value)); };
+    const dAmt = document.getElementById('global-delay-amt'); if(dAmt) dAmt.oninput = (e) => { if(window.updateDelayAmount) window.updateDelayAmount(parseFloat(e.target.value)); };
+    const dTime = document.getElementById('global-delay-time'); if(dTime) dTime.oninput = (e) => { if(window.updateDelayTime) window.updateDelayTime(parseFloat(e.target.value)); };
+    const vol = document.getElementById('master-gain'); if(vol && window.masterGain) vol.oninput = (e) => window.masterGain.gain.value = parseFloat(e.target.value);
+}
+
+function showParamsForTrack(idx) {
+    document.querySelectorAll('.instr-params').forEach(p => p.style.display = 'none');
+    const target = document.getElementById(`params-track-${idx}`);
+    if (target) target.style.display = 'flex';
+}
+
+function setupTempoDrag(id) {
+    const el = document.getElementById(id); if(!el) return;
+    let isDragging = false, startY = 0, startVal = 0; el.style.cursor = "ns-resize";
+    el.addEventListener('mousedown', (e) => { isDragging = true; startY = e.clientY; startVal = parseInt(el.innerText); document.body.style.cursor = "ns-resize"; e.preventDefault(); });
+    window.addEventListener('mousemove', (e) => { if (!isDragging) return; let newVal = startVal + Math.floor((startY - e.clientY) / 2); if (newVal < 40) newVal = 40; if (newVal > 300) newVal = 300; el.innerText = newVal; });
+    window.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = "default"; });
+}
 
 function generateSmartRhythm(trackIdx) {
     window.drumSequences[trackIdx] = Array(64).fill(false);
@@ -397,37 +448,40 @@ function initSeq3Extension() {
         </section>`;
         
         initGrid('grid-seq3'); initFaders('grid-freq-seq3', 3);
+        
+        // Navigation listeners
         document.getElementById('btn-prev-page-seq3').onclick = () => { if(currentPageSeq3 > 0) { currentPageSeq3--; updatePageIndicator('seq3'); refreshGridVisuals(); refreshFadersVisuals(3); }};
         document.getElementById('btn-next-page-seq3').onclick = () => { if((currentPageSeq3 + 1) * 16 < window.masterLength) { currentPageSeq3++; updatePageIndicator('seq3'); refreshGridVisuals(); refreshFadersVisuals(3); }};
         updatePageIndicator('seq3');
 
+        // Bindings
         document.getElementById('vol-seq3').oninput = (e) => window.synthVol3 = parseFloat(e.target.value);
         document.getElementById('synth3-disto').oninput = (e) => { if(window.updateSynth3Disto) window.updateSynth3Disto(parseFloat(e.target.value)); };
         document.getElementById('synth3-res').oninput = (e) => { if(window.updateSynth3Res) window.updateSynth3Res(parseFloat(e.target.value)); };
         document.getElementById('synth3-cutoff').oninput = (e) => { if(window.updateSynth3Cutoff) window.updateSynth3Cutoff(parseFloat(e.target.value)); };
         document.getElementById('synth3-decay').oninput = (e) => { if(window.updateSynth3Decay) window.updateSynth3Decay(parseFloat(e.target.value)); };
+        
         document.getElementById('seq3-container').scrollIntoView({ behavior: 'smooth' });
     });
 }
 
-function bindControls() {
-    const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
-    bind('kick-pitch', window.kickSettings, 'pitch'); bind('kick-decay', window.kickSettings, 'decay'); bind('kick-level', window.kickSettings, 'level');
-    bind('snare-tone', window.snareSettings, 'tone'); bind('snare-snappy', window.snareSettings, 'snappy'); bind('snare-level', window.snareSettings, 'level');
-    bind('hhc-tone', window.hhSettings, 'tone'); bind('hhc-level', window.hhSettings, 'levelClose');
-    bind('hho-decay', window.hhSettings, 'decayOpen'); bind('hho-level', window.hhSettings, 'levelOpen');
-    bind('fm-carrier', window.fmSettings, 'carrierPitch'); bind('fm-mod', window.fmSettings, 'modPitch'); bind('fm-amt', window.fmSettings, 'fmAmount'); bind('fm-decay', window.fmSettings, 'decay'); bind('fm-level', window.fmSettings, 'level');
-
-    const swingSlider = document.getElementById('global-swing'); if(swingSlider) swingSlider.oninput = (e) => { globalSwing = parseInt(e.target.value) / 100; document.getElementById('swing-val').innerText = e.target.value + "%"; };
-    const accSlider = document.getElementById('global-accent-amount'); if(accSlider) accSlider.oninput = (e) => { const val = parseFloat(e.target.value); if(window.updateAccentBoost) window.updateAccentBoost(val); document.getElementById('accent-val-display').innerText = val.toFixed(1) + 'x'; };
-    const metroBox = document.getElementById('metro-toggle'); if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
-    
-    const v2 = document.getElementById('vol-seq2'); if(v2) v2.oninput = (e) => window.synthVol2 = parseFloat(e.target.value);
-    const s2disto = document.getElementById('synth2-disto'); if(s2disto) s2disto.oninput = (e) => { if(window.updateSynth2Disto) window.updateSynth2Disto(parseFloat(e.target.value)); };
-    const s2res = document.getElementById('synth2-res'); if(s2res) s2res.oninput = (e) => { if(window.updateSynth2Res) window.updateSynth2Res(parseFloat(e.target.value)); };
-    const s2cut = document.getElementById('synth2-cutoff'); if(s2cut) s2cut.oninput = (e) => { if(window.updateSynth2Cutoff) window.updateSynth2Cutoff(parseFloat(e.target.value)); };
-    const s2dec = document.getElementById('synth2-decay'); if(s2dec) s2dec.oninput = (e) => { if(window.updateSynth2Decay) window.updateSynth2Decay(parseFloat(e.target.value)); };
-    const dAmt = document.getElementById('global-delay-amt'); if(dAmt) dAmt.oninput = (e) => { if(window.updateDelayAmount) window.updateDelayAmount(parseFloat(e.target.value)); };
-    const dTime = document.getElementById('global-delay-time'); if(dTime) dTime.oninput = (e) => { if(window.updateDelayTime) window.updateDelayTime(parseFloat(e.target.value)); };
-    const vol = document.getElementById('master-gain'); if(vol) vol.oninput = (e) => masterGain.gain.value = parseFloat(e.target.value);
-}
+// Event Listeners (Bottom)
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-drum-rand')) {
+        const track = parseInt(e.target.dataset.track);
+        generateSmartRhythm(track);
+        refreshGridVisuals();
+        return;
+    }
+    if (e.target.classList.contains('track-btn')) { 
+        document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active')); 
+        e.target.classList.add('active'); 
+        currentTrackIndex = parseInt(e.target.dataset.track); 
+        showParamsForTrack(currentTrackIndex); 
+        refreshGridVisuals(); 
+    }
+    if (e.target.classList.contains('btn-mute') && !e.target.classList.contains('btn-synth-mute')) { const track = parseInt(e.target.dataset.track); window.trackMutes[track] = !window.trackMutes[track]; e.target.classList.toggle('active', window.trackMutes[track]); if(window.trackMutes[track]) { window.trackSolos[track] = false; const soloBtn = e.target.parentElement.querySelector('.btn-solo'); if(soloBtn) soloBtn.classList.remove('active'); } return; }
+    if (e.target.classList.contains('btn-solo')) { const track = parseInt(e.target.dataset.track); window.trackSolos[track] = !window.trackSolos[track]; e.target.classList.toggle('active', window.trackSolos[track]); if(window.trackSolos[track]) { window.trackMutes[track] = false; const muteBtn = e.target.parentElement.querySelector('.btn-mute'); if(muteBtn) muteBtn.classList.remove('active'); } return; }
+    if (e.target.classList.contains('btn-synth-mute')) { const target = parseInt(e.target.dataset.target); if(window.toggleMuteSynth) window.toggleMuteSynth(target, !e.target.classList.contains('active')); e.target.classList.toggle('active'); return; }
+    if (e.target.classList.contains('btn-random')) { const target = parseInt(e.target.dataset.target); const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader'; const faders = document.querySelectorAll(selector); const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); faders.forEach(fader => { const randomFreq = Math.floor(Math.random() * (880 - 50) + 50); fader.value = randomFreq; fader.dispatchEvent(new Event('input', { bubbles: true })); }); return; }
+});
