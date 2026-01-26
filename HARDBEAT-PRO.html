@@ -12,8 +12,16 @@
         <header id="master-control">
             <div class="logo">HARDBEAT PRO <span style="font-size:0.4em; color:#00f3ff; vertical-align:super;">64</span></div>
             
-            <div class="memory-bank">
-                <span class="help-tip" data-text="Sauvegardez vos patterns (SAVE + Slot).">?</span>
+          <div class="memory-bank">
+                <select id="preset-selector" style="background:#000; color:#00f3ff; border:1px solid #333; font-family:'Courier New'; font-weight:bold; font-size:10px; height:25px; margin-right:10px; cursor:pointer;">
+                    <option value="">-- LOAD PRESET --</option>
+                    <option value="init">INIT / BLANK</option>
+                    <option value="rumble">BERLIN RUMBLE</option>
+                    <option value="polymills">DETROIT POLY</option>
+                    <option value="hardgroove">HARDGROOVE</option>
+                </select>
+
+                <span class="help-tip" data-text="Sauvegardez vos patterns (SAVE + Slot). CLIC DROIT sur un slot pour l'effacer.">?</span>
                 <button id="btn-clear-all" class="btn-mem-action">CLR</button>
                 <div style="width:1px; height:15px; background:#333; margin:0 5px;"></div>
                 <button id="btn-save-mode" class="btn-mem-action">SAVE</button>
