@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HARDBEAT PRO | HUB</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --panel-bg: #111;
+            --text-main: #ccc;
+            --cyan: #00f3ff;
+            --purple: #a855f7;
+            --green: #0f0;
+            --border: 1px solid #333;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 0;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* --- HEADER HERO --- */
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            border-bottom: 1px solid #222;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            color: var(--purple);
+            letter-spacing: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        .btn-main {
+            display: inline-block;
+            background: rgba(0, 243, 255, 0.1);
+            color: var(--cyan);
+            border: 2px solid var(--cyan);
+            padding: 20px 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .btn-main:hover {
+            background: var(--cyan);
+            color: #000;
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* --- CONTENT GRID --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* 2/3 Vidéos, 1/3 Infos */
+            gap: 40px;
+        }
+
+        @media (max-width: 800px) { .container { grid-template-columns: 1fr; } }
+
+        h2 { border-left: 4px solid var(--cyan); padding-left: 15px; color: #fff; margin-top: 0; text-transform: uppercase; }
+        h3 { color: var(--purple); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 30px; font-size: 1rem; }
+
+        /* --- VIDEO GALLERY --- */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .video-card {
+            background: var(--panel-bg);
+            border: var(--border);
+            padding: 10px;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+        .video-card:hover { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        
+        .video-card video { width: 100%; border-radius: 2px; background: #000; }
+        
+        .vid-info { padding: 10px 5px 0 5px; }
+        .vid-title { font-weight: bold; color: #fff; font-size: 1.1rem; margin-bottom: 5px; }
+        .vid-desc { font-size: 0.8rem; color: #888; }
+
+        /* --- SIDEBAR (INFOS) --- */
+        .sidebar-box {
+            background: #0e0e0e;
+            padding: 20px;
+            border: 1px solid #222;
+            margin-bottom: 20px;
+        }
+
+        ul.updates { list-style: none; padding: 0; }
+        ul.updates li { margin-bottom: 15px; border-bottom: 1px dashed #222; padding-bottom: 15px; }
+        .date { color: var(--cyan); font-size: 0.7rem; display: block; margin-bottom: 4px; }
+        .text { font-size: 0.9rem; line-height: 1.4; }
+
+        ul.roadmap { list-style: none; padding: 0; }
+        ul.roadmap li { margin-bottom: 10px; padding-left: 20px; position: relative; font-size: 0.9rem; }
+        ul.roadmap li::before { content: "►"; color: var(--purple); position: absolute; left: 0; top: 0; font-size: 0.8rem; }
+        ul.roadmap li.done { color: #555; text-decoration: line-through; }
+        ul.roadmap li.done::before { content: "✔"; color: var(--green); }
+
+        /* --- FOOTER --- */
+        footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid #222;
+            margin-top: 40px;
+            color: #555;
+            font-size: 0.8rem;
+        }
+
+        .dl-btn {
+            color: #fff; text-decoration: none; border: 1px solid #444; padding: 10px 20px;
+            transition: 0.2s; display: inline-block; margin-top: 10px;
+        }
+        .dl-btn:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,0,0,0.5); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>HARDBEAT PRO</h1>
+        <div class="subtitle">BROWSER BASED TECHNO WORKSTATION</div>
+        <a href="HARDBEAT-PRO.html" target="_new" class="btn-main">START ENGINE</a>
+    </header>
+
+    <div class="container">
+        
+        <main>
+            <h2>Vidéothèque & Démos</h2>
+            <p style="font-size:0.9rem; color:#666; margin-bottom:20px;">
+                Découvrez les capacités de la machine à travers ces démos.
+            </p>
+            
+            <div class="video-grid" id="gallery-container">
+                </div>
+        </main>
+
+        <aside>
+            <div class="sidebar-box">
+                <h3> >> DERNIÈRES NOUVEAUTÉS </h3>
+                <ul class="updates">
+                    <li>
+                        <span class="date">17 JAN 2026</span>
+                        <div class="text">Lancement officiel de la <strong>V1.0 Stable</strong>. Intégration du moteur "Smart Random" pour les drums et les synthés.</div>
+                    </li>
+                    <li>
+                        <span class="date">16 JAN 2026</span>
+                        <div class="text">Ajout du <strong>SEQ 3 (Rumble)</strong> pour les basses fréquences.</div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-box">
+                <h3>IDÉES À VENIR (Roadmap)</h3>
+                <ul class="roadmap">
+                    <li class="done">Moteur Audio Low-Latency</li>
+                    <li class="done">Sauvegarde Locale</li>
+                    <li class="done">Randomizer Intelligent</li>
+                    <li>Export Audio (WAV)</li>
+                    <li>Mode "Dark Techno" (Skin Alternatif)</li>
+                    <li>Banque de Presets Artistes</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-box" style="text-align:center;">
+                <h3>DOCUMENTATION</h3>
+                <p style="font-size:0.8rem; margin-bottom:15px;">Le manuel complet pour maîtriser la bête.</p>
+                <a href="MANUEL.pdf" target="_new" class="dl-btn">📄 TÉLÉCHARGER LE PDF</a>
+            </div>
+        </aside>
+
+    </div>
+
+    <footer>
+        <p>HARDBEAT PRO SYSTEM © 2026</p>
+        <p>Conçu pour Chrome / Edge / Brave (Desktop)</p>
+    </footer>
+
+    <script>
+        /* ========================================================
+           ZONE DE CONFIGURATION VIDEOS
+           Ajoute tes vidéos ici. Format : { titre: "...", fichier: "...", desc: "..." },
+           ======================================================== */
+        
+        const myVideos = [
+            {
+                titre: "4 Recettes Polyrythmiques",
+                fichier: "SAMPLE-4-RECETTE.mp4",
+                desc: "Démonstration des techniques de décalage temporel (3 vs 4, Rush, Industriel)."
+            },
+            
+            // COPIE CE BLOC POUR AJOUTER UNE NOUVELLE VIDEO :
+            /*
+            {
+                titre: "Mon Nouveau Jam",
+                fichier: "NOM_DU_FICHIER.mp4",
+                desc: "Description courte de la vidéo."
+            },
+            */
+        ];
+
+        /* ========================================================
+           FIN DE LA CONFIGURATION (Ne touche pas en dessous)
+           ======================================================== */
+
+        const container = document.getElementById('gallery-container');
+
+        myVideos.forEach(vid => {
+            // Création automatique du HTML
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <video controls preload="metadata">
+                    <source src="${vid.fichier}" type="video/mp4">
+                    Votre navigateur ne supporte pas la vidéo.
+                </video>
+                <div class="vid-info">
+                    <div class="vid-title">${vid.titre}</div>
+                    <div class="vid-desc">${vid.desc}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    </script>
+
+</body>
+</html>
+
