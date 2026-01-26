@@ -6,6 +6,21 @@ function initStorageSystem() {
     console.log("Storage System V9: Ready.");
     updateMemoryUI(); 
 
+   // GESTION DES PRESETS FACTORY
+    const presetSelector = document.getElementById('preset-selector');
+    if (presetSelector) {
+        presetSelector.onchange = (e) => {
+            const key = e.target.value;
+            if (key && FACTORY_PRESETS[key]) {
+                if(confirm(`Charger le preset "${FACTORY_PRESETS[key].name}" ? \nCela effacera votre travail non sauvegardé.`)) {
+                    loadFactoryPreset(key);
+                }
+                // Reset du selecteur visuel
+                e.target.value = ""; 
+            }
+        };
+    }
+
     const btnSave = document.getElementById('btn-save-mode');
     if(btnSave) {
         btnSave.onclick = () => {
