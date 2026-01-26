@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO | SMART RANDOM</title>
+    <title>HARDBEAT PRO | 64 STEPS EDITION</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <main id="rack-container">
         <header id="master-control">
-            <div class="logo">HARDBEAT PRO</div>
+            <div class="logo">HARDBEAT PRO <span style="font-size:0.4em; color:#00f3ff; vertical-align:super;">64</span></div>
             
             <div class="memory-bank">
-                <span class="help-tip" data-text="Sauvegardez vos patterns (SAVE + Slot) ou effacez tout (CLR). Les slots verts contiennent des données.">?</span>
-                <button id="btn-clear-all" class="btn-mem-action" title="Clear All Patterns">CLR</button>
+                <span class="help-tip" data-text="Sauvegardez vos patterns (SAVE + Slot).">?</span>
+                <button id="btn-clear-all" class="btn-mem-action">CLR</button>
                 <div style="width:1px; height:15px; background:#333; margin:0 5px;"></div>
                 <button id="btn-save-mode" class="btn-mem-action">SAVE</button>
                 <div class="slots-group">
@@ -25,7 +25,17 @@
                 </div>
             </div>
 
-            <button id="master-play-stop">PLAY / STOP</button>
+            <div class="length-control-panel" style="display:flex; align-items:center; gap:5px; margin-left:20px; border-left:1px solid #333; padding-left:20px;">
+                <label style="font-size:0.7rem; color:#666; display:block; margin-right:5px;">LENGTH</label>
+                <div class="length-btn-group">
+                    <button class="btn-length active" data-length="16">16</button>
+                    <button class="btn-length" data-length="32">32</button>
+                    <button class="btn-length" data-length="48">48</button>
+                    <button class="btn-length" data-length="64">64</button>
+                </div>
+            </div>
+
+            <button id="master-play-stop" style="margin-left:auto; margin-right:20px;">PLAY / STOP</button>
             
             <div class="master-volume">
                 <label>MASTER VOL</label>
@@ -36,8 +46,14 @@
         <section id="seq1-container" class="rack-section">
             <div class="section-header">
                 <h2>SEQ 1 : DRUM ENGINE</h2>
-                <span class="help-tip" data-text="Séquenceur polyrythmique. Utilisez le Swing pour le groove et le slider ACCENT (orange) pour la dynamique.">?</span>
-                <div style="display:flex; gap:15px; align-items:center;">
+                
+                <div class="page-navigator" id="seq1-navigator" style="display:flex; gap:10px; margin-left:20px; align-items:center;">
+                    <button class="btn-nav" id="btn-prev-page-seq1" disabled>&lt;&lt;</button>
+                    <span class="page-indicator" id="page-indicator-seq1" style="font-family:'Courier New'; color:#00f3ff; font-weight:bold;">1-16</span>
+                    <button class="btn-nav" id="btn-next-page-seq1" disabled>&gt;&gt;</button>
+                </div>
+
+                <div style="display:flex; gap:15px; align-items:center; margin-left:auto;">
                     <div class="bpm-control" style="border-right:1px solid #333; padding-right:15px;">
                         <label style="cursor:pointer; color:#00f3ff;">
                             CLICK <input type="checkbox" id="metro-toggle" style="vertical-align:middle;">
@@ -49,7 +65,7 @@
                         <span id="swing-val" style="font-size:10px; color:#888;">6%</span>
                     </div>
                     <div class="bpm-control">
-                        <label>TEMPO 1</label>
+                        <label>TEMPO</label>
                         <span id="display-bpm1">120</span> BPM
                     </div>
                 </div>
@@ -58,15 +74,12 @@
             <div class="track-selectors">
                 <div class="track-unit">
                     <div class="ms-group">
-                        <div class="track-controls-col">
-                        <button class="btn-mute" data-track="0" title="Mute">M</button>
-                        <button class="btn-solo" data-track="0" title="Solo">S</button>
-                        <button class="btn-drum-rand" data-track="0" title="Smart Random">R</button>
-                            <span class="help-tip" data-text="Smart Random. Génère un rythme intelligent adapté à l'instrument.">?</span></div>
+                        <button class="btn-mute" data-track="0">M</button>
+                        <button class="btn-solo" data-track="0">S</button>
+                        <button class="btn-drum-rand" data-track="0">R</button>
                     </div>
                     <button class="track-btn active" data-track="0">KIK</button>
                 </div>
-
                 <div class="track-unit">
                     <div class="ms-group">
                         <button class="btn-mute" data-track="1">M</button>
@@ -75,18 +88,14 @@
                     </div>
                     <button class="track-btn" data-track="1">SNR</button>
                 </div>
-
                 <div class="track-unit">
                     <div class="ms-group">
-                        
                         <button class="btn-mute" data-track="2">M</button>
                         <button class="btn-solo" data-track="2">S</button>
                         <button class="btn-drum-rand" data-track="2">R</button>
-                        
                     </div>
                     <button class="track-btn" data-track="2">HHC</button>
                 </div>
-
                 <div class="track-unit">
                     <div class="ms-group">
                         <button class="btn-mute" data-track="3">M</button>
@@ -95,7 +104,6 @@
                     </div>
                     <button class="track-btn" data-track="3">HHO</button>
                 </div>
-
                 <div class="track-unit">
                     <div class="ms-group">
                         <button class="btn-mute" data-track="4">M</button>
@@ -145,30 +153,33 @@
             </div>
 
             <div class="drum-rack-row" style="display:flex; align-items:flex-start; justify-content:center; gap:15px; margin-top:10px;">
-                <div class="step-grid" id="grid-seq1"></div>
+                <div class="step-grid" id="grid-seq1">
+                    </div>
                 <div class="accent-control-unit">
                     <label>ACCENT</label>
                     <input type="range" id="global-accent-amount" min="1.1" max="2.5" step="0.1" value="1.4" orient="vertical">
                     <span id="accent-val-display" style="font-size:9px; color:#ffaa00; margin-top:5px; font-family:'Courier New';">1.4x</span>
                 </div>
             </div>
-
-            <div class="page-selectors">
-                <button class="page-btn active" data-page="0">PAGE 1</button>
-            </div>
         </section>
 
         <section id="seq2-container" class="rack-section synth-instance" data-id="2">
             <div class="section-header">
                 <h2>SEQ 2 : FREQ SYNTH (LEAD)</h2>
-                <span class="help-tip" data-text="Synthétiseur FM/Disto. Dessinez votre mélodie avec les faders. Utilisez [R] pour une génération intelligente.">?</span>
-                <div style="display:flex; gap:20px; align-items:center;">
+                
+                <div class="page-navigator" id="seq2-navigator" style="display:flex; gap:10px; margin-left:20px; align-items:center;">
+                    <button class="btn-nav" id="btn-prev-page-seq2" disabled>&lt;&lt;</button>
+                    <span class="page-indicator" id="page-indicator-seq2" style="font-family:'Courier New'; color:#a855f7; font-weight:bold;">1-16</span>
+                    <button class="btn-nav" id="btn-next-page-seq2" disabled>&gt;&gt;</button>
+                </div>
+
+                <div style="display:flex; gap:20px; align-items:center; margin-left:auto;">
                     <div class="bpm-control">
                         <label>VOL</label>
                         <input type="range" id="vol-seq2" min="0" max="1" step="0.01" value="0.6" style="width:60px">
                     </div>
                     <div class="bpm-control">
-                        <label>TEMPO 2</label>
+                        <label>TEMPO</label>
                         <span id="display-bpm2">122</span> BPM
                     </div>
                 </div>
