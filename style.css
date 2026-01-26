@@ -581,3 +581,81 @@ div.hz-label, span.hz-label, .hz-label {
     display: block !important;        /* Force l'affichage */
     opacity: 1 !important;
 }
+
+/* ==========================================
+   NOUVEAUX CONTROLES (64 STEPS)
+   ========================================== */
+
+/* Groupe de longueur (16/32/48/64) */
+.length-btn-group {
+    display: flex;
+    gap: 2px;
+    background: #111;
+    padding: 3px;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+.btn-length {
+    background: #222;
+    border: 1px solid #444;
+    color: #666;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 5px 8px;
+    cursor: pointer;
+    width: 30px;
+    transition: all 0.2s;
+}
+
+.btn-length:hover {
+    color: #fff;
+    border-color: #888;
+}
+
+/* Bouton Actif (Cyan) */
+.btn-length.active {
+    background: #002a2d;
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+}
+
+/* Navigation des Pages (<< 1-16 >>) */
+.page-navigator {
+    background: #000;
+    border: 1px solid #333;
+    padding: 5px 10px;
+    border-radius: 20px; /* Forme de pilule */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-nav {
+    background: transparent;
+    border: 1px solid #444;
+    color: var(--accent-color);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.btn-nav:hover:not(:disabled) {
+    background: var(--accent-color);
+    color: #000;
+}
+
+.btn-nav:disabled {
+    border-color: #222;
+    color: #333;
+    cursor: default;
+}
+
+.page-indicator {
+    min-width: 40px;
+    text-align: center;
+    font-size: 12px;
+}
