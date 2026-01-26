@@ -1,9 +1,9 @@
 /* ==========================================
-   HARDBEAT PRO - STORAGE ENGINE (V7 - MUTE FIX)
+   HARDBEAT PRO - STORAGE ENGINE (V8 - DELETE FEATURE)
    ========================================== */
 
 function initStorageSystem() {
-    console.log("Storage System V7: Init...");
+    console.log("Storage System V8: Right-click delete active.");
     updateMemoryUI(); 
 
     const btnSave = document.getElementById('btn-save-mode');
@@ -16,33 +16,57 @@ function initStorageSystem() {
 
     const btnClear = document.getElementById('btn-clear-all');
     if(btnClear) {
-        btnClear.onclick = () => { if(confirm("Effacer tout ?")) clearAllData(); };
+        btnClear.onclick = () => {
+            if(confirm("Effacer la table de travail ? (Vos sauvegardes ne seront pas touchées)")) {
+                clearAllData();
+            }
+        };
     }
 
     document.querySelectorAll('.btn-mem-slot').forEach(btn => {
+        // --- CLIC GAUCHE (SAVE / LOAD) ---
         btn.onclick = () => {
             const slot = btn.dataset.slot;
             if (window.isSaveMode) {
+                // Mode Sauvegarde
                 if(localStorage.getItem(`hardbeat_pattern_${slot}`)) {
-                    if(!confirm(`Écraser Slot ${slot} ?`)) return;
+                    if(!confirm(`Le Slot ${slot} contient déjà des données. Écraser ?`)) return;
                 }
                 savePattern(slot);
                 btn.classList.add('flash-success'); 
                 setTimeout(() => btn.classList.remove('flash-success'), 200);
+                
+                // On quitte le mode save auto pour éviter les accidents
                 window.isSaveMode = false; 
                 if(btnSave) btnSave.classList.remove('saving');
             } else {
+                // Mode Chargement
                 if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
                     loadPattern(slot);
                     btn.classList.add('flash-success'); 
                     setTimeout(() => btn.classList.remove('flash-success'), 200);
                 } else {
-                    if(confirm(`Slot ${slot} vide. Créer nouveau ?`)) {
+                    // Slot vide -> Proposition de Nouveau Projet
+                    if(confirm(`Le Slot ${slot} est vide. Voulez-vous vider la table de travail pour commencer un nouveau beat ici ?`)) {
                         clearAllData();
                         btn.style.backgroundColor = "#00f3ff";
                         btn.style.color = "#000";
                         setTimeout(() => { btn.style.backgroundColor = ""; btn.style.color = ""; }, 500);
                     }
+                }
+            }
+        };
+
+        // --- CLIC DROIT (SUPPRIMER LE SLOT) ---
+        btn.oncontextmenu = (e) => {
+            e.preventDefault(); // Empêche le menu contextuel du navigateur
+            const slot = btn.dataset.slot;
+            
+            if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
+                if(confirm(`⚠️ ATTENTION : Voulez-vous vraiment supprimer définitivement le contenu du SLOT ${slot} ?`)) {
+                    localStorage.removeItem(`hardbeat_pattern_${slot}`);
+                    updateMemoryUI(); // La lumière verte va s'éteindre
+                    console.log(`Slot ${slot} deleted.`);
                 }
             }
         };
@@ -58,10 +82,9 @@ function clearAllData() {
     window.freqDataSeq2.fill(440);
     window.freqDataSeq3.fill(440);
     
-    // 2. Reset Mutes (CRUCIAL FIX)
+    // 2. Reset Mutes
     window.isMutedSeq2 = false;
     window.isMutedSeq3 = false;
-    // Reset Boutons Mute UI
     const btnM2 = document.getElementById('btn-mute-seq2'); if(btnM2) btnM2.classList.remove('active');
     const btnM3 = document.getElementById('btn-mute-seq3'); if(btnM3) btnM3.classList.remove('active');
     
@@ -76,7 +99,6 @@ function clearAllData() {
         window.refreshFadersVisuals(2);
         if(document.getElementById('grid-seq3')) window.refreshFadersVisuals(3);
     }
-    console.log("System Cleared & Mutes Reset.");
 }
 
 function savePattern(slot) {
@@ -104,7 +126,6 @@ function savePattern(slot) {
             freqs3: window.freqDataSeq3,
             params2: window.paramsSeq2, 
             params3: window.paramsSeq3,
-            // Maintenant isMutedSeq2 est bien accessible via window
             mutes: { seq2: window.isMutedSeq2, seq3: window.isMutedSeq3 }, 
             vol2: document.getElementById('vol-seq2').value,
             vol3: document.getElementById('vol-seq3') ? document.getElementById('vol-seq3').value : 0.6,
@@ -127,12 +148,10 @@ function loadPattern(slot) {
     try {
         const data = JSON.parse(json);
         
-        // Globals
         window.masterLength = data.masterLength || 16;
         document.querySelectorAll('.btn-length').forEach(b => { b.classList.toggle('active', parseInt(b.dataset.length) === window.masterLength); });
         if(window.updateNavButtonsState) window.updateNavButtonsState();
 
-        // Drums
         window.drumSequences = (data.drums.seq[0].length < 64) ? data.drums.seq.map(r => [...r, ...Array(64-r.length).fill(false)]) : data.drums.seq;
         window.drumAccents = (data.drums.accents[0].length < 64) ? data.drums.accents.map(r => [...r, ...Array(64-r.length).fill(false)]) : data.drums.accents;
         window.trackMutes = data.drums.mutes;
@@ -143,7 +162,18 @@ function loadPattern(slot) {
         setSlider('kick-pitch', data.drums.settings.kick.pitch);
         setSlider('kick-decay', data.drums.settings.kick.decay);
         setSlider('kick-level', data.drums.settings.kick.level);
-        // ... (autres settings drums) ...
+        setSlider('snare-tone', data.drums.settings.snare.tone);
+        setSlider('snare-snappy', data.drums.settings.snare.snappy);
+        setSlider('snare-level', data.drums.settings.snare.level);
+        setSlider('hhc-tone', data.drums.settings.hhc.tone);
+        setSlider('hhc-level', data.drums.settings.hhc.levelClose);
+        setSlider('hho-decay', data.drums.settings.hho.decayOpen);
+        setSlider('hho-level', data.drums.settings.hho.levelOpen);
+        setSlider('fm-carrier', data.drums.settings.fm.carrierPitch);
+        setSlider('fm-mod', data.drums.settings.fm.modPitch);
+        setSlider('fm-amt', data.drums.settings.fm.fmAmount);
+        setSlider('fm-decay', data.drums.settings.fm.decay);
+        setSlider('fm-level', data.drums.settings.fm.level);
 
         document.querySelectorAll('.btn-mute').forEach((btn) => { 
             if (!btn.classList.contains('btn-synth-mute')) { 
@@ -152,7 +182,6 @@ function loadPattern(slot) {
             }
         });
 
-        // Synths
         window.synthSequences.seq2 = (data.synths.seq2.length < 64) ? [...data.synths.seq2, ...Array(64 - data.synths.seq2.length).fill(false)] : data.synths.seq2;
         window.synthSequences.seq3 = (data.synths.seq3 && data.synths.seq3.length < 64) ? [...data.synths.seq3, ...Array(64 - data.synths.seq3.length).fill(false)] : (data.synths.seq3 || Array(64).fill(false));
         
@@ -165,7 +194,6 @@ function loadPattern(slot) {
         setSlider('synth2-cutoff', data.synths.params2.cutoff);
         setSlider('synth2-decay', data.synths.params2.decay);
 
-        // RESTAURATION MUTES SYNTHS (CORRECTED)
         const mutes = data.synths.mutes || { seq2: false, seq3: false };
         if(window.toggleMuteSynth) {
             window.toggleMuteSynth(2, mutes.seq2);
@@ -174,7 +202,6 @@ function loadPattern(slot) {
         const btnMute2 = document.getElementById('btn-mute-seq2'); 
         if(btnMute2) btnMute2.classList.toggle('active', mutes.seq2);
 
-        // Seq 3 UI
         const hasSeq3Data = data.synths.freqs3 && data.synths.freqs3.some(f => f !== 440);
         const isSeq3Visible = document.getElementById('seq3-container');
         if ((hasSeq3Data || mutes.seq3) && !isSeq3Visible) {
