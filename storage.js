@@ -1,9 +1,9 @@
 /* ==========================================
-   HARDBEAT PRO - STORAGE ENGINE (V8 - DELETE FEATURE)
+   HARDBEAT PRO - STORAGE ENGINE (V9 - ROBUST LOAD)
    ========================================== */
 
 function initStorageSystem() {
-    console.log("Storage System V8: Right-click delete active.");
+    console.log("Storage System V9: Ready.");
     updateMemoryUI(); 
 
     const btnSave = document.getElementById('btn-save-mode');
@@ -24,30 +24,25 @@ function initStorageSystem() {
     }
 
     document.querySelectorAll('.btn-mem-slot').forEach(btn => {
-        // --- CLIC GAUCHE (SAVE / LOAD) ---
+        // CLIC GAUCHE (SAVE/LOAD)
         btn.onclick = () => {
             const slot = btn.dataset.slot;
             if (window.isSaveMode) {
-                // Mode Sauvegarde
                 if(localStorage.getItem(`hardbeat_pattern_${slot}`)) {
-                    if(!confirm(`Le Slot ${slot} contient déjà des données. Écraser ?`)) return;
+                    if(!confirm(`Écraser le Slot ${slot} ?`)) return;
                 }
                 savePattern(slot);
                 btn.classList.add('flash-success'); 
                 setTimeout(() => btn.classList.remove('flash-success'), 200);
-                
-                // On quitte le mode save auto pour éviter les accidents
                 window.isSaveMode = false; 
                 if(btnSave) btnSave.classList.remove('saving');
             } else {
-                // Mode Chargement
                 if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
                     loadPattern(slot);
                     btn.classList.add('flash-success'); 
                     setTimeout(() => btn.classList.remove('flash-success'), 200);
                 } else {
-                    // Slot vide -> Proposition de Nouveau Projet
-                    if(confirm(`Le Slot ${slot} est vide. Voulez-vous vider la table de travail pour commencer un nouveau beat ici ?`)) {
+                    if(confirm(`Slot ${slot} vide. Créer nouveau projet ?`)) {
                         clearAllData();
                         btn.style.backgroundColor = "#00f3ff";
                         btn.style.color = "#000";
@@ -57,16 +52,14 @@ function initStorageSystem() {
             }
         };
 
-        // --- CLIC DROIT (SUPPRIMER LE SLOT) ---
+        // CLIC DROIT (DELETE)
         btn.oncontextmenu = (e) => {
-            e.preventDefault(); // Empêche le menu contextuel du navigateur
+            e.preventDefault();
             const slot = btn.dataset.slot;
-            
             if (localStorage.getItem(`hardbeat_pattern_${slot}`)) {
-                if(confirm(`⚠️ ATTENTION : Voulez-vous vraiment supprimer définitivement le contenu du SLOT ${slot} ?`)) {
+                if(confirm(`⚠️ Supprimer définitivement le SLOT ${slot} ?`)) {
                     localStorage.removeItem(`hardbeat_pattern_${slot}`);
-                    updateMemoryUI(); // La lumière verte va s'éteindre
-                    console.log(`Slot ${slot} deleted.`);
+                    updateMemoryUI();
                 }
             }
         };
@@ -74,7 +67,7 @@ function initStorageSystem() {
 }
 
 function clearAllData() {
-    // 1. Reset Memory
+    // RESET MEMOIRE
     window.drumSequences = Array.from({ length: 5 }, () => Array(64).fill(false));
     window.drumAccents = Array.from({ length: 5 }, () => Array(64).fill(false));
     window.synthSequences.seq2 = Array(64).fill(false);
@@ -82,19 +75,21 @@ function clearAllData() {
     window.freqDataSeq2.fill(440);
     window.freqDataSeq3.fill(440);
     
-    // 2. Reset Mutes
+    // RESET MUTES
     window.isMutedSeq2 = false;
     window.isMutedSeq3 = false;
     const btnM2 = document.getElementById('btn-mute-seq2'); if(btnM2) btnM2.classList.remove('active');
     const btnM3 = document.getElementById('btn-mute-seq3'); if(btnM3) btnM3.classList.remove('active');
     
-    // 3. Reset Global settings
+    // RESET LENGTH
     window.masterLength = 16;
     
-    // 4. Update UI
+    // RESET UI
     document.querySelectorAll('.btn-length').forEach(b => { b.classList.toggle('active', parseInt(b.dataset.length) === 16); });
     if(window.updateNavButtonsState) window.updateNavButtonsState();
     if(window.refreshGridVisuals) window.refreshGridVisuals();
+    
+    // RESET FADERS VISUELS
     if(window.refreshFadersVisuals) {
         window.refreshFadersVisuals(2);
         if(document.getElementById('grid-seq3')) window.refreshFadersVisuals(3);
@@ -103,7 +98,7 @@ function clearAllData() {
 
 function savePattern(slot) {
     const data = {
-        version: "2.1",
+        version: "2.2",
         masterLength: window.masterLength,
         drums: {
             seq: window.drumSequences,
@@ -122,6 +117,7 @@ function savePattern(slot) {
         synths: {
             seq2: window.synthSequences.seq2,
             seq3: window.synthSequences.seq3,
+            // C'est ici que la magie opère : on sauvegarde bien le tableau global
             freqs2: window.freqDataSeq2,
             freqs3: window.freqDataSeq3,
             params2: window.paramsSeq2, 
@@ -148,10 +144,12 @@ function loadPattern(slot) {
     try {
         const data = JSON.parse(json);
         
+        // Globals
         window.masterLength = data.masterLength || 16;
         document.querySelectorAll('.btn-length').forEach(b => { b.classList.toggle('active', parseInt(b.dataset.length) === window.masterLength); });
         if(window.updateNavButtonsState) window.updateNavButtonsState();
 
+        // Drums
         window.drumSequences = (data.drums.seq[0].length < 64) ? data.drums.seq.map(r => [...r, ...Array(64-r.length).fill(false)]) : data.drums.seq;
         window.drumAccents = (data.drums.accents[0].length < 64) ? data.drums.accents.map(r => [...r, ...Array(64-r.length).fill(false)]) : data.drums.accents;
         window.trackMutes = data.drums.mutes;
@@ -182,11 +180,31 @@ function loadPattern(slot) {
             }
         });
 
+        // Synths Notes
         window.synthSequences.seq2 = (data.synths.seq2.length < 64) ? [...data.synths.seq2, ...Array(64 - data.synths.seq2.length).fill(false)] : data.synths.seq2;
         window.synthSequences.seq3 = (data.synths.seq3 && data.synths.seq3.length < 64) ? [...data.synths.seq3, ...Array(64 - data.synths.seq3.length).fill(false)] : (data.synths.seq3 || Array(64).fill(false));
         
-        window.freqDataSeq2 = (data.synths.freqs2.length < 64) ? [...data.synths.freqs2, ...Array(64 - data.synths.freqs2.length).fill(440)] : data.synths.freqs2;
-        window.freqDataSeq3 = (data.synths.freqs3 && data.synths.freqs3.length < 64) ? [...data.synths.freqs3, ...Array(64 - data.synths.freqs3.length).fill(440)] : (data.synths.freqs3 || Array(64).fill(440));
+        // --- RESTAURATION ROBUSTE DES FREQUENCES ---
+        if (data.synths.freqs2 && data.synths.freqs2.length > 0) {
+            // On force la conversion en nombres pour éviter les chaînes "440"
+            window.freqDataSeq2 = data.synths.freqs2.map(v => parseFloat(v));
+            // Padding si vieux save
+            if (window.freqDataSeq2.length < 64) {
+                window.freqDataSeq2 = [...window.freqDataSeq2, ...Array(64 - window.freqDataSeq2.length).fill(440)];
+            }
+        } else {
+            // Fallback
+            window.freqDataSeq2.fill(440);
+        }
+
+        if (data.synths.freqs3 && data.synths.freqs3.length > 0) {
+            window.freqDataSeq3 = data.synths.freqs3.map(v => parseFloat(v));
+            if (window.freqDataSeq3.length < 64) {
+                window.freqDataSeq3 = [...window.freqDataSeq3, ...Array(64 - window.freqDataSeq3.length).fill(440)];
+            }
+        } else {
+            window.freqDataSeq3.fill(440);
+        }
 
         setSlider('vol-seq2', data.synths.vol2);
         setSlider('synth2-disto', data.synths.params2.disto);
@@ -202,6 +220,7 @@ function loadPattern(slot) {
         const btnMute2 = document.getElementById('btn-mute-seq2'); 
         if(btnMute2) btnMute2.classList.toggle('active', mutes.seq2);
 
+        // Seq 3 UI activation
         const hasSeq3Data = data.synths.freqs3 && data.synths.freqs3.some(f => f !== 440);
         const isSeq3Visible = document.getElementById('seq3-container');
         if ((hasSeq3Data || mutes.seq3) && !isSeq3Visible) {
@@ -218,6 +237,8 @@ function loadPattern(slot) {
                  
                  const btnMute3 = document.getElementById('btn-mute-seq3'); 
                  if(btnMute3) btnMute3.classList.toggle('active', mutes.seq3);
+                 
+                 // Force refresh Seq 3 Faders
                  if(window.refreshFadersVisuals) window.refreshFadersVisuals(3);
              }
         }, 100);
@@ -228,7 +249,10 @@ function loadPattern(slot) {
         setSlider('global-delay-amt', data.global.delay.amt);
         setSlider('global-delay-time', data.global.delay.time);
 
+        // --- REFRESH FINAL OBLIGATOIRE ---
         if(window.refreshGridVisuals) window.refreshGridVisuals();
+        
+        // On force le refresh des faders Seq 2
         if(window.refreshFadersVisuals) window.refreshFadersVisuals(2);
 
     } catch (e) {
