@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (V7 - VISUAL FEEDBACK FIX)
+   HARDBEAT PRO - UI LOGIC (V8 - POLYRHYTHMIE REELLE & VISUEL)
    ========================================== */
 
 let masterTimer; // UNE SEULE HORLOGE pour tout le système
@@ -21,41 +21,37 @@ window.trackLengths = [16, 16, 16, 16, 16];
 window.trackMutes = [false, false, false, false, false];
 window.trackSolos = [false, false, false, false, false];
 
+// --- NOUVEAU : COMPTEURS INDÉPENDANTS (Pour que le Kick boucle sur 3 pendant que le Snare boucle sur 16) ---
+let trackCursors = [0, 0, 0, 0, 0]; 
+
 // Internes
 let currentPageSeq1 = 0;    
 let currentPageSeq2 = 0;    
 let currentPageSeq3 = 0; 
 let currentTrackIndex = 0;
 
-// Position de lecture (Tête de lecture unique)
-let globalStepIndex = 0; 
-let globalTickCount = 0; // Pour le swing
+// Compteurs Globaux
+let globalTickCount = 0; 
+let globalMasterStep = 0; // Position absolue (0 à 63)
 
 // --- INIT ---
 window.addEventListener('load', () => {
-    console.log("Initializing Logic V7 (Visual Fix)...");
+    console.log("Initialisation Logic V8 (FR)...");
     
-    // Vérification AUDIO
-    if (!window.audioCtx) console.error("ERREUR CRITIQUE: audio.js ne semble pas chargé !");
+    if (!window.audioCtx) console.error("ERREUR : audio.js manquant !");
 
     initGrid('grid-seq1'); 
     initGrid('grid-seq2'); 
     initFaders('grid-freq-seq2', 2);
     
-    // Initialisation forcée des valeurs des faders au démarrage
+    // Initialisation forcée des faders
     const initialFaders = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
-    initialFaders.forEach((f, i) => { 
-        window.freqDataSeq2[i] = parseFloat(f.value); 
-    });
+    initialFaders.forEach((f, i) => { window.freqDataSeq2[i] = parseFloat(f.value); });
 
-    if(window.kickSettings) {
-        bindControls(); 
-    } else {
-        alert("Attention: Le moteur audio ne répond pas.");
-    }
+    if(window.kickSettings) bindControls(); 
+    else alert("Erreur Moteur Audio");
 
     setupTempoDrag('display-bpm1'); 
-    
     initSeq3Extension();
     setupLengthControls();
     setupPageNavigation();
@@ -63,9 +59,7 @@ window.addEventListener('load', () => {
     currentTrackIndex = 0; 
     showParamsForTrack(0); 
     
-    if(typeof initStorageSystem === 'function') {
-        initStorageSystem();
-    }
+    if(typeof initStorageSystem === 'function') initStorageSystem();
     
     refreshGridVisuals();
     refreshFadersVisuals(2);
@@ -73,7 +67,7 @@ window.addEventListener('load', () => {
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) playBtn.onclick = () => togglePlay(playBtn);
     
-    console.log("UI Logic V7: Ready.");
+    console.log("Logic V8 : Prêt.");
 });
 
 function togglePlay(btn) {
@@ -87,9 +81,12 @@ function togglePlay(btn) {
         btn.style.background = "#222"; 
         btn.style.color = "#fff";
         
-        // Reset
-        globalStepIndex = 0;
+        // RESET TOTAL
         globalTickCount = 0;
+        globalMasterStep = 0;
+        trackCursors = [0, 0, 0, 0, 0]; // On remet tous les instruments au début
+        currentSynthStep = 0;
+        
         refreshGridVisuals(); 
         
     } else {
@@ -100,53 +97,60 @@ function togglePlay(btn) {
         btn.style.background = "#00f3ff"; 
         btn.style.color = "#000";
         
-        globalStepIndex = 0;
+        // On repart à zéro
+        trackCursors = [0, 0, 0, 0, 0];
+        globalMasterStep = 0;
         globalTickCount = 0;
+        currentSynthStep = 0;
         
         runMasterClock(); 
     }
 }
 
-// --- MASTER CLOCK ENGINE ---
+// --- MOTEUR D'HORLOGE MAÎTRE (Le Cœur) ---
 
 function runMasterClock() {
     if (!window.isPlaying) return;
 
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
-    
     const bpm2Display = document.getElementById('display-bpm2');
     if(bpm2Display && bpm2Display.innerText != bpm) bpm2Display.innerText = bpm;
 
     let baseDuration = (60 / bpm) / 4 * 1000;
-    
-    let currentStepDuration;
-    if (globalTickCount % 2 === 0) {
-        currentStepDuration = baseDuration * (1 + globalSwing);
-    } else {
-        currentStepDuration = baseDuration * (1 - globalSwing);
+    let currentStepDuration = (globalTickCount % 2 === 0) ? baseDuration * (1 + globalSwing) : baseDuration * (1 - globalSwing);
+
+    // 1. JOUER LE SON
+    triggerDrums();
+    triggerSynths(globalMasterStep);
+
+    // 2. METTRE À JOUR L'ÉCRAN
+    updatePlayheads();
+
+    // 3. AVANCER LES COMPTEURS
+    // Chaque piste avance selon SA PROPRE longueur (Polyrythmie)
+    for(let i=0; i<5; i++) {
+        trackCursors[i] = (trackCursors[i] + 1) % window.trackLengths[i];
     }
-
-    triggerDrums(globalStepIndex);
-    triggerSynths(globalStepIndex);
-    updatePlayheads(globalStepIndex);
-
-    globalStepIndex = (globalStepIndex + 1) % window.masterLength;
+    
+    // Le compteur général avance selon la longueur MAÎTRE (64)
+    globalMasterStep = (globalMasterStep + 1) % window.masterLength;
     globalTickCount++;
 
     masterTimer = setTimeout(runMasterClock, currentStepDuration);
 }
 
-function triggerDrums(stepIndex) {
+function triggerDrums() {
     const isAnySolo = window.trackSolos.includes(true);
     
     for (let i = 0; i < 5; i++) {
-        let localPos = stepIndex % window.trackLengths[i]; 
+        // On utilise le curseur INDÉPENDANT de la piste
+        let pos = trackCursors[i]; 
 
         let shouldPlay = true;
         if (isAnySolo) { if (!window.trackSolos[i]) shouldPlay = false; } else { if (window.trackMutes[i]) shouldPlay = false; }
 
-        if (shouldPlay && window.drumSequences[i][localPos]) {
-            let acc = window.drumAccents[i][localPos];
+        if (shouldPlay && window.drumSequences[i][pos]) {
+            let acc = window.drumAccents[i][pos];
             if(i===0 && window.playKick) window.playKick(acc);
             if(i===1 && window.playSnare) window.playSnare(acc);
             if(i===2 && window.playHiHat) window.playHiHat(false, acc);
@@ -154,40 +158,49 @@ function triggerDrums(stepIndex) {
             if(i===4 && window.playDrumFM) window.playDrumFM(acc);
         }
         
-        if (i === 0 && isMetroOn && stepIndex % 4 === 0) { 
-            if(window.playMetronome) window.playMetronome(stepIndex % 16 === 0); 
+        // Métronome (reste stable sur le temps absolu)
+        if (i === 0 && isMetroOn && globalTickCount % 4 === 0) { 
+            if(window.playMetronome) window.playMetronome(globalTickCount % 16 === 0); 
         }
     }
 }
 
-function triggerSynths(stepIndex) {
+// Les Synthés restent synchronisés sur le Maître (Comportement standard DAW)
+let currentSynthStep = 0;
+function triggerSynths(masterStep) {
     if(window.playSynthStep) {
-        // SEQ 2
-        const isActive2 = window.synthSequences.seq2[stepIndex];
-        if(window.freqDataSeq2) {
-             window.playSynthStep(stepIndex, window.freqDataSeq2[stepIndex], 2, isActive2);
-        }
+        const isActive2 = window.synthSequences.seq2[masterStep];
+        if(window.freqDataSeq2) window.playSynthStep(masterStep, window.freqDataSeq2[masterStep], 2, isActive2);
 
-        // SEQ 3
-        const isActive3 = window.synthSequences.seq3[stepIndex];
-        if(window.freqDataSeq3) {
-            window.playSynthStep(stepIndex, window.freqDataSeq3[stepIndex], 3, isActive3);
-        }
+        const isActive3 = window.synthSequences.seq3[masterStep];
+        if(window.freqDataSeq3) window.playSynthStep(masterStep, window.freqDataSeq3[masterStep], 3, isActive3);
     }
 }
 
-function updatePlayheads(currentStep) {
+function updatePlayheads() {
     // DRUMS (SEQ 1)
-    const offset1 = currentPageSeq1 * 16;
     const pads1 = document.querySelectorAll('#grid-seq1 .step-pad');
+    const offset1 = currentPageSeq1 * 16;
     
-    if (currentStep >= offset1 && currentStep < offset1 + 16) {
-        const visualIndex = currentStep - offset1;
-        pads1.forEach(p => p.style.borderColor = "#333");
-        if(pads1[visualIndex]) pads1[visualIndex].style.borderColor = "#ffffff";
-    } else {
-        pads1.forEach(p => p.style.borderColor = "#333");
-    }
+    // On affiche le curseur de l'instrument SÉLECTIONNÉ
+    const activeCursor = trackCursors[currentTrackIndex];
+    
+    // Pour l'affichage, on doit "tricher" un peu :
+    // Si l'instrument boucle sur 3 pas (0, 1, 2), on veut voir s'allumer les pads 1, 2, 3.
+    // Mais si on est sur la page 2 (pas 17-32), on ne voit rien, c'est normal.
+    // SAUF si on veut voir le curseur "passer" sur la page 2 ?
+    // Pour l'instant, restons simple : on allume le pad correspondant à la position de lecture.
+    
+    pads1.forEach((p, index) => {
+        const realIndex = index + offset1; // L'index réel du bouton (ex: 17)
+        p.style.borderColor = "#333"; // Reset
+        
+        // Si le curseur de lecture est sur ce pad précis
+        // (Attention : si la boucle fait 3 pas, le curseur vaudra 0, 1, 2. Donc seuls les pads 1, 2, 3 s'allumeront)
+        if (realIndex === activeCursor) {
+            p.style.borderColor = "#ffffff";
+        }
+    });
 
     // SYNTHS
     ['seq2', 'seq3'].forEach((seqKey, idx) => {
@@ -198,8 +211,8 @@ function updatePlayheads(currentStep) {
         const color = (seqNum === 2) ? "#00f3ff" : "#a855f7";
         
         if (padsS.length > 0) {
-            if (currentStep >= offsetS && currentStep < offsetS + 16) {
-                const visualIndex = currentStep - offsetS;
+            if (globalMasterStep >= offsetS && globalMasterStep < offsetS + 16) {
+                const visualIndex = globalMasterStep - offsetS;
                 padsS.forEach(p => p.style.borderColor = "#333");
                 if(padsS[visualIndex]) padsS[visualIndex].style.borderColor = color;
             } else {
@@ -209,79 +222,32 @@ function updatePlayheads(currentStep) {
     });
 }
 
-// --- GESTION 64 PAS & NAV ---
-function setupLengthControls() {
-    const btns = document.querySelectorAll('.btn-length');
-    btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            btns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            window.masterLength = parseInt(btn.dataset.length);
-            
-            if (currentPageSeq1 * 16 >= window.masterLength) { currentPageSeq1 = 0; updatePageIndicator('seq1'); }
-            if (currentPageSeq2 * 16 >= window.masterLength) { currentPageSeq2 = 0; updatePageIndicator('seq2'); }
-            if (currentPageSeq3 * 16 >= window.masterLength) { currentPageSeq3 = 0; updatePageIndicator('seq3'); }
-            
-            updateNavButtonsState();
-            refreshGridVisuals();
-            refreshFadersVisuals(2);
-            if(document.getElementById('grid-seq3')) refreshFadersVisuals(3);
-        });
-    });
-}
-
-function setupPageNavigation() {
-    const p1 = document.getElementById('btn-prev-page-seq1');
-    const n1 = document.getElementById('btn-next-page-seq1');
-    if(p1) p1.onclick = () => { if(currentPageSeq1 > 0) { currentPageSeq1--; updatePageIndicator('seq1'); refreshGridVisuals(); }};
-    if(n1) n1.onclick = () => { if((currentPageSeq1 + 1) * 16 < window.masterLength) { currentPageSeq1++; updatePageIndicator('seq1'); refreshGridVisuals(); }};
-
-    const p2 = document.getElementById('btn-prev-page-seq2');
-    const n2 = document.getElementById('btn-next-page-seq2');
-    if(p2) p2.onclick = () => { if(currentPageSeq2 > 0) { currentPageSeq2--; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
-    if(n2) n2.onclick = () => { if((currentPageSeq2 + 1) * 16 < window.masterLength) { currentPageSeq2++; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
-}
-
-function updatePageIndicator(seqId) {
-    const indicator = document.getElementById(`page-indicator-${seqId}`);
-    if(!indicator) return;
-    let page = (seqId === 'seq1') ? currentPageSeq1 : (seqId === 'seq2') ? currentPageSeq2 : currentPageSeq3;
-    const start = (page * 16) + 1;
-    const end = (page + 1) * 16;
-    indicator.innerText = `${start}-${end}`;
-    updateNavButtonsState();
-}
-
-window.updateNavButtonsState = function() {
-    const checkBtn = (pid, nid, page) => {
-        const p = document.getElementById(pid);
-        const n = document.getElementById(nid);
-        if(p) p.disabled = (page === 0);
-        if(n) n.disabled = ((page + 1) * 16 >= window.masterLength);
-    };
-    checkBtn('btn-prev-page-seq1', 'btn-next-page-seq1', currentPageSeq1);
-    checkBtn('btn-prev-page-seq2', 'btn-next-page-seq2', currentPageSeq2);
-    checkBtn('btn-prev-page-seq3', 'btn-next-page-seq3', currentPageSeq3);
-};
-
-// --- MODIFICATION ICI : RAFFRAICHISSEMENT VISUEL COMPLET ---
+// --- VISUEL ET FEEDBACK ---
 window.refreshGridVisuals = function() {
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
+    if(pads.length === 0) return;
     const offset1 = currentPageSeq1 * 16;
-    
-    // On récupère la longueur du slider de l'instrument actuel
+
+    // Récupère la longueur de la boucle de l'instrument actuel
     const currentTrackLen = window.trackLengths[currentTrackIndex]; 
 
     pads.forEach((pad, i) => {
         const realIndex = i + offset1; 
         
-        // --- LOGIQUE VISUELLE CORRIGÉE ---
-        // Désactivé si hors Master Length OU hors Track Length (Slider)
-        if (realIndex >= window.masterLength || realIndex >= currentTrackLen) { 
+        // 1. Si on dépasse le MASTER (64), on désactive complètement (gris foncé, inerte)
+        if (realIndex >= window.masterLength) {
             pad.classList.add('disabled'); 
-        } else { 
-            pad.classList.remove('disabled'); 
+            pad.style.opacity = "0.2";
+        } else {
+            pad.classList.remove('disabled');
+            
+            // 2. Si on dépasse la BOUCLE INSTRUMENT (Slider), on atténue mais on laisse visible
+            if (realIndex >= currentTrackLen) {
+                pad.style.opacity = "0.3"; // "Fantôme"
+            } else {
+                pad.style.opacity = "1"; // Actif
+            }
         }
         
         if(window.drumSequences && window.drumSequences[currentTrackIndex]) { 
@@ -289,16 +255,15 @@ window.refreshGridVisuals = function() {
             pad.classList.toggle('active', isActive); 
             
             const led = pad.querySelector('.led'); 
-            // Si c'est désactivé, la LED doit être éteinte aussi
+            // Si hors boucle, la LED est éteinte même si la note est active (elle ne jouera pas)
             if (realIndex >= currentTrackLen) {
-                if(led) led.style.background = "#330000"; 
+                if(led) led.style.background = "#111"; 
             } else {
                 if (led) led.style.background = isActive ? "red" : "#330000"; 
             }
             
             pad.dataset.realIndex = realIndex; 
         }
-        
         const span = pad.querySelector('span');
         if(span) span.innerText = realIndex + 1;
     });
@@ -306,18 +271,21 @@ window.refreshGridVisuals = function() {
     accents.forEach((acc, i) => {
         const realIndex = i + offset1;
         acc.dataset.realIndex = realIndex; 
-        // Pareil pour les accents
-        if (realIndex >= window.masterLength || realIndex >= currentTrackLen) { 
-            acc.style.opacity = "0.2"; acc.style.pointerEvents = "none"; 
+        
+        if (realIndex >= window.masterLength) { 
+            acc.style.opacity = "0.1"; acc.style.pointerEvents = "none"; 
         } else { 
-            acc.style.opacity = "1"; acc.style.pointerEvents = "auto"; 
+            if (realIndex >= currentTrackLen) acc.style.opacity = "0.2";
+            else acc.style.opacity = "1";
+            acc.style.pointerEvents = "auto"; 
         }
+        
         if(window.drumAccents && window.drumAccents[currentTrackIndex]) { 
             acc.classList.toggle('active', window.drumAccents[currentTrackIndex][realIndex]); 
         }
     });
     
-    // Synths Refresh (inchangé)
+    // Synths Refresh
     const updateSynthGrid = (seqKey, seqNum, page) => {
         const padsS = document.querySelectorAll(`#grid-seq${seqNum} .step-pad`);
         const offsetS = page * 16;
@@ -325,7 +293,15 @@ window.refreshGridVisuals = function() {
         if (padsS.length > 0) padsS.forEach((pad, i) => { 
             const realIndex = i + offsetS;
             pad.dataset.realIndex = realIndex;
-            if (realIndex >= window.masterLength) pad.classList.add('disabled'); else pad.classList.remove('disabled');
+            
+            if (realIndex >= window.masterLength) {
+                pad.classList.add('disabled'); 
+                pad.style.opacity = "0.2";
+            } else {
+                pad.classList.remove('disabled');
+                pad.style.opacity = "1";
+            }
+
             const isActive = window.synthSequences[seqKey][realIndex]; 
             pad.classList.toggle('active', isActive); 
             const led = pad.querySelector('.led'); 
@@ -343,7 +319,6 @@ window.refreshFadersVisuals = function(seqId) {
     const data = (seqId === 3) ? window.freqDataSeq3 : window.freqDataSeq2;
     const page = (seqId === 3) ? currentPageSeq3 : currentPageSeq2;
     const offset = page * 16;
-    
     faders.forEach((fader, i) => {
         const realIndex = i + offset;
         fader.dataset.realIndex = realIndex; 
@@ -353,78 +328,32 @@ window.refreshFadersVisuals = function(seqId) {
     });
 };
 
-// --- INPUTS & CONTROLS ---
-document.addEventListener('mousedown', (e) => {
-    const pad = e.target.closest('.step-pad');
-    if (pad) {
-        if (pad.classList.contains('disabled')) return;
-        const idx = parseInt(pad.dataset.realIndex); 
-        const pid = pad.closest('.step-grid').id;
-        
-        if (pid === 'grid-seq1') { 
-            window.drumSequences[currentTrackIndex][idx] = !window.drumSequences[currentTrackIndex][idx]; 
-            pad.classList.toggle('active');
-            const led = pad.querySelector('.led'); if(led) led.style.background = window.drumSequences[currentTrackIndex][idx] ? "red" : "#330000";
-        } 
-        else if (pid === 'grid-seq2') { 
-            window.synthSequences.seq2[idx] = !window.synthSequences.seq2[idx]; 
-            pad.classList.toggle('active'); 
-            const led = pad.querySelector('.led'); if(led) led.style.background = window.synthSequences.seq2[idx] ? "cyan" : "#330000"; 
-        } 
-        else if (pid === 'grid-seq3') { 
-            window.synthSequences.seq3[idx] = !window.synthSequences.seq3[idx]; 
-            pad.classList.toggle('active'); 
-            const led = pad.querySelector('.led'); if(led) led.style.background = window.synthSequences.seq3[idx] ? "#a855f7" : "#330000"; 
-        }
-    }
-    const accentBtn = e.target.closest('.accent-pad');
-    if (accentBtn) {
-        const idx = parseInt(accentBtn.dataset.realIndex);
-        window.drumAccents[currentTrackIndex][idx] = !window.drumAccents[currentTrackIndex][idx];
-        accentBtn.classList.toggle('active');
-    }
-});
-
-document.addEventListener('input', (e) => {
-    if (e.target.classList.contains('freq-fader')) {
-        const val = parseFloat(e.target.value);
-        const idx = parseInt(e.target.dataset.realIndex); 
-        const seq = parseInt(e.target.dataset.seq);
-        
-        if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
-        
-        if (seq === 2) window.freqDataSeq2[idx] = val;
-        if (seq === 3) window.freqDataSeq3[idx] = val;
-    }
-});
-
-// --- MODIFICATION ICI : BINDING SPÉCIFIQUE POUR LES STEPS ---
+// --- CONTROLS ---
 function bindControls() {
     const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
     
-    // NOUVEAU : Helper spécifique pour les sliders de Loop
+    // BINDING SPÉCIAL POUR LES SLIDERS DE BOUCLE (Visual Feedback Immédiat)
     const bindSteps = (id, trackIdx) => {
         const el = document.getElementById(id);
         if (el) {
             el.oninput = (e) => {
-                // 1. Mise à jour de la mémoire
                 window.trackLengths[trackIdx] = parseInt(e.target.value);
-                // 2. Si on est sur la piste active, on rafraichit la grille immédiatement
-                if (currentTrackIndex === trackIdx) {
-                    refreshGridVisuals();
+                // Si on raccourcit la boucle, on ramène le curseur à 0 pour éviter le silence
+                if (trackCursors[trackIdx] >= window.trackLengths[trackIdx]) {
+                    trackCursors[trackIdx] = 0;
                 }
+                // Mise à jour visuelle immédiate
+                if (currentTrackIndex === trackIdx) refreshGridVisuals();
             };
         }
     };
 
-    // On lie les sliders de longueur (Steps) avec la nouvelle fonction
     bindSteps('kick-steps', 0);
     bindSteps('snare-steps', 1);
     bindSteps('hhc-steps', 2);
     bindSteps('hho-steps', 3);
     bindSteps('fm-steps', 4);
 
-    // Le reste est standard
     bind('kick-pitch', window.kickSettings, 'pitch'); bind('kick-decay', window.kickSettings, 'decay'); bind('kick-level', window.kickSettings, 'level');
     bind('snare-tone', window.snareSettings, 'tone'); bind('snare-snappy', window.snareSettings, 'snappy'); bind('snare-level', window.snareSettings, 'level');
     bind('hhc-tone', window.hhSettings, 'tone'); bind('hhc-level', window.hhSettings, 'levelClose');
@@ -460,7 +389,6 @@ function setupTempoDrag(id) {
 }
 
 function generateSmartRhythm(trackIdx) {
-    // Reset sur 64 pas
     window.drumSequences[trackIdx] = Array(64).fill(false);
     window.drumAccents[trackIdx] = Array(64).fill(false);
     for (let i = 0; i < window.masterLength; i++) {
@@ -540,7 +468,6 @@ function initSeq3Extension() {
         document.getElementById('btn-next-page-seq3').onclick = () => { if((currentPageSeq3 + 1) * 16 < window.masterLength) { currentPageSeq3++; updatePageIndicator('seq3'); refreshGridVisuals(); refreshFadersVisuals(3); }};
         updatePageIndicator('seq3');
 
-        // Init faders values
         const initialFaders3 = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
         initialFaders3.forEach((f, i) => { window.freqDataSeq3[i] = parseFloat(f.value); });
 
@@ -552,6 +479,104 @@ function initSeq3Extension() {
         document.getElementById('seq3-container').scrollIntoView({ behavior: 'smooth' });
     });
 }
+
+// --- SETUP NAV ---
+function setupLengthControls() {
+    const btns = document.querySelectorAll('.btn-length');
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            window.masterLength = parseInt(btn.dataset.length);
+            
+            if (currentPageSeq1 * 16 >= window.masterLength) { currentPageSeq1 = 0; updatePageIndicator('seq1'); }
+            if (currentPageSeq2 * 16 >= window.masterLength) { currentPageSeq2 = 0; updatePageIndicator('seq2'); }
+            if (currentPageSeq3 * 16 >= window.masterLength) { currentPageSeq3 = 0; updatePageIndicator('seq3'); }
+            
+            updateNavButtonsState();
+            refreshGridVisuals();
+            refreshFadersVisuals(2);
+            if(document.getElementById('grid-seq3')) refreshFadersVisuals(3);
+        });
+    });
+}
+
+function setupPageNavigation() {
+    const p1 = document.getElementById('btn-prev-page-seq1');
+    const n1 = document.getElementById('btn-next-page-seq1');
+    if(p1) p1.onclick = () => { if(currentPageSeq1 > 0) { currentPageSeq1--; updatePageIndicator('seq1'); refreshGridVisuals(); }};
+    if(n1) n1.onclick = () => { if((currentPageSeq1 + 1) * 16 < window.masterLength) { currentPageSeq1++; updatePageIndicator('seq1'); refreshGridVisuals(); }};
+
+    const p2 = document.getElementById('btn-prev-page-seq2');
+    const n2 = document.getElementById('btn-next-page-seq2');
+    if(p2) p2.onclick = () => { if(currentPageSeq2 > 0) { currentPageSeq2--; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
+    if(n2) n2.onclick = () => { if((currentPageSeq2 + 1) * 16 < window.masterLength) { currentPageSeq2++; updatePageIndicator('seq2'); refreshGridVisuals(); refreshFadersVisuals(2); }};
+}
+
+function updatePageIndicator(seqId) {
+    const indicator = document.getElementById(`page-indicator-${seqId}`);
+    if(!indicator) return;
+    let page = (seqId === 'seq1') ? currentPageSeq1 : (seqId === 'seq2') ? currentPageSeq2 : currentPageSeq3;
+    const start = (page * 16) + 1;
+    const end = (page + 1) * 16;
+    indicator.innerText = `${start}-${end}`;
+    updateNavButtonsState();
+}
+
+window.updateNavButtonsState = function() {
+    const checkBtn = (pid, nid, page) => {
+        const p = document.getElementById(pid);
+        const n = document.getElementById(nid);
+        if(p) p.disabled = (page === 0);
+        if(n) n.disabled = ((page + 1) * 16 >= window.masterLength);
+    };
+    checkBtn('btn-prev-page-seq1', 'btn-next-page-seq1', currentPageSeq1);
+    checkBtn('btn-prev-page-seq2', 'btn-next-page-seq2', currentPageSeq2);
+    checkBtn('btn-prev-page-seq3', 'btn-next-page-seq3', currentPageSeq3);
+};
+
+// LISTENERS
+document.addEventListener('mousedown', (e) => {
+    const pad = e.target.closest('.step-pad');
+    if (pad) {
+        if (pad.classList.contains('disabled')) return;
+        const idx = parseInt(pad.dataset.realIndex); 
+        const pid = pad.closest('.step-grid').id;
+        
+        if (pid === 'grid-seq1') { 
+            window.drumSequences[currentTrackIndex][idx] = !window.drumSequences[currentTrackIndex][idx]; 
+            // Refresh complet pour gérer l'état LED vs Opacité
+            refreshGridVisuals();
+        } 
+        else if (pid === 'grid-seq2') { 
+            window.synthSequences.seq2[idx] = !window.synthSequences.seq2[idx]; 
+            pad.classList.toggle('active'); 
+            const led = pad.querySelector('.led'); if(led) led.style.background = window.synthSequences.seq2[idx] ? "cyan" : "#330000"; 
+        } 
+        else if (pid === 'grid-seq3') { 
+            window.synthSequences.seq3[idx] = !window.synthSequences.seq3[idx]; 
+            pad.classList.toggle('active'); 
+            const led = pad.querySelector('.led'); if(led) led.style.background = window.synthSequences.seq3[idx] ? "#a855f7" : "#330000"; 
+        }
+    }
+    const accentBtn = e.target.closest('.accent-pad');
+    if (accentBtn) {
+        const idx = parseInt(accentBtn.dataset.realIndex);
+        window.drumAccents[currentTrackIndex][idx] = !window.drumAccents[currentTrackIndex][idx];
+        accentBtn.classList.toggle('active');
+    }
+});
+
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('freq-fader')) {
+        const val = parseFloat(e.target.value);
+        const idx = parseInt(e.target.dataset.realIndex); 
+        const seq = parseInt(e.target.dataset.seq);
+        if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
+        if (seq === 2) window.freqDataSeq2[idx] = val;
+        if (seq === 3) window.freqDataSeq3[idx] = val;
+    }
+});
 
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('btn-drum-rand')) {
