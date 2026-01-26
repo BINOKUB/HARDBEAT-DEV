@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (V6 - MASTER CLOCK)
+   HARDBEAT PRO - UI LOGIC (V7 - VISUAL FEEDBACK FIX)
    ========================================== */
 
 let masterTimer; // UNE SEULE HORLOGE pour tout le système
@@ -33,7 +33,7 @@ let globalTickCount = 0; // Pour le swing
 
 // --- INIT ---
 window.addEventListener('load', () => {
-    console.log("Initializing Logic V6 (Master Clock)...");
+    console.log("Initializing Logic V7 (Visual Fix)...");
     
     // Vérification AUDIO
     if (!window.audioCtx) console.error("ERREUR CRITIQUE: audio.js ne semble pas chargé !");
@@ -42,10 +42,10 @@ window.addEventListener('load', () => {
     initGrid('grid-seq2'); 
     initFaders('grid-freq-seq2', 2);
     
-    // Initialisation forcée des valeurs des faders au démarrage (Correction du bug fader)
+    // Initialisation forcée des valeurs des faders au démarrage
     const initialFaders = document.querySelectorAll('#grid-freq-seq2 .freq-fader');
     initialFaders.forEach((f, i) => { 
-        window.freqDataSeq2[i] = parseFloat(f.value); // On synchronise la mémoire avec le visuel par défaut
+        window.freqDataSeq2[i] = parseFloat(f.value); 
     });
 
     if(window.kickSettings) {
@@ -55,8 +55,6 @@ window.addEventListener('load', () => {
     }
 
     setupTempoDrag('display-bpm1'); 
-    // display-bpm2 est maintenant juste visuel ou esclave, car on a une seule horloge
-    // Mais on le garde pour l'interface
     
     initSeq3Extension();
     setupLengthControls();
@@ -75,7 +73,7 @@ window.addEventListener('load', () => {
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) playBtn.onclick = () => togglePlay(playBtn);
     
-    console.log("UI Logic V6: Synced & Ready.");
+    console.log("UI Logic V7: Ready.");
 });
 
 function togglePlay(btn) {
@@ -84,7 +82,7 @@ function togglePlay(btn) {
     if (window.isPlaying) {
         // STOP
         window.isPlaying = false; 
-        clearTimeout(masterTimer); // On tue l'horloge unique
+        clearTimeout(masterTimer); 
         btn.innerText = "PLAY / STOP";
         btn.style.background = "#222"; 
         btn.style.color = "#fff";
@@ -92,7 +90,7 @@ function togglePlay(btn) {
         // Reset
         globalStepIndex = 0;
         globalTickCount = 0;
-        refreshGridVisuals(); // Pour éteindre les têtes de lecture
+        refreshGridVisuals(); 
         
     } else {
         // PLAY
@@ -105,27 +103,22 @@ function togglePlay(btn) {
         globalStepIndex = 0;
         globalTickCount = 0;
         
-        runMasterClock(); // Lancement du moteur unique
+        runMasterClock(); 
     }
 }
 
-// --- MASTER CLOCK ENGINE (LE CŒUR DU SYSTEME) ---
-// C'est ici que tout se joue. Une seule fonction pour tout le monde.
+// --- MASTER CLOCK ENGINE ---
 
 function runMasterClock() {
     if (!window.isPlaying) return;
 
-    // 1. CALCUL DU TEMPO & SWING
-    // On utilise BPM 1 comme maître absolu
     const bpm = parseInt(document.getElementById('display-bpm1').innerText) || 120;
     
-    // Copie le BPM sur l'affichage 2 pour la cohérence visuelle
     const bpm2Display = document.getElementById('display-bpm2');
     if(bpm2Display && bpm2Display.innerText != bpm) bpm2Display.innerText = bpm;
 
     let baseDuration = (60 / bpm) / 4 * 1000;
     
-    // Application du Swing
     let currentStepDuration;
     if (globalTickCount % 2 === 0) {
         currentStepDuration = baseDuration * (1 + globalSwing);
@@ -133,18 +126,13 @@ function runMasterClock() {
         currentStepDuration = baseDuration * (1 - globalSwing);
     }
 
-    // 2. DECLENCHEMENT AUDIO (DRUMS + SYNTHS EN MEME TEMPS)
     triggerDrums(globalStepIndex);
     triggerSynths(globalStepIndex);
-
-    // 3. MISE A JOUR VISUELLE (PLAYHEAD)
     updatePlayheads(globalStepIndex);
 
-    // 4. AVANCEMENT
     globalStepIndex = (globalStepIndex + 1) % window.masterLength;
     globalTickCount++;
 
-    // 5. BOUCLE
     masterTimer = setTimeout(runMasterClock, currentStepDuration);
 }
 
@@ -152,9 +140,6 @@ function triggerDrums(stepIndex) {
     const isAnySolo = window.trackSolos.includes(true);
     
     for (let i = 0; i < 5; i++) {
-        // Gestion Polyrythmie: on utilise modulo trackLength pour savoir où on est dans la piste
-        // Mais c'est drivé par l'horloge maître.
-        // Si la piste fait 16 pas, au pas 17 global, elle jouera son pas 1 (17 % 16 = 1).
         let localPos = stepIndex % window.trackLengths[i]; 
 
         let shouldPlay = true;
@@ -169,7 +154,6 @@ function triggerDrums(stepIndex) {
             if(i===4 && window.playDrumFM) window.playDrumFM(acc);
         }
         
-        // Metronome sur les noires (tous les 4 pas)
         if (i === 0 && isMetroOn && stepIndex % 4 === 0) { 
             if(window.playMetronome) window.playMetronome(stepIndex % 16 === 0); 
         }
@@ -180,7 +164,6 @@ function triggerSynths(stepIndex) {
     if(window.playSynthStep) {
         // SEQ 2
         const isActive2 = window.synthSequences.seq2[stepIndex];
-        // On passe stepIndex pour aller chercher la fréquence dans le tableau global
         if(window.freqDataSeq2) {
              window.playSynthStep(stepIndex, window.freqDataSeq2[stepIndex], 2, isActive2);
         }
@@ -198,20 +181,11 @@ function updatePlayheads(currentStep) {
     const offset1 = currentPageSeq1 * 16;
     const pads1 = document.querySelectorAll('#grid-seq1 .step-pad');
     
-    // On calcule la position locale sur la page affichée
-    // Attention: Pour le visuel drum, on veut voir la tête de lecture avancer
-    // même si la piste est en polyrythmie courte. On affiche l'index maitre.
-    
     if (currentStep >= offset1 && currentStep < offset1 + 16) {
-        // On est dans la page visible
         const visualIndex = currentStep - offset1;
-        
-        // On nettoie tout
         pads1.forEach(p => p.style.borderColor = "#333");
-        // On allume le bon
         if(pads1[visualIndex]) pads1[visualIndex].style.borderColor = "#ffffff";
     } else {
-        // On est hors page, on éteint tout
         pads1.forEach(p => p.style.borderColor = "#333");
     }
 
@@ -235,7 +209,7 @@ function updatePlayheads(currentStep) {
     });
 }
 
-// --- GESTION 64 PAS & NAV (Reste inchangé mais vital) ---
+// --- GESTION 64 PAS & NAV ---
 function setupLengthControls() {
     const btns = document.querySelectorAll('.btn-length');
     btns.forEach(btn => {
@@ -244,7 +218,6 @@ function setupLengthControls() {
             btn.classList.add('active');
             window.masterLength = parseInt(btn.dataset.length);
             
-            // Correction pagination si on réduit
             if (currentPageSeq1 * 16 >= window.masterLength) { currentPageSeq1 = 0; updatePageIndicator('seq1'); }
             if (currentPageSeq2 * 16 >= window.masterLength) { currentPageSeq2 = 0; updatePageIndicator('seq2'); }
             if (currentPageSeq3 * 16 >= window.masterLength) { currentPageSeq3 = 0; updatePageIndicator('seq3'); }
@@ -291,24 +264,41 @@ window.updateNavButtonsState = function() {
     checkBtn('btn-prev-page-seq3', 'btn-next-page-seq3', currentPageSeq3);
 };
 
+// --- MODIFICATION ICI : RAFFRAICHISSEMENT VISUEL COMPLET ---
 window.refreshGridVisuals = function() {
-    const offset1 = currentPageSeq1 * 16;
     const pads = document.querySelectorAll('#grid-seq1 .step-pad');
     const accents = document.querySelectorAll('#grid-seq1 .accent-pad');
+    const offset1 = currentPageSeq1 * 16;
     
+    // On récupère la longueur du slider de l'instrument actuel
+    const currentTrackLen = window.trackLengths[currentTrackIndex]; 
+
     pads.forEach((pad, i) => {
         const realIndex = i + offset1; 
-        if (realIndex >= window.masterLength) pad.classList.add('disabled'); else pad.classList.remove('disabled');
+        
+        // --- LOGIQUE VISUELLE CORRIGÉE ---
+        // Désactivé si hors Master Length OU hors Track Length (Slider)
+        if (realIndex >= window.masterLength || realIndex >= currentTrackLen) { 
+            pad.classList.add('disabled'); 
+        } else { 
+            pad.classList.remove('disabled'); 
+        }
         
         if(window.drumSequences && window.drumSequences[currentTrackIndex]) { 
             const isActive = window.drumSequences[currentTrackIndex][realIndex]; 
             pad.classList.toggle('active', isActive); 
-            // Reset LED color based on state
+            
             const led = pad.querySelector('.led'); 
-            if (led) led.style.background = isActive ? "red" : "#330000"; 
+            // Si c'est désactivé, la LED doit être éteinte aussi
+            if (realIndex >= currentTrackLen) {
+                if(led) led.style.background = "#330000"; 
+            } else {
+                if (led) led.style.background = isActive ? "red" : "#330000"; 
+            }
+            
             pad.dataset.realIndex = realIndex; 
         }
-        // Update number
+        
         const span = pad.querySelector('span');
         if(span) span.innerText = realIndex + 1;
     });
@@ -316,13 +306,18 @@ window.refreshGridVisuals = function() {
     accents.forEach((acc, i) => {
         const realIndex = i + offset1;
         acc.dataset.realIndex = realIndex; 
-        if (realIndex >= window.masterLength) { acc.style.opacity = "0.2"; acc.style.pointerEvents = "none"; } else { acc.style.opacity = "1"; acc.style.pointerEvents = "auto"; }
+        // Pareil pour les accents
+        if (realIndex >= window.masterLength || realIndex >= currentTrackLen) { 
+            acc.style.opacity = "0.2"; acc.style.pointerEvents = "none"; 
+        } else { 
+            acc.style.opacity = "1"; acc.style.pointerEvents = "auto"; 
+        }
         if(window.drumAccents && window.drumAccents[currentTrackIndex]) { 
             acc.classList.toggle('active', window.drumAccents[currentTrackIndex][realIndex]); 
         }
     });
     
-    // Synths Refresh
+    // Synths Refresh (inchangé)
     const updateSynthGrid = (seqKey, seqNum, page) => {
         const padsS = document.querySelectorAll(`#grid-seq${seqNum} .step-pad`);
         const offsetS = page * 16;
@@ -352,8 +347,6 @@ window.refreshFadersVisuals = function(seqId) {
     faders.forEach((fader, i) => {
         const realIndex = i + offset;
         fader.dataset.realIndex = realIndex; 
-        // Important: On lit la donnée mémoire pour mettre à jour le visuel
-        // Si la donnée n'existe pas encore (undefined), on met 440
         const val = data[realIndex] || 440;
         fader.value = val; 
         if(fader.previousElementSibling) fader.previousElementSibling.innerText = val + "Hz";
@@ -370,7 +363,6 @@ document.addEventListener('mousedown', (e) => {
         
         if (pid === 'grid-seq1') { 
             window.drumSequences[currentTrackIndex][idx] = !window.drumSequences[currentTrackIndex][idx]; 
-            // Feedback instantané
             pad.classList.toggle('active');
             const led = pad.querySelector('.led'); if(led) led.style.background = window.drumSequences[currentTrackIndex][idx] ? "red" : "#330000";
         } 
@@ -393,7 +385,6 @@ document.addEventListener('mousedown', (e) => {
     }
 });
 
-// GESTIONNAIRE DE FADERS ROBUSTE
 document.addEventListener('input', (e) => {
     if (e.target.classList.contains('freq-fader')) {
         const val = parseFloat(e.target.value);
@@ -402,14 +393,38 @@ document.addEventListener('input', (e) => {
         
         if (e.target.previousElementSibling) e.target.previousElementSibling.innerText = val + "Hz";
         
-        // Mise à jour directe de la mémoire globale
         if (seq === 2) window.freqDataSeq2[idx] = val;
         if (seq === 3) window.freqDataSeq3[idx] = val;
     }
 });
 
+// --- MODIFICATION ICI : BINDING SPÉCIFIQUE POUR LES STEPS ---
 function bindControls() {
     const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
+    
+    // NOUVEAU : Helper spécifique pour les sliders de Loop
+    const bindSteps = (id, trackIdx) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.oninput = (e) => {
+                // 1. Mise à jour de la mémoire
+                window.trackLengths[trackIdx] = parseInt(e.target.value);
+                // 2. Si on est sur la piste active, on rafraichit la grille immédiatement
+                if (currentTrackIndex === trackIdx) {
+                    refreshGridVisuals();
+                }
+            };
+        }
+    };
+
+    // On lie les sliders de longueur (Steps) avec la nouvelle fonction
+    bindSteps('kick-steps', 0);
+    bindSteps('snare-steps', 1);
+    bindSteps('hhc-steps', 2);
+    bindSteps('hho-steps', 3);
+    bindSteps('fm-steps', 4);
+
+    // Le reste est standard
     bind('kick-pitch', window.kickSettings, 'pitch'); bind('kick-decay', window.kickSettings, 'decay'); bind('kick-level', window.kickSettings, 'level');
     bind('snare-tone', window.snareSettings, 'tone'); bind('snare-snappy', window.snareSettings, 'snappy'); bind('snare-level', window.snareSettings, 'level');
     bind('hhc-tone', window.hhSettings, 'tone'); bind('hhc-level', window.hhSettings, 'levelClose');
