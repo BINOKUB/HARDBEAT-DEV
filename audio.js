@@ -1,9 +1,8 @@
 /* ==========================================
-   HARDBEAT PRO - AUDIO ENGINE (ROBUST GLOBAL V3)
+   HARDBEAT PRO - AUDIO ENGINE (V7 - GLOBAL STATE FIX)
    ========================================== */
 window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-// --- MASTER LIMITER ---
 const masterLimiter = window.audioCtx.createWaveShaper();
 function makeSoftClipCurve(amount = 0) {
     let k = typeof amount === 'number' ? amount : 50;
@@ -22,8 +21,7 @@ masterGain.connect(masterLimiter);
 masterLimiter.connect(window.audioCtx.destination);
 masterGain.gain.value = 0.5;
 
-// --- PARAMETRES GLOBAUX EXPOSÉS ---
-// On utilise window. pour être SUR que logic.js les voit
+// --- ETAT GLOBAL ---
 window.isPlaying = false;
 window.globalAccentBoost = 1.4;
 
@@ -39,11 +37,12 @@ window.globalDelay = { amt: 0, time: 0.375 };
 window.synthVol2 = 0.6;
 window.synthVol3 = 0.6;
 
-// Etats Mute (Audio only)
-let isMutedSeq2 = false;
-let isMutedSeq3 = false;
+// --- CORRECTION MUTE ICI ---
+// On les attache à window pour que storage.js puisse les sauvegarder
+window.isMutedSeq2 = false;
+window.isMutedSeq3 = false;
 
-// --- FX CHAIN ---
+// --- FX ---
 const distoNode2 = window.audioCtx.createWaveShaper();
 const distoNode3 = window.audioCtx.createWaveShaper();
 const delayNode = window.audioCtx.createDelay(2.0);
@@ -67,7 +66,7 @@ distoNode3.connect(masterGain); distoNode3.connect(delayNode);
 delayNode.connect(feedback); feedback.connect(delayNode); delayNode.connect(delayMix); delayMix.connect(masterGain);
 feedback.gain.value = 0; delayMix.gain.value = 0;
 
-// --- API WINDOW (Contrôles Temps Réel) ---
+// --- API ---
 window.updateSynth2Disto = function(val) { window.paramsSeq2.disto = val; if(window.audioCtx.state==='running') distoNode2.curve = createDistortionCurve(val); };
 window.updateSynth2Res = function(val) { window.paramsSeq2.res = val; };
 window.updateSynth2Cutoff = function(val) { window.paramsSeq2.cutoff = val; };
@@ -81,20 +80,19 @@ window.updateSynth3Decay = function(val) { window.paramsSeq3.decay = val; };
 window.updateDelayAmount = function(val) { window.globalDelay.amt = val; delayMix.gain.setTargetAtTime(val, window.audioCtx.currentTime, 0.02); feedback.gain.setTargetAtTime(val * 0.7, window.audioCtx.currentTime, 0.02); };
 window.updateDelayTime = function(val) { window.globalDelay.time = val; delayNode.delayTime.setTargetAtTime(val, window.audioCtx.currentTime, 0.02); };
 window.updateAccentBoost = function(val) { window.globalAccentBoost = val; };
-window.toggleMuteSynth = function(seqId, isMuted) { if (seqId === 2) isMutedSeq2 = isMuted; if (seqId === 3) isMutedSeq3 = isMuted; };
 
-// --- DRUMS ENGINE ---
+window.toggleMuteSynth = function(seqId, isMuted) { 
+    if (seqId === 2) window.isMutedSeq2 = isMuted; 
+    if (seqId === 3) window.isMutedSeq3 = isMuted; 
+};
+
+// --- PLAYBACK ---
 window.playMetronome = function(isDownbeat) { const osc = window.audioCtx.createOscillator(); const g = window.audioCtx.createGain(); osc.connect(g); g.connect(masterGain); osc.frequency.value = isDownbeat ? 1200 : 800; g.gain.setValueAtTime(0.3, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + 0.05); osc.start(); osc.stop(window.audioCtx.currentTime + 0.05); }
-
 window.playKick = function(isAccent) { const osc = window.audioCtx.createOscillator(); const g = window.audioCtx.createGain(); osc.connect(g); g.connect(masterGain); let lvl = window.kickSettings.level; let decayMod = window.kickSettings.decay; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); decayMod += 0.1; } osc.frequency.setValueAtTime(window.kickSettings.pitch || 150, window.audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(0.01, window.audioCtx.currentTime + decayMod); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + decayMod); osc.start(); osc.stop(window.audioCtx.currentTime + decayMod); }
-
 window.playSnare = function(isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.2, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let baseTone = window.snareSettings.tone || 1000; let lvl = window.snareSettings.level; let snap = window.snareSettings.snappy || 1; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); baseTone += 200; snap += 0.2; } filt.frequency.value = baseTone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + (0.2 * snap)); noise.start(); }
-
 window.playHiHat = function(isOpen, isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.5, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let tone = window.hhSettings.tone || 8000; let d = isOpen ? (window.hhSettings.decayOpen || 0.3) : (window.hhSettings.decayClose || 0.05); let l = isOpen ? (window.hhSettings.levelOpen || 0.5) : (window.hhSettings.levelClose || 0.4); if (isAccent) { l = Math.min(1.0, l * window.globalAccentBoost); d += 0.05; tone += 500; } filt.frequency.value = tone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(l, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + d); noise.start(); }
-
 window.playDrumFM = function(isAccent) { const car = window.audioCtx.createOscillator(); const mod = window.audioCtx.createOscillator(); const modG = window.audioCtx.createGain(); const mainG = window.audioCtx.createGain(); mod.frequency.value = window.fmSettings.modPitch || 50; let amt = window.fmSettings.fmAmount || 100; let lvl = window.fmSettings.level || 0.5; let d = window.fmSettings.decay || 0.3; if (isAccent) { lvl = Math.min(1.0, lvl * window.globalAccentBoost); amt += 50; d += 0.1; } modG.gain.value = amt; car.frequency.value = window.fmSettings.carrierPitch || 100; mod.connect(modG); modG.connect(car.frequency); car.connect(mainG); mainG.connect(masterGain); mainG.gain.setValueAtTime(lvl, window.audioCtx.currentTime); mainG.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + d); car.start(); mod.start(); car.stop(window.audioCtx.currentTime + d); mod.stop(window.audioCtx.currentTime + d); }
 
-// SYNTH NOTE
 function playSynthNote(freq, volume, seqId) {
     if (!freq || freq < 20) return;
     const targetVol = (typeof volume === 'number') ? volume : 0.5;
@@ -119,12 +117,11 @@ function playSynthNote(freq, volume, seqId) {
     osc.start(); osc.stop(window.audioCtx.currentTime + params.decay + 0.1);
 }
 
-// TRIGGER GLOBAL (Appelé par logic.js)
+// TRIGGER
 window.playSynthStep = function(stepIndex, freqValue, seqId, isActive) {
-    if (seqId === 2 && isMutedSeq2) return;
-    if (seqId === 3 && isMutedSeq3) return;
+    if (seqId === 2 && window.isMutedSeq2) return;
+    if (seqId === 3 && window.isMutedSeq3) return;
     
-    // ICI : On reçoit isActive depuis logic.js. Si c'est vrai, on joue !
     if (isActive) {
         const vol = (seqId === 3) ? window.synthVol3 : window.synthVol2;
         const freq = (seqId === 3) ? freqValue * 0.5 : freqValue;
@@ -132,4 +129,4 @@ window.playSynthStep = function(stepIndex, freqValue, seqId, isActive) {
     }
 };
 
-console.log("AUDIO ENGINE V3 (Global Vars): Ready.");
+console.log("AUDIO ENGINE V7: Mutes are now Global.");
