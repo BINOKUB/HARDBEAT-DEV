@@ -122,7 +122,7 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 
 .btn-mute, .btn-solo {
     height: 50%; border: 1px solid #333; background: #111;
-    color: #555; font-size: 9px; cursor: pointer; padding: 0; font-weight: bold;
+    color: #555; font-size: 12px; cursor: pointer; padding: 0; font-weight: bold;
 }
 .btn-mute:hover { color: #fff; }
 .btn-mute.active { background: #cc0000; color: #fff; border-color: #ff0000; }
@@ -147,28 +147,19 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 .instr-params .group { display: flex; flex-direction: column; align-items: center; min-width: 55px; }
 .instr-params label { font-size: 8px; color: #666; margin-bottom: 2px; text-transform: uppercase; }
 .instr-params input[type="range"] { width: 45px !important; cursor: pointer; }
-.label-cyan { font-size: 9px; color: var(--accent-color); font-weight: bold; margin-right: 5px; }
+.label-cyan { font-size: 12px; color: var(--accent-color); font-weight: bold; margin-right: 5px; }
 
 /* --- FADERS & HZ LABELS (MODIFIÉ ICI) --- */
 .fader-unit { display: flex; flex-direction: column; align-items: center; height: 160px; }
 .freq-fader { appearance: slider-vertical; width: 12px; height: 130px; background: #222; cursor: ns-resize; }
 
-/* LE CHANGEMENT EST ICI : CLAIR ET NEON */
-.hz-label { 
-    font-size: 9px; 
-    color: var(--accent-color); /* Cyan */
-    margin-bottom: 5px; 
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    text-shadow: 0 0 5px rgba(0, 243, 255, 0.4); /* Petite lueur */
-}
 
 /* --- SYNTH MASTER --- */
 .synth-master-fixed {
     display: flex; gap: 20px; background: #111; padding: 10px;
     border: 1px solid #333; margin-top: 10px; align-items: center; border-radius: 4px;
 }
-.synth-master-fixed .group label { font-size: 9px; color: #888; text-transform: uppercase; }
+.synth-master-fixed .group label { font-size: 12px; color: #888; text-transform: uppercase; }
 .synth-master-fixed input[type="range"] { width: 70px; }
 
 /* --- GLOBAL ACCENT SLIDER --- */
@@ -178,7 +169,7 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
     background: rgba(0,0,0,0.3); padding: 10px 5px; border: 1px solid #444; border-radius: 4px; height: auto;
 }
 .accent-control-unit label {
-    font-size: 10px; color: #ffaa00; font-weight: bold; margin-bottom: 8px;
+    font-size: 12px; color: #ffaa00; font-weight: bold; margin-bottom: 8px;
     writing-mode: vertical-rl; transform: rotate(180deg);
 }
 .accent-control-unit input[type=range] {
@@ -202,8 +193,13 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 /* --- FADERS & HZ LABELS (NEON) --- */
 .fader-unit { display: flex; flex-direction: column; align-items: center; height: 160px; }
 .freq-fader { appearance: slider-vertical; width: 12px; height: 130px; background: #222; cursor: ns-resize; }
+
+
+/* changement des nombre hz */
 .hz-label { 
-    font-size: 9px; color: var(--accent-color); margin-bottom: 5px; 
+   font-size:14px important!; 
+   font-weight:bold important!;
+    color: var(--accent-color); margin-bottom: 5px; 
     font-family: 'Courier New', monospace; font-weight: bold;
     text-shadow: 0 0 5px rgba(0, 243, 255, 0.4);
 }
@@ -223,7 +219,7 @@ h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #888; letter-
 /* Nouveau Bouton Mute Synth */
 .btn-synth-mute {
     background: #222; border: 1px solid #444; color: #888;
-    padding: 8px 15px; font-size: 10px; cursor: pointer; letter-spacing: 1px;
+    padding: 8px 15px; font-size: 12px; cursor: pointer; letter-spacing: 1px;
     font-weight: bold; transition: all 0.2s;
 }
 .btn-synth-mute:hover {
@@ -350,7 +346,7 @@ body { background-color: var(--bg-color); color: #e0e0e0; font-family: 'Segoe UI
 .track-btn.active { border-color: var(--accent-color); color: var(--accent-color); background: #002a2d; }
 .page-btn { background: #222; border: 1px solid #444; color: #888; padding: 5px 12px; font-size: 11px; cursor: pointer; }
 .fader-unit { display: flex; flex-direction: column; align-items: center; height: 160px; }
-.freq-fader { appearance: slider-vertical; width: 12px; height: 130px; background: #222; cursor: ns-resize; }
+.freq-fader { appearance: slider-vertical; width: 12px; height: 130px; background: #222; cursor: ns-resize; font-size:14px; font-weight:bold; }
 .hz-label { font-size: 9px; color: var(--accent-color); margin-bottom: 5px; font-family: 'Courier New'; font-weight: bold; text-shadow: 0 0 5px rgba(0, 243, 255, 0.4); }
 .synth-master-fixed { display: flex; gap: 20px; background: #111; padding: 10px; border: 1px solid #333; margin-top: 10px; align-items: center; border-radius: 4px; }
 .synth-master-fixed .group label { font-size: 9px; color: #888; text-transform: uppercase; }
@@ -569,4 +565,19 @@ body { background-color: var(--bg-color); color: #e0e0e0; font-family: 'Segoe UI
 .track-controls-col .help-tip {
     margin: 2px 0 0 0;      /* Un peu d'espace au-dessus, pas à gauche */
     margin-left: 0 !important; /* Force le centrage (annule la marge précédente) */
+}
+
+
+/* =================================================
+   CORRECTIF FINAL - TAILLE HZ
+   Colle ceci TOUT EN BAS du fichier style.css
+   ================================================= */
+div.hz-label, span.hz-label, .hz-label {
+    font-size: 16px !important;       /* Change ici : 16px, 18px, 20px... */
+    font-weight: 900 !important;      /* Très gras */
+    color: #00f3ff !important;        /* Cyan Néon forcé */
+    font-family: 'Courier New', monospace !important;
+    margin-bottom: 8px !important;    /* Un peu d'espace */
+    display: block !important;        /* Force l'affichage */
+    opacity: 1 !important;
 }
