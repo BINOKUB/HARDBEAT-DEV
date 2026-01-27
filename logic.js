@@ -649,3 +649,73 @@ function initFreqSnapshots() {
         };
     });
 }
+
+/* ==========================================
+   MODULE D'AUDITION (PREVIEW)
+   Joue une note quand on touche les faders ou les pads
+   ========================================== */
+
+function initAudioPreview() {
+    console.log("Audio Preview: Active.");
+
+    // 1. AUDITION DES FADERS DE FRÉQUENCE (SEQ 2 & 3)
+    // On détecte quand l'utilisateur lâche le fader ou le bouge
+    const attachFaderPreview = (seqId) => {
+        const container = document.getElementById(`grid-freq-seq${seqId}`);
+        if(!container) return;
+
+        // On utilise la délégation d'événement (plus léger)
+        container.addEventListener('input', (e) => {
+            if(e.target.type === 'range') {
+                // On joue une note courte (0.1s) à la fréquence actuelle
+                const freq = parseFloat(e.target.value);
+                // On joue sur le synthé correspondant (2 ou 3)
+                if(window.playSynthSound) {
+                    window.playSynthSound(seqId, freq, 0.1, 0, 0); 
+                }
+            }
+        });
+    };
+
+    attachFaderPreview(2); // Pour Seq 2
+    attachFaderPreview(3); // Pour Seq 3 (si activé)
+
+    // 2. AUDITION DES PADS (GRILLE)
+    // Quand on clique sur un Pad pour l'allumer
+    const attachPadPreview = (seqId) => {
+        const grid = document.getElementById(`grid-seq${seqId}`);
+        if(!grid) return;
+
+        grid.addEventListener('click', (e) => {
+            // On cherche si on a cliqué sur un PAD (ou son enfant)
+            const pad = e.target.closest('.step-pad');
+            
+            // Si c'est un pad et qu'il vient d'être activé (classe 'active')
+            if (pad && pad.classList.contains('active')) {
+                // On doit trouver quelle est la fréquence de ce pas
+                // L'index du pas est stocké dans data-step ou data-index ?
+                // Dans la V8, c'est l'index dans la grille.
+                
+                // Astuce : On récupère l'index du pad parmi ses frères
+                const index = Array.from(grid.children).indexOf(pad.parentElement); 
+                
+                // Récupérer la fréquence dans la mémoire
+                let freq = 440; // Défaut
+                if(seqId === 2 && window.freqDataSeq2) freq = window.freqDataSeq2[index] || 440;
+                if(seqId === 3 && window.freqDataSeq3) freq = window.freqDataSeq3[index] || 110;
+
+                if(window.playSynthSound) {
+                    window.playSynthSound(seqId, freq, 0.15, 0, 0);
+                }
+            }
+        });
+    };
+
+    attachPadPreview(2);
+    attachPadPreview(3);
+}
+
+// Lancer l'init après le chargement
+window.addEventListener('load', () => {
+    setTimeout(initAudioPreview, 1000); // On attend 1s que tout soit généré
+});
