@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - WAV RECORDER (STUDIO QUALITY)
+   HARDBEAT PRO - WAV RECORDER (STUDIO QUALITY - FIX V2)
    ========================================== */
 
 let isRecording = false;
@@ -15,7 +15,7 @@ function initRecorder() {
     // GESTION DU CLIC
     btnRec.onclick = () => {
         if (!isRecording) {
-            startRecording(btnRec);
+            startRecording(btnRec); // On passe le bouton en paramètre
         } else {
             stopRecording(btnRec);
         }
@@ -23,7 +23,12 @@ function initRecorder() {
 }
 
 function startRecording(btn) {
-    if (!window.audioCtx || !window.masterGain) return;
+    // Vérifications de sécurité
+    if (!window.audioCtx || !window.masterGain) {
+        console.error("Recorder Error: AudioCtx or MasterGain missing.");
+        return;
+    }
+    
     if (window.audioCtx.state === 'suspended') window.audioCtx.resume();
 
     // Reset des buffers
@@ -31,7 +36,7 @@ function startRecording(btn) {
     sampleRate = window.audioCtx.sampleRate;
 
     // Création du processeur (Capture le son brut)
-    // Buffer de 4096 échantillons, 2 entrées, 2 sorties
+    // Utilisation de ScriptProcessor (déprécié mais universel pour ce besoin simple)
     recorderNode = window.audioCtx.createScriptProcessor(4096, 2, 2);
 
     // Boucle de capture
@@ -40,18 +45,20 @@ function startRecording(btn) {
         const left = e.inputBuffer.getChannelData(0);
         const right = e.inputBuffer.getChannelData(1);
         
-        // On copie les données (important de cloner)
+        // On copie les données
         recordingData[0].push(new Float32Array(left));
         recordingData[1].push(new Float32Array(right));
     };
 
-    // Connexion : Master -> Recorder -> Destination (pour ne pas couper le son)
+    // Connexion : Master -> Recorder -> Destination
     window.masterGain.connect(recorderNode);
     recorderNode.connect(window.audioCtx.destination);
 
     isRecording = true;
-    btnRec.classList.add('recording');
-    btnRec.innerText = "REC ●"; // Indicateur visuel
+    
+    // CORRECTION ICI : On utilise 'btn' et non 'btnRec'
+    btn.classList.add('recording');
+    btn.innerText = "REC ●"; 
 }
 
 function stopRecording(btn) {
@@ -65,44 +72,45 @@ function stopRecording(btn) {
         recorderNode = null;
     }
 
-    btnRec.classList.remove('recording');
-    btnRec.innerText = "WAIT..."; // Petit temps de traitement
+    // CORRECTION ICI : On utilise 'btn'
+    btn.classList.remove('recording');
+    btn.innerText = "WAIT..."; 
 
-    // TRAITEMENT ASYNCHRONE (Pour ne pas figer l'interface)
+    // TRAITEMENT ASYNCHRONE
     setTimeout(() => {
         exportWav();
-        btnRec.innerText = "REC";
+        btn.innerText = "REC"; // Remet le texte à la normale
     }, 100);
 }
 
 function exportWav() {
-    // 1. Aplatir les buffers (fusionner les morceaux)
+    // 1. Aplatir les buffers
     const leftBuffer = mergeBuffers(recordingData[0]);
     const rightBuffer = mergeBuffers(recordingData[1]);
 
-    // 2. Entrelacer (Gauche, Droite, Gauche, Droite...)
+    // 2. Entrelacer
     const interleaved = interleave(leftBuffer, rightBuffer);
 
     // 3. Créer le fichier binaire WAV
     const buffer = new ArrayBuffer(44 + interleaved.length * 2);
     const view = new DataView(buffer);
 
-    // --- ÉCRITURE DU HEADER WAV (Standard RIFF) ---
+    // Header WAV
     writeString(view, 0, 'RIFF');
     view.setUint32(4, 36 + interleaved.length * 2, true);
     writeString(view, 8, 'WAVE');
     writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true); // PCM format
-    view.setUint16(20, 1, true); // Raw PCM
-    view.setUint16(22, 2, true); // Stereo
+    view.setUint32(16, 16, true); 
+    view.setUint16(20, 1, true); 
+    view.setUint16(22, 2, true); 
     view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 4, true); // Byte rate
-    view.setUint16(32, 4, true); // Block align
-    view.setUint16(34, 16, true); // 16-bit
+    view.setUint32(28, sampleRate * 4, true); 
+    view.setUint16(32, 4, true); 
+    view.setUint16(34, 16, true); 
     writeString(view, 36, 'data');
     view.setUint32(40, interleaved.length * 2, true);
 
-    // --- ÉCRITURE DES DONNÉES AUDIO (PCM 16-bit) ---
+    // Données Audio
     floatTo16BitPCM(view, 44, interleaved);
 
     // 4. Téléchargement
@@ -125,16 +133,11 @@ function exportWav() {
     console.log("WAV Export terminé.");
 }
 
-// --- UTILITAIRES AUDIO ---
-
+// --- UTILITAIRES ---
 function mergeBuffers(recBuffers) {
-    let recLength = recBuffers.length * 4096; // Approximation taille
-    let result = new Float32Array(recLength); // Devrait être calculé plus précisément mais ok pour script simple
-    // Calcul précis de la longueur
     let length = 0;
     recBuffers.forEach(b => length += b.length);
-    result = new Float32Array(length);
-    
+    let result = new Float32Array(length);
     let offset = 0;
     recBuffers.forEach(buffer => {
         result.set(buffer, offset);
@@ -146,7 +149,6 @@ function mergeBuffers(recBuffers) {
 function interleave(inputL, inputR) {
     let length = inputL.length + inputR.length;
     let result = new Float32Array(length);
-
     let index = 0, inputIndex = 0;
     while (index < length) {
         result[index++] = inputL[inputIndex];
@@ -159,7 +161,6 @@ function interleave(inputL, inputR) {
 function floatTo16BitPCM(output, offset, input) {
     for (let i = 0; i < input.length; i++, offset += 2) {
         let s = Math.max(-1, Math.min(1, input[i]));
-        // Convertit float (-1.0 à 1.0) vers 16-bit PCM (-32768 à 32767)
         output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
     }
 }
