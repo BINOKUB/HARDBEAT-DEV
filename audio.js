@@ -17,6 +17,7 @@ masterLimiter.curve = makeSoftClipCurve(0);
 masterLimiter.oversample = '4x';
 
 window.masterGain = window.audioCtx.createGain(); // On ajoute window.
+
 masterGain.connect(masterLimiter);
 masterLimiter.connect(window.audioCtx.destination);
 masterGain.gain.value = 0.5;
