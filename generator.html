@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>HARDBEAT GENERATOR V3 (HUMAN MODE)</title>
+    <title>HARDBEAT GENERATOR V4 (POLYRHYTHM)</title>
     <style>
         :root { --bg: #0d0d0d; --panel: #1a1a1a; --cyan: #00f3ff; --purple: #a855f7; --text: #ccc; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; padding: 20px; }
@@ -14,6 +14,10 @@
         label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
         input[type="text"], input[type="number"] { width: 100%; background: #050505; border: 1px solid #444; color: #fff; padding: 8px; box-sizing: border-box; font-family: monospace; font-size: 13px; }
         input:focus { border-color: var(--cyan); outline: none; }
+        
+        /* Style pour les inputs de longueur (Polyrythmie) */
+        .len-input { border-color: #666 !important; color: #ffff00 !important; font-weight: bold; }
+        
         textarea { width: 100%; height: 250px; background: #050505; color: #0f0; border: 1px solid #333; padding: 15px; margin-top: 20px; font-family: monospace; }
         button { width: 100%; padding: 15px; background: var(--cyan); border: none; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
         button:hover { background: #fff; box-shadow: 0 0 15px var(--cyan); }
@@ -28,50 +32,74 @@
 <body>
 
 <div class="container">
-    <h1>Generator V3 | Human Mode (1-64)</h1>
+    <h1>Generator V4 | Polyrythmie</h1>
     
     <div class="row">
-        <div class="col"><label>ID (ex: my_track)</label><input type="text" id="p-id" value="new_track_01"></div>
-        <div class="col"><label>Nom Affiché</label><input type="text" id="p-name" value="MY TECHNO TRACK"></div>
+        <div class="col"><label>ID</label><input type="text" id="p-id" value="poly_test"></div>
+        <div class="col"><label>Nom Affiché</label><input type="text" id="p-name" value="POLY TEST"></div>
         <div class="col"><label>BPM</label><input type="number" id="p-bpm" value="138"></div>
     </div>
 
-    <h2 style="border-color: #fff">DRUMS (Comptez de 1 à 16)</h2>
+    <h2 style="border-color: #fff">DRUMS & POLYRYTHMIE</h2>
+    <p class="helper">
+        <strong>LOOP LEN :</strong> C'est la longueur de la boucle. Mettez <strong>16</strong> pour une mesure normale.<br>
+        Mettez <strong>3</strong>, <strong>5</strong>, ou <strong>12</strong> pour créer des décalages polyrythmiques.
+    </p>
+
     <div class="row">
-        <div class="col"><label>KICK (ex: 1, 5, 9, 13)</label><input type="text" id="d-0" value="1, 5, 9, 13"></div>
-        <div class="col"><label>SNARE (ex: 5, 13)</label><input type="text" id="d-1" value="5, 13"></div>
-        <div class="col"><label>HHC (ex: 3, 7, 11, 15)</label><input type="text" id="d-2" value="3, 7, 11, 15"></div>
-        <div class="col"><label>HHO</label><input type="text" id="d-3" value=""></div>
-        <div class="col"><label>FM</label><input type="text" id="d-4" value=""></div>
+        <div class="col">
+            <label style="color:#ffff00">LOOP LEN</label>
+            <input type="number" id="l-0" value="16" class="len-input">
+            <label style="margin-top:10px">KICK SEQ</label>
+            <input type="text" id="d-0" value="1, 5, 9, 13">
+        </div>
+        <div class="col">
+            <label style="color:#ffff00">LOOP LEN</label>
+            <input type="number" id="l-1" value="16" class="len-input">
+            <label style="margin-top:10px">SNARE SEQ</label>
+            <input type="text" id="d-1" value="5, 13">
+        </div>
+        <div class="col">
+            <label style="color:#ffff00">LOOP LEN</label>
+            <input type="number" id="l-2" value="16" class="len-input">
+            <label style="margin-top:10px">HHC SEQ</label>
+            <input type="text" id="d-2" value="3, 7, 11, 15">
+        </div>
+        <div class="col">
+            <label style="color:#ffff00">LOOP LEN</label>
+            <input type="number" id="l-3" value="16" class="len-input">
+            <label style="margin-top:10px">HHO SEQ</label>
+            <input type="text" id="d-3" value="">
+        </div>
+        <div class="col">
+            <label style="color:#ffff00">LOOP LEN</label>
+            <input type="number" id="l-4" value="16" class="len-input">
+            <label style="margin-top:10px">FM SEQ</label>
+            <input type="text" id="d-4" value="">
+        </div>
     </div>
 
     <h2 style="border-color: var(--cyan)">SYNTH 2 (CYAN)</h2>
-    <p class="helper">
-        <strong>Mode Humain Activé :</strong> Ne calculez plus les zéros !<br>
-        Mesure 1 = Pas 1 à 16 <br>
-        Mesure 2 = Pas 17 à 32 <br>
-        Mesure 3 = Pas 33 à 48 <br>
-        Mesure 4 = Pas 49 à 64
-    </p>
+    <p class="helper">Mesure 1 (1-16) | Mesure 2 (17-32) | Mesure 3 (33-48) | Mesure 4 (49-64)</p>
     
     <div class="row">
         <div class="col measure-box">
-            <div class="measure-title">MESURE 1 (1 - 16)</div>
-            <label>STEPS (ex: 1, 11)</label><input type="text" id="s2-m1-seq" value="1, 11, 14, 16">
-            <label>FREQS (Hz)</label><input type="text" id="s2-m1-frq" value="313, 262, 350, 316">
+            <div class="measure-title">MESURE 1</div>
+            <label>STEPS</label><input type="text" id="s2-m1-seq" value="1, 11, 14, 16">
+            <label>FREQS</label><input type="text" id="s2-m1-frq" value="313, 262, 350, 316">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 2 (17 - 32)</div>
-            <label>STEPS (ex: 17, 20)</label><input type="text" id="s2-m2-seq" value="17">
+            <div class="measure-title">MESURE 2</div>
+            <label>STEPS</label><input type="text" id="s2-m2-seq" value="17">
             <label>FREQS</label><input type="text" id="s2-m2-frq" value="313">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 3 (33 - 48)</div>
+            <div class="measure-title">MESURE 3</div>
             <label>STEPS</label><input type="text" id="s2-m3-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s2-m3-frq" placeholder="">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 4 (49 - 64)</div>
+            <div class="measure-title">MESURE 4</div>
             <label>STEPS</label><input type="text" id="s2-m4-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s2-m4-frq" placeholder="">
         </div>
@@ -81,23 +109,23 @@
     
     <div class="row purple">
         <div class="col measure-box">
-            <div class="measure-title">MESURE 1 (1 - 16)</div>
+            <div class="measure-title">MESURE 1</div>
             <label>STEPS</label><input type="text" id="s3-m1-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s3-m1-frq" placeholder="">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 2 (17 - 32)</div>
+            <div class="measure-title">MESURE 2</div>
             <label>STEPS</label><input type="text" id="s3-m2-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s3-m2-frq" placeholder="">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 3 (33 - 48)</div>
+            <div class="measure-title">MESURE 3</div>
             <label>STEPS</label><input type="text" id="s3-m3-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s3-m3-frq" placeholder="">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 4 (49 - 64)</div>
-            <label>STEPS (ex: 61, 62, 63)</label><input type="text" id="s3-m4-seq" value="61, 62, 63">
+            <div class="measure-title">MESURE 4</div>
+            <label>STEPS</label><input type="text" id="s3-m4-seq" value="61, 62, 63">
             <label>FREQS</label><input type="text" id="s3-m4-frq" value="208, 360, 310">
         </div>
     </div>
@@ -107,17 +135,16 @@
 </div>
 
 <script>
-    // Convertit "1, 5, 9" en [0, 4, 8] (Humain vers Machine)
+    // Convertit "1, 5" en [0, 4] (Humain vers Machine)
     function parseInputHuman(str) {
         if(!str.trim()) return [];
         return str.split(',')
                   .map(x => parseFloat(x.trim()))
                   .filter(x => !isNaN(x))
-                  .map(x => x - 1) // LE CÉLÈBRE -1 !
-                  .filter(x => x >= 0 && x < 64); // Sécurité
+                  .map(x => x - 1)
+                  .filter(x => x >= 0 && x < 64);
     }
 
-    // Convertit juste les fréquences (pas de -1 ici)
     function parseFreqs(str) {
         if(!str.trim()) return [];
         return str.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
@@ -125,21 +152,15 @@
 
     function buildSynthTrack(prefix) {
         let fullSeq = [];
-        let fullFreqs = new Array(64).fill(440); // 440 par défaut
+        let fullFreqs = new Array(64).fill(440);
 
         for(let m=0; m<4; m++) {
-            // Ici on n'a plus besoin d'offset car l'utilisateur tape "17" qui devient "16" direct
             let steps = parseInputHuman(document.getElementById(`${prefix}-m${m+1}-seq`).value);
             let freqs = parseFreqs(document.getElementById(`${prefix}-m${m+1}-frq`).value);
 
             steps.forEach((machineIndex, i) => {
-                // On ajoute le pas machine (ex: 16)
                 fullSeq.push(machineIndex);
-
-                // On met la fréquence au bon endroit
-                if(freqs[i]) {
-                    fullFreqs[machineIndex] = freqs[i];
-                }
+                if(freqs[i]) fullFreqs[machineIndex] = freqs[i];
             });
         }
         return { seq: fullSeq, freqs: fullFreqs };
@@ -150,14 +171,20 @@
         const name = document.getElementById('p-name').value || "MY PRESET";
         const bpm = document.getElementById('p-bpm').value;
 
-        // Drums (Humain vers Machine)
+        // TRACK LENGTHS (Polyrythmie)
+        const l0 = document.getElementById('l-0').value || 16;
+        const l1 = document.getElementById('l-1').value || 16;
+        const l2 = document.getElementById('l-2').value || 16;
+        const l3 = document.getElementById('l-3').value || 16;
+        const l4 = document.getElementById('l-4').value || 16;
+
+        // Drums Patterns
         const d0 = parseInputHuman(document.getElementById('d-0').value).join(', ');
         const d1 = parseInputHuman(document.getElementById('d-1').value).join(', ');
         const d2 = parseInputHuman(document.getElementById('d-2').value).join(', ');
         const d3 = parseInputHuman(document.getElementById('d-3').value).join(', ');
         const d4 = parseInputHuman(document.getElementById('d-4').value).join(', ');
 
-        // Synths Logic
         const s2 = buildSynthTrack('s2');
         const s3 = buildSynthTrack('s3');
 
@@ -167,7 +194,7 @@
         masterLength: 64,
         bpm: ${bpm},
         swing: 0,
-        trackLengths: [16, 16, 16, 16, 16],
+        trackLengths: [${l0}, ${l1}, ${l2}, ${l3}, ${l4}],
         drums: {
             seq: [
                 makeSeq([${d0}]),
