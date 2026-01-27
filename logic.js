@@ -355,20 +355,6 @@ function bindControls() {
     const vol = document.getElementById('master-gain'); if(vol && window.masterGain) vol.oninput = (e) => window.masterGain.gain.value = parseFloat(e.target.value);
 }
 
-function showParamsForTrack(idx) {
-    document.querySelectorAll('.instr-params').forEach(p => p.style.display = 'none');
-    const target = document.getElementById(`params-track-${idx}`);
-    if (target) target.style.display = 'flex';
-}
-
-function setupTempoDrag(id) {
-    const el = document.getElementById(id); if(!el) return;
-    let isDragging = false, startY = 0, startVal = 0; el.style.cursor = "ns-resize";
-    el.addEventListener('mousedown', (e) => { isDragging = true; startY = e.clientY; startVal = parseInt(el.innerText); document.body.style.cursor = "ns-resize"; e.preventDefault(); });
-    window.addEventListener('mousemove', (e) => { if (!isDragging) return; let newVal = startVal + Math.floor((startY - e.clientY) / 2); if (newVal < 40) newVal = 40; if (newVal > 300) newVal = 300; el.innerText = newVal; });
-    window.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = "default"; });
-}
-
 function generateSmartRhythm(trackIdx) {
     window.drumSequences[trackIdx] = Array(64).fill(false);
     window.drumAccents[trackIdx] = Array(64).fill(false);
@@ -461,6 +447,7 @@ function initSeq3Extension() {
         
         // CORRECTION MAJEURE ICI : On force le rafraîchissement pour que les pads aient leur ID
         refreshGridVisuals();
+        refreshFadersVisuals(3); // AJOUT CRITIQUE POUR LA MISE À JOUR DES FRÉQUENCES
     });
 }
 
