@@ -724,21 +724,23 @@ div.hz-label, span.hz-label, .hz-label {
 }
 
 /* --- RECORDER BUTTON --- */
+/* --- RECORDER BUTTON (Version Compacte) --- */
 .btn-recorder {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%; /* Rond */
+    width: 35px; /* Était 50px */
+    height: 35px; /* Était 50px */
+    border-radius: 50%;
     background: #220000;
     border: 2px solid #550000;
     color: #888;
     font-weight: bold;
-    font-size: 11px;
+    font-size: 9px; /* Plus petit texte */
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: inset 0 0 10px #000;
+    margin-left: 15px; /* Espace avec le Tempo */
 }
 
 .btn-recorder:hover {
