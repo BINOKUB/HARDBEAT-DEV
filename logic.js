@@ -651,75 +651,72 @@ function initFreqSnapshots() {
 }
 
 /* ==========================================
-   MODULE D'AUDITION (PREVIEW)
-   Joue une note quand on touche les faders ou les pads
-   ========================================== */
-
-/* ==========================================
-   MODULE D'AUDITION (PREVIEW GLOBAL V2)
-   Fonctionne même pour les instruments créés après coup (Seq 3)
+   MODULE D'AUDITION (PREVIEW V3 - ROBUST FIX)
+   Fonctionne même si data-id est manquant sur l'extension
    ========================================== */
 
 function initAudioPreview() {
-    console.log("Audio Preview: Global Mode Active.");
+    console.log("Audio Preview V3: Ready.");
 
-    // 1. ECOUTEUR GLOBAL POUR LES FADERS (Input)
-    // Détecte n'importe quel mouvement de fader 'freq-fader' sur la page
-    document.addEventListener('input', (e) => {
-        // On vérifie si l'élément touché est un fader de fréquence
-        if(e.target.classList.contains('freq-fader')) {
-            const freq = parseFloat(e.target.value);
+    // Fonction centrale pour jouer le son
+    const triggerPreview = (target, type) => {
+        const section = target.closest('.rack-section');
+        if (!section) return;
+
+        // 1. Identification ROBUSTE du Synthé
+        let seqId = parseInt(section.dataset.id);
+        
+        // Si data-id est absent (NaN), on regarde l'ID du container (Plan B)
+        if (isNaN(seqId)) {
+            if (section.id && section.id.includes('seq2')) seqId = 2;
+            if (section.id && section.id.includes('seq3')) seqId = 3;
+        }
+
+        // On ne joue que pour les Synths 2 et 3
+        if (seqId !== 2 && seqId !== 3) return;
+
+        // 2. Récupération de la fréquence
+        let freq = 0;
+
+        if (type === 'fader') {
+            // Si c'est un fader, on prend sa valeur directe
+            freq = parseFloat(target.value);
+        } 
+        else if (type === 'pad') {
+            // Si c'est un pad, on doit retrouver sa fréquence en mémoire
+            const col = target.closest('.step-column');
+            const grid = col.parentElement;
+            // On trouve l'index (0-15)
+            const index = Array.from(grid.children).indexOf(col);
             
-            // On cherche à quel Synth il appartient (en regardant le parent)
-            const section = e.target.closest('.rack-section');
-            if(section) {
-                // On lit l'ID de la section (2 ou 3)
-                const seqId = parseInt(section.dataset.id);
-                
-                // On joue le son (Si c'est Seq 2 ou 3)
-                if((seqId === 2 || seqId === 3) && window.playSynthSound) {
-                    window.playSynthSound(seqId, freq, 0.1, 0, 0); 
-                }
-            }
+            if (seqId === 2 && window.freqDataSeq2) freq = window.freqDataSeq2[index];
+            if (seqId === 3 && window.freqDataSeq3) freq = window.freqDataSeq3[index];
+        }
+
+        // 3. JOUER LE SON (via le pont audio.js)
+        if (window.playSynthSound && freq > 20) {
+            // console.log(`Preview Seq ${seqId} @ ${freq}Hz`); // Décommenter pour debug
+            window.playSynthSound(seqId, freq, 0.1, 0, 0);
+        }
+    };
+
+    // ECOUTEUR GLOBAL (FADERS)
+    document.addEventListener('input', (e) => {
+        if (e.target.classList.contains('freq-fader')) {
+            triggerPreview(e.target, 'fader');
         }
     });
 
-    // 2. ECOUTEUR GLOBAL POUR LES PADS (Click)
+    // ECOUTEUR GLOBAL (PADS)
     document.addEventListener('click', (e) => {
-        // On vérifie si on a cliqué sur un Pad
         const pad = e.target.closest('.step-pad');
-        
-        // Si c'est un pad et qu'il est ACTIF (allumé)
-        if(pad && pad.classList.contains('active')) {
-            const section = pad.closest('.rack-section');
-            if(section) {
-                const seqId = parseInt(section.dataset.id);
-
-                // On s'intéresse uniquement aux Synths (2 et 3), pas au Drum (0 ou 1)
-                if(seqId === 2 || seqId === 3) {
-                    
-                    // Calcul savant pour trouver l'index du pad (0 à 63)
-                    // On trouve la colonne parente, puis sa position dans la grille
-                    const col = pad.closest('.step-column');
-                    const grid = col.parentElement;
-                    const index = Array.from(grid.children).indexOf(col);
-                    
-                    // On récupère la bonne fréquence en mémoire
-                    let freq = 440;
-                    if(seqId === 2 && window.freqDataSeq2) freq = window.freqDataSeq2[index];
-                    if(seqId === 3 && window.freqDataSeq3) freq = window.freqDataSeq3[index];
-
-                    // Jouer !
-                    if(window.playSynthSound && freq) {
-                        window.playSynthSound(seqId, freq, 0.15, 0, 0);
-                    }
-                }
-            }
+        if (pad && pad.classList.contains('active')) {
+            triggerPreview(pad, 'pad');
         }
     });
 }
 
 // Lancer l'init après le chargement
 window.addEventListener('load', () => {
-    setTimeout(initAudioPreview, 500);
+    setTimeout(initAudioPreview, 800);
 });
