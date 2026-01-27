@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (V10 - SAFE MODE)
+   HARDBEAT PRO - UI LOGIC (V11 - FINAL GOLD)
    ========================================== */
 
 let masterTimer; 
@@ -32,7 +32,7 @@ let globalMasterStep = 0;
 
 
 /* ==========================================
-   HELPER FUNCTIONS (DÉFINIES EN PREMIER POUR EVITER LES ERREURS)
+   HELPER FUNCTIONS
    ========================================== */
 
 function setupTempoDrag(id) {
@@ -141,19 +141,16 @@ function bindControls() {
     };
     bindSteps('kick-steps', 0); bindSteps('snare-steps', 1); bindSteps('hhc-steps', 2); bindSteps('hho-steps', 3); bindSteps('fm-steps', 4);
 
-    // Audio Params
     bind('kick-pitch', window.kickSettings, 'pitch'); bind('kick-decay', window.kickSettings, 'decay'); bind('kick-level', window.kickSettings, 'level');
     bind('snare-tone', window.snareSettings, 'tone'); bind('snare-snappy', window.snareSettings, 'snappy'); bind('snare-level', window.snareSettings, 'level');
     bind('hhc-tone', window.hhSettings, 'tone'); bind('hhc-level', window.hhSettings, 'levelClose');
     bind('hho-decay', window.hhSettings, 'decayOpen'); bind('hho-level', window.hhSettings, 'levelOpen');
     bind('fm-carrier', window.fmSettings, 'carrierPitch'); bind('fm-mod', window.fmSettings, 'modPitch'); bind('fm-amt', window.fmSettings, 'fmAmount'); bind('fm-decay', window.fmSettings, 'decay'); bind('fm-level', window.fmSettings, 'level');
 
-    // UI Params
     const swingSlider = document.getElementById('global-swing'); if(swingSlider) swingSlider.oninput = (e) => { globalSwing = parseInt(e.target.value) / 100; document.getElementById('swing-val').innerText = e.target.value + "%"; };
     const accSlider = document.getElementById('global-accent-amount'); if(accSlider) accSlider.oninput = (e) => { const val = parseFloat(e.target.value); if(window.updateAccentBoost) window.updateAccentBoost(val); document.getElementById('accent-val-display').innerText = val.toFixed(1) + 'x'; };
     const metroBox = document.getElementById('metro-toggle'); if(metroBox) metroBox.onchange = (e) => isMetroOn = e.target.checked;
     
-    // Synth & Delay Params
     const v2 = document.getElementById('vol-seq2'); if(v2) v2.oninput = (e) => window.synthVol2 = parseFloat(e.target.value);
     const s2disto = document.getElementById('synth2-disto'); if(s2disto) s2disto.oninput = (e) => { if(window.updateSynth2Disto) window.updateSynth2Disto(parseFloat(e.target.value)); };
     const s2res = document.getElementById('synth2-res'); if(s2res) s2res.oninput = (e) => { if(window.updateSynth2Res) window.updateSynth2Res(parseFloat(e.target.value)); };
@@ -236,9 +233,47 @@ function initSeq3Extension() {
     });
 }
 
+// --- SNAPSHOTS (MEMORY) ---
+function initFreqSnapshots() {
+    window.freqSnapshots = [null, null, null, null]; 
+    let isSnapshotSaveMode = false;
+
+    const btnSave = document.getElementById('btn-snap-save');
+    const slots = document.querySelectorAll('.btn-snap-slot');
+
+    if(!btnSave) return;
+
+    btnSave.onclick = () => {
+        isSnapshotSaveMode = !isSnapshotSaveMode;
+        btnSave.classList.toggle('saving', isSnapshotSaveMode);
+    };
+
+    slots.forEach(slotBtn => {
+        slotBtn.onclick = () => {
+            const slotIndex = parseInt(slotBtn.dataset.slot);
+            if (isSnapshotSaveMode) {
+                // SAVE
+                window.freqSnapshots[slotIndex] = [...window.freqDataSeq2];
+                slotBtn.classList.add('has-data');
+                isSnapshotSaveMode = false;
+                btnSave.classList.remove('saving');
+                slotBtn.classList.add('flash-load');
+                setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
+            } else {
+                // LOAD
+                if (window.freqSnapshots[slotIndex]) {
+                    window.freqDataSeq2 = [...window.freqSnapshots[slotIndex]];
+                    refreshFadersVisuals(2);
+                    slotBtn.classList.add('flash-load');
+                    setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
+                }
+            }
+        };
+    });
+}
+
 function initAudioPreview() {
     console.log("Audio Preview V4: Active.");
-
     const triggerPreview = (target, type) => {
         const section = target.closest('.rack-section');
         if (!section) return;
@@ -250,7 +285,6 @@ function initAudioPreview() {
         }
 
         if (seqId !== 2 && seqId !== 3) return;
-
         let freq = 0;
         if (type === 'fader') {
             freq = parseFloat(target.value);
@@ -279,10 +313,10 @@ function initAudioPreview() {
 }
 
 /* ==========================================
-   MAIN INIT (PLACÉ À LA FIN POUR QUE TOUT SOIT PRÊT)
+   MAIN INIT 
    ========================================== */
 window.addEventListener('load', () => {
-    console.log("Initialisation Logic V10 (Final)...");
+    console.log("Initialisation Logic V11 (Final)...");
     
     if (!window.audioCtx) console.error("ERREUR : audio.js manquant !");
 
@@ -294,9 +328,8 @@ window.addEventListener('load', () => {
     initialFaders.forEach((f, i) => { window.freqDataSeq2[i] = parseFloat(f.value); });
 
     if(window.kickSettings) bindControls(); 
-    else alert("Erreur Moteur Audio: Le fichier audio.js n'est pas chargé correctement.");
+    else alert("Erreur Moteur Audio");
 
-    // Ces fonctions sont maintenant DÉFINIES plus haut, donc plus d'erreur !
     setupTempoDrag('display-bpm1'); 
     initSeq3Extension();
     setupLengthControls();
@@ -313,11 +346,12 @@ window.addEventListener('load', () => {
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) playBtn.onclick = () => togglePlay(playBtn);
    
-    if(typeof initFreqSnapshots === 'function') initFreqSnapshots();
+    // ICI : ON LANCE LES SNAPSHOTS
+    initFreqSnapshots();
     
     setTimeout(initAudioPreview, 800);
 
-    console.log("Logic V10 : Prêt.");
+    console.log("Logic V11 : Prêt.");
 });
 
 // --- PLAYBACK ENGINE ---
