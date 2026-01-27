@@ -66,7 +66,8 @@ window.addEventListener('load', () => {
 
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) playBtn.onclick = () => togglePlay(playBtn);
-    
+   
+    initFreqSnapshots();
     console.log("Logic V8 : Prêt.");
 });
 
@@ -597,3 +598,54 @@ document.addEventListener('click', (e) => {
     if (e.target.classList.contains('btn-synth-mute')) { const target = parseInt(e.target.dataset.target); if(window.toggleMuteSynth) window.toggleMuteSynth(target, !e.target.classList.contains('active')); e.target.classList.toggle('active'); return; }
     if (e.target.classList.contains('btn-random')) { const target = parseInt(e.target.dataset.target); const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader'; const faders = document.querySelectorAll(selector); const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); faders.forEach(fader => { const randomFreq = Math.floor(Math.random() * (880 - 50) + 50); fader.value = randomFreq; fader.dispatchEvent(new Event('input', { bubbles: true })); }); return; }
 });
+
+// --- SYSTEME DE SNAPSHOTS FREQUENCES ---
+function initFreqSnapshots() {
+    window.freqSnapshots = [null, null, null, null]; // 4 mémoires vides
+    let isSnapshotSaveMode = false;
+
+    const btnSave = document.getElementById('btn-snap-save');
+    const slots = document.querySelectorAll('.btn-snap-slot');
+
+    if(!btnSave) return;
+
+    // Click sur "S" (Save)
+    btnSave.onclick = () => {
+        isSnapshotSaveMode = !isSnapshotSaveMode;
+        btnSave.classList.toggle('saving', isSnapshotSaveMode);
+    };
+
+    // Click sur un Slot 1-4
+    slots.forEach(slotBtn => {
+        slotBtn.onclick = () => {
+            const slotIndex = parseInt(slotBtn.dataset.slot);
+
+            if (isSnapshotSaveMode) {
+                // SAUVEGARDE
+                // On clone le tableau actuel pour figer les valeurs
+                window.freqSnapshots[slotIndex] = [...window.freqDataSeq2];
+                
+                slotBtn.classList.add('has-data');
+                
+                // Feedback visuel et sortie du mode save
+                isSnapshotSaveMode = false;
+                btnSave.classList.remove('saving');
+                slotBtn.classList.add('flash-load');
+                setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
+                
+            } else {
+                // CHARGEMENT (RAPPEL)
+                if (window.freqSnapshots[slotIndex]) {
+                    // On remplace les fréquences actuelles par celles de la mémoire
+                    window.freqDataSeq2 = [...window.freqSnapshots[slotIndex]];
+                    
+                    // On met à jour les faders visuels
+                    refreshFadersVisuals(2);
+                    
+                    slotBtn.classList.add('flash-load');
+                    setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
+                }
+            }
+        };
+    });
+}
