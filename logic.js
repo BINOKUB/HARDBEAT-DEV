@@ -642,4 +642,4 @@ function initAudioPreview() {
             triggerPreview(pad, 'pad');
         }
     });
-// }
+}
