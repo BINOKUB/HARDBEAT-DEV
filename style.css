@@ -692,3 +692,33 @@ div.hz-label, span.hz-label, .hz-label {
     cursor: ns-resize;
     margin: 0;
 }
+
+/* --- FREQ MEMORY SNAPSHOTS --- */
+.btn-snap-action {
+    width: 20px; height: 20px;
+    background: #330000; color: #ff5555;
+    border: 1px solid #660000;
+    font-size: 10px; font-weight: bold; cursor: pointer;
+}
+.btn-snap-action.saving {
+    background: #ff0000; color: #fff;
+    box-shadow: 0 0 10px #ff0000;
+    animation: blink-save 0.5s infinite;
+}
+
+.btn-snap-slot {
+    width: 20px; height: 20px;
+    background: #222; color: #666;
+    border: 1px solid #444;
+    font-size: 10px; font-weight: bold; cursor: pointer;
+}
+.btn-snap-slot:hover { border-color: #00f3ff; color: #fff; }
+
+.btn-snap-slot.has-data {
+    background: #002233; color: #00f3ff; border-color: #005577;
+}
+
+/* Animation flash quand on charge */
+.flash-load {
+    background: #fff !important; transition: background 0.1s;
+}
