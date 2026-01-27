@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (V8 - POLYRHYTHMIE REELLE & VISUEL)
+   HARDBEAT PRO - UI LOGIC (V9 - GOLD FINAL)
    ========================================== */
 
 let masterTimer; // UNE SEULE HORLOGE pour tout le système
@@ -7,7 +7,7 @@ let isMetroOn = false;
 let globalSwing = 0.06;
 
 // --- VARIABLES GLOBALES ---
-window.masterLength = 16;      
+window.masterLength = 16;       
 window.isSaveMode = false;
 
 // Mémoire
@@ -21,7 +21,7 @@ window.trackLengths = [16, 16, 16, 16, 16];
 window.trackMutes = [false, false, false, false, false];
 window.trackSolos = [false, false, false, false, false];
 
-// --- NOUVEAU : COMPTEURS INDÉPENDANTS (Pour que le Kick boucle sur 3 pendant que le Snare boucle sur 16) ---
+// --- COMPTEURS INDÉPENDANTS ---
 let trackCursors = [0, 0, 0, 0, 0]; 
 
 // Internes
@@ -36,7 +36,7 @@ let globalMasterStep = 0; // Position absolue (0 à 63)
 
 // --- INIT ---
 window.addEventListener('load', () => {
-    console.log("Initialisation Logic V8 (FR)...");
+    console.log("Initialisation Logic V9 (Final)...");
     
     if (!window.audioCtx) console.error("ERREUR : audio.js manquant !");
 
@@ -67,8 +67,12 @@ window.addEventListener('load', () => {
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) playBtn.onclick = () => togglePlay(playBtn);
    
-    initFreqSnapshots();
-    console.log("Logic V8 : Prêt.");
+    if(typeof initFreqSnapshots === 'function') initFreqSnapshots();
+    
+    // Lancer le module d'audition (Preview)
+    setTimeout(initAudioPreview, 800);
+
+    console.log("Logic V9 : Prêt.");
 });
 
 function togglePlay(btn) {
@@ -85,7 +89,7 @@ function togglePlay(btn) {
         // RESET TOTAL
         globalTickCount = 0;
         globalMasterStep = 0;
-        trackCursors = [0, 0, 0, 0, 0]; // On remet tous les instruments au début
+        trackCursors = [0, 0, 0, 0, 0]; 
         currentSynthStep = 0;
         
         refreshGridVisuals(); 
@@ -128,12 +132,10 @@ function runMasterClock() {
     updatePlayheads();
 
     // 3. AVANCER LES COMPTEURS
-    // Chaque piste avance selon SA PROPRE longueur (Polyrythmie)
     for(let i=0; i<5; i++) {
         trackCursors[i] = (trackCursors[i] + 1) % window.trackLengths[i];
     }
     
-    // Le compteur général avance selon la longueur MAÎTRE (64)
     globalMasterStep = (globalMasterStep + 1) % window.masterLength;
     globalTickCount++;
 
@@ -144,7 +146,6 @@ function triggerDrums() {
     const isAnySolo = window.trackSolos.includes(true);
     
     for (let i = 0; i < 5; i++) {
-        // On utilise le curseur INDÉPENDANT de la piste
         let pos = trackCursors[i]; 
 
         let shouldPlay = true;
@@ -159,14 +160,12 @@ function triggerDrums() {
             if(i===4 && window.playDrumFM) window.playDrumFM(acc);
         }
         
-        // Métronome (reste stable sur le temps absolu)
         if (i === 0 && isMetroOn && globalTickCount % 4 === 0) { 
             if(window.playMetronome) window.playMetronome(globalTickCount % 16 === 0); 
         }
     }
 }
 
-// Les Synthés restent synchronisés sur le Maître (Comportement standard DAW)
 let currentSynthStep = 0;
 function triggerSynths(masterStep) {
     if(window.playSynthStep) {
@@ -182,22 +181,11 @@ function updatePlayheads() {
     // DRUMS (SEQ 1)
     const pads1 = document.querySelectorAll('#grid-seq1 .step-pad');
     const offset1 = currentPageSeq1 * 16;
-    
-    // On affiche le curseur de l'instrument SÉLECTIONNÉ
     const activeCursor = trackCursors[currentTrackIndex];
     
-    // Pour l'affichage, on doit "tricher" un peu :
-    // Si l'instrument boucle sur 3 pas (0, 1, 2), on veut voir s'allumer les pads 1, 2, 3.
-    // Mais si on est sur la page 2 (pas 17-32), on ne voit rien, c'est normal.
-    // SAUF si on veut voir le curseur "passer" sur la page 2 ?
-    // Pour l'instant, restons simple : on allume le pad correspondant à la position de lecture.
-    
     pads1.forEach((p, index) => {
-        const realIndex = index + offset1; // L'index réel du bouton (ex: 17)
-        p.style.borderColor = "#333"; // Reset
-        
-        // Si le curseur de lecture est sur ce pad précis
-        // (Attention : si la boucle fait 3 pas, le curseur vaudra 0, 1, 2. Donc seuls les pads 1, 2, 3 s'allumeront)
+        const realIndex = index + offset1; 
+        p.style.borderColor = "#333"; 
         if (realIndex === activeCursor) {
             p.style.borderColor = "#ffffff";
         }
@@ -230,24 +218,20 @@ window.refreshGridVisuals = function() {
     if(pads.length === 0) return;
     const offset1 = currentPageSeq1 * 16;
 
-    // Récupère la longueur de la boucle de l'instrument actuel
     const currentTrackLen = window.trackLengths[currentTrackIndex]; 
 
     pads.forEach((pad, i) => {
         const realIndex = i + offset1; 
         
-        // 1. Si on dépasse le MASTER (64), on désactive complètement (gris foncé, inerte)
         if (realIndex >= window.masterLength) {
             pad.classList.add('disabled'); 
             pad.style.opacity = "0.2";
         } else {
             pad.classList.remove('disabled');
-            
-            // 2. Si on dépasse la BOUCLE INSTRUMENT (Slider), on atténue mais on laisse visible
             if (realIndex >= currentTrackLen) {
-                pad.style.opacity = "0.3"; // "Fantôme"
+                pad.style.opacity = "0.3"; 
             } else {
-                pad.style.opacity = "1"; // Actif
+                pad.style.opacity = "1"; 
             }
         }
         
@@ -256,7 +240,6 @@ window.refreshGridVisuals = function() {
             pad.classList.toggle('active', isActive); 
             
             const led = pad.querySelector('.led'); 
-            // Si hors boucle, la LED est éteinte même si la note est active (elle ne jouera pas)
             if (realIndex >= currentTrackLen) {
                 if(led) led.style.background = "#111"; 
             } else {
@@ -333,17 +316,14 @@ window.refreshFadersVisuals = function(seqId) {
 function bindControls() {
     const bind = (id, obj, prop) => { const el = document.getElementById(id); if (el) el.oninput = (e) => obj[prop] = parseFloat(e.target.value); };
     
-    // BINDING SPÉCIAL POUR LES SLIDERS DE BOUCLE (Visual Feedback Immédiat)
     const bindSteps = (id, trackIdx) => {
         const el = document.getElementById(id);
         if (el) {
             el.oninput = (e) => {
                 window.trackLengths[trackIdx] = parseInt(e.target.value);
-                // Si on raccourcit la boucle, on ramène le curseur à 0 pour éviter le silence
                 if (trackCursors[trackIdx] >= window.trackLengths[trackIdx]) {
                     trackCursors[trackIdx] = 0;
                 }
-                // Mise à jour visuelle immédiate
                 if (currentTrackIndex === trackIdx) refreshGridVisuals();
             };
         }
@@ -436,7 +416,7 @@ function initSeq3Extension() {
         btn.disabled = true; btn.style.opacity = "0.3"; btn.innerText = "SEQ 3 ACTIVE";
         const zone = document.getElementById('extension-zone');
         zone.innerHTML = `
-        <section id="seq3-container" class="rack-section synth-instance">
+        <section id="seq3-container" class="rack-section synth-instance" data-id="3">
             <div class="section-header">
                 <h2 style="color:#a855f7">SEQ 3 : HARDGROOVE LAYER</h2>
                 <div class="page-navigator" id="seq3-navigator" style="display:flex; gap:10px; margin-left:20px; align-items:center;">
@@ -478,6 +458,9 @@ function initSeq3Extension() {
         document.getElementById('synth3-cutoff').oninput = (e) => { if(window.updateSynth3Cutoff) window.updateSynth3Cutoff(parseFloat(e.target.value)); };
         document.getElementById('synth3-decay').oninput = (e) => { if(window.updateSynth3Decay) window.updateSynth3Decay(parseFloat(e.target.value)); };
         document.getElementById('seq3-container').scrollIntoView({ behavior: 'smooth' });
+        
+        // CORRECTION MAJEURE ICI : On force le rafraîchissement pour que les pads aient leur ID
+        refreshGridVisuals();
     });
 }
 
@@ -541,12 +524,13 @@ document.addEventListener('mousedown', (e) => {
     const pad = e.target.closest('.step-pad');
     if (pad) {
         if (pad.classList.contains('disabled')) return;
-        const idx = parseInt(pad.dataset.realIndex); 
+        const idx = parseInt(pad.dataset.realIndex);
+        if (isNaN(idx)) return; // Protection
+
         const pid = pad.closest('.step-grid').id;
         
         if (pid === 'grid-seq1') { 
             window.drumSequences[currentTrackIndex][idx] = !window.drumSequences[currentTrackIndex][idx]; 
-            // Refresh complet pour gérer l'état LED vs Opacité
             refreshGridVisuals();
         } 
         else if (pid === 'grid-seq2') { 
@@ -599,64 +583,13 @@ document.addEventListener('click', (e) => {
     if (e.target.classList.contains('btn-random')) { const target = parseInt(e.target.dataset.target); const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader'; const faders = document.querySelectorAll(selector); const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); faders.forEach(fader => { const randomFreq = Math.floor(Math.random() * (880 - 50) + 50); fader.value = randomFreq; fader.dispatchEvent(new Event('input', { bubbles: true })); }); return; }
 });
 
-// --- SYSTEME DE SNAPSHOTS FREQUENCES ---
-function initFreqSnapshots() {
-    window.freqSnapshots = [null, null, null, null]; // 4 mémoires vides
-    let isSnapshotSaveMode = false;
-
-    const btnSave = document.getElementById('btn-snap-save');
-    const slots = document.querySelectorAll('.btn-snap-slot');
-
-    if(!btnSave) return;
-
-    // Click sur "S" (Save)
-    btnSave.onclick = () => {
-        isSnapshotSaveMode = !isSnapshotSaveMode;
-        btnSave.classList.toggle('saving', isSnapshotSaveMode);
-    };
-
-    // Click sur un Slot 1-4
-    slots.forEach(slotBtn => {
-        slotBtn.onclick = () => {
-            const slotIndex = parseInt(slotBtn.dataset.slot);
-
-            if (isSnapshotSaveMode) {
-                // SAUVEGARDE
-                // On clone le tableau actuel pour figer les valeurs
-                window.freqSnapshots[slotIndex] = [...window.freqDataSeq2];
-                
-                slotBtn.classList.add('has-data');
-                
-                // Feedback visuel et sortie du mode save
-                isSnapshotSaveMode = false;
-                btnSave.classList.remove('saving');
-                slotBtn.classList.add('flash-load');
-                setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
-                
-            } else {
-                // CHARGEMENT (RAPPEL)
-                if (window.freqSnapshots[slotIndex]) {
-                    // On remplace les fréquences actuelles par celles de la mémoire
-                    window.freqDataSeq2 = [...window.freqSnapshots[slotIndex]];
-                    
-                    // On met à jour les faders visuels
-                    refreshFadersVisuals(2);
-                    
-                    slotBtn.classList.add('flash-load');
-                    setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
-                }
-            }
-        };
-    });
-}
-
 /* ==========================================
-   MODULE D'AUDITION (PREVIEW V3 - ROBUST FIX)
-   Fonctionne même si data-id est manquant sur l'extension
+   MODULE D'AUDITION (PREVIEW V4 - FINAL FIX)
+   Gère Drums (avec colonnes) ET Synths (sans colonnes)
    ========================================== */
 
 function initAudioPreview() {
-    console.log("Audio Preview V3: Ready.");
+    console.log("Audio Preview V4: Active.");
 
     // Fonction centrale pour jouer le son
     const triggerPreview = (target, type) => {
@@ -666,7 +599,7 @@ function initAudioPreview() {
         // 1. Identification ROBUSTE du Synthé
         let seqId = parseInt(section.dataset.id);
         
-        // Si data-id est absent (NaN), on regarde l'ID du container (Plan B)
+        // Si data-id est absent, on tente de le deviner
         if (isNaN(seqId)) {
             if (section.id && section.id.includes('seq2')) seqId = 2;
             if (section.id && section.id.includes('seq3')) seqId = 3;
@@ -679,23 +612,30 @@ function initAudioPreview() {
         let freq = 0;
 
         if (type === 'fader') {
-            // Si c'est un fader, on prend sa valeur directe
             freq = parseFloat(target.value);
         } 
         else if (type === 'pad') {
-            // Si c'est un pad, on doit retrouver sa fréquence en mémoire
+            // CORRECTION CRITIQUE ICI :
+            // Les DRUMS ont des colonnes, les SYNTHS sont directs dans la grille.
+            let index = 0;
+            
             const col = target.closest('.step-column');
-            const grid = col.parentElement;
-            // On trouve l'index (0-15)
-            const index = Array.from(grid.children).indexOf(col);
+            if (col) {
+                // Cas DRUM (ne devrait pas arriver ici car on filtre seqId 2 ou 3)
+                const grid = col.parentElement;
+                index = Array.from(grid.children).indexOf(col);
+            } else {
+                // Cas SYNTH (Direct grid child)
+                const grid = target.parentElement;
+                index = Array.from(grid.children).indexOf(target);
+            }
             
             if (seqId === 2 && window.freqDataSeq2) freq = window.freqDataSeq2[index];
             if (seqId === 3 && window.freqDataSeq3) freq = window.freqDataSeq3[index];
         }
 
-        // 3. JOUER LE SON (via le pont audio.js)
+        // 3. JOUER LE SON
         if (window.playSynthSound && freq > 20) {
-            // console.log(`Preview Seq ${seqId} @ ${freq}Hz`); // Décommenter pour debug
             window.playSynthSound(seqId, freq, 0.1, 0, 0);
         }
     };
@@ -710,13 +650,9 @@ function initAudioPreview() {
     // ECOUTEUR GLOBAL (PADS)
     document.addEventListener('click', (e) => {
         const pad = e.target.closest('.step-pad');
+        // On vérifie s'il est actif (car le click arrive après le mousedown qui active)
         if (pad && pad.classList.contains('active')) {
             triggerPreview(pad, 'pad');
         }
     });
 }
-
-// Lancer l'init après le chargement
-window.addEventListener('load', () => {
-    setTimeout(initAudioPreview, 800);
-});
