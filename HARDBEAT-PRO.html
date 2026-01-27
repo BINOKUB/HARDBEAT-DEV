@@ -45,9 +45,17 @@
 
             <button id="master-play-stop" style="margin-left:auto; margin-right:20px;">PLAY / STOP</button>
             
-          <div class="master-volume">
-                <label>VOL</label>
-                <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5" orient="vertical">
+         <div style="display:flex; align-items:center; gap:15px;">
+                
+                <button id="master-play-stop">PLAY / STOP</button>
+
+                <div class="master-volume">
+                    <label>VOL</label>
+                    <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5" orient="vertical">
+                </div>
+
+                <button id="btn-rec" class="btn-recorder">REC</button>
+
             </div>
         </header>
 
@@ -230,6 +238,7 @@
 
     <script src="audio.js"></script>
     <script src="presets.js"></script>
+    <script src="recorder.js">
     <script src="storage.js"></script>
     <script src="logic.js"></script>
 </body>
