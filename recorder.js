@@ -1,10 +1,10 @@
 /* ==========================================
-   HARDBEAT PRO - WAV RECORDER (STUDIO QUALITY - FIX V2)
+   HARDBEAT PRO - WAV RECORDER (V3 - FINAL FIX)
    ========================================== */
 
 let isRecording = false;
 let recorderNode = null;
-let recordingData = [[], []]; // Canal Gauche, Canal Droit
+let recordingData = [[], []]; 
 let sampleRate = 44100;
 
 function initRecorder() {
@@ -12,10 +12,9 @@ function initRecorder() {
     const btnRec = document.getElementById('btn-rec');
     if (!btnRec) return;
 
-    // GESTION DU CLIC
     btnRec.onclick = () => {
         if (!isRecording) {
-            startRecording(btnRec); // On passe le bouton en paramètre
+            startRecording(btnRec); // On passe bien le bouton en argument
         } else {
             stopRecording(btnRec);
         }
@@ -23,40 +22,33 @@ function initRecorder() {
 }
 
 function startRecording(btn) {
-    // Vérifications de sécurité
     if (!window.audioCtx || !window.masterGain) {
-        console.error("Recorder Error: AudioCtx or MasterGain missing.");
+        console.error("Recorder Error: AudioCtx missing.");
         return;
     }
     
     if (window.audioCtx.state === 'suspended') window.audioCtx.resume();
 
-    // Reset des buffers
     recordingData = [[], []];
     sampleRate = window.audioCtx.sampleRate;
 
-    // Création du processeur (Capture le son brut)
-    // Utilisation de ScriptProcessor (déprécié mais universel pour ce besoin simple)
+    // Capture
     recorderNode = window.audioCtx.createScriptProcessor(4096, 2, 2);
-
-    // Boucle de capture
+    
     recorderNode.onaudioprocess = (e) => {
         if (!isRecording) return;
         const left = e.inputBuffer.getChannelData(0);
         const right = e.inputBuffer.getChannelData(1);
-        
-        // On copie les données
         recordingData[0].push(new Float32Array(left));
         recordingData[1].push(new Float32Array(right));
     };
 
-    // Connexion : Master -> Recorder -> Destination
     window.masterGain.connect(recorderNode);
     recorderNode.connect(window.audioCtx.destination);
 
     isRecording = true;
     
-    // CORRECTION ICI : On utilise 'btn' et non 'btnRec'
+    // CORRECTION : On utilise 'btn' ici (et pas btnRec)
     btn.classList.add('recording');
     btn.innerText = "REC ●"; 
 }
@@ -66,36 +58,27 @@ function stopRecording(btn) {
 
     isRecording = false;
     
-    // Déconnexion propre
     if (recorderNode) {
         recorderNode.disconnect();
         recorderNode = null;
     }
 
-    // CORRECTION ICI : On utilise 'btn'
     btn.classList.remove('recording');
     btn.innerText = "WAIT..."; 
 
-    // TRAITEMENT ASYNCHRONE
     setTimeout(() => {
         exportWav();
-        btn.innerText = "REC"; // Remet le texte à la normale
+        btn.innerText = "REC"; 
     }, 100);
 }
 
 function exportWav() {
-    // 1. Aplatir les buffers
     const leftBuffer = mergeBuffers(recordingData[0]);
     const rightBuffer = mergeBuffers(recordingData[1]);
-
-    // 2. Entrelacer
     const interleaved = interleave(leftBuffer, rightBuffer);
-
-    // 3. Créer le fichier binaire WAV
     const buffer = new ArrayBuffer(44 + interleaved.length * 2);
     const view = new DataView(buffer);
 
-    // Header WAV
     writeString(view, 0, 'RIFF');
     view.setUint32(4, 36 + interleaved.length * 2, true);
     writeString(view, 8, 'WAVE');
@@ -110,18 +93,15 @@ function exportWav() {
     writeString(view, 36, 'data');
     view.setUint32(40, interleaved.length * 2, true);
 
-    // Données Audio
     floatTo16BitPCM(view, 44, interleaved);
 
-    // 4. Téléchargement
     const blob = new Blob([view], { type: 'audio/wav' });
     const url = URL.createObjectURL(blob);
-    
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    a.download = `hardbeat_studio_${timestamp}.wav`;
+    a.download = `hardbeat_track_${timestamp}.wav`;
     document.body.appendChild(a);
     a.click();
     
@@ -129,20 +109,14 @@ function exportWav() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
     }, 100);
-    
-    console.log("WAV Export terminé.");
 }
 
-// --- UTILITAIRES ---
 function mergeBuffers(recBuffers) {
     let length = 0;
     recBuffers.forEach(b => length += b.length);
     let result = new Float32Array(length);
     let offset = 0;
-    recBuffers.forEach(buffer => {
-        result.set(buffer, offset);
-        offset += buffer.length;
-    });
+    recBuffers.forEach(buffer => { result.set(buffer, offset); offset += buffer.length; });
     return result;
 }
 
@@ -150,11 +124,7 @@ function interleave(inputL, inputR) {
     let length = inputL.length + inputR.length;
     let result = new Float32Array(length);
     let index = 0, inputIndex = 0;
-    while (index < length) {
-        result[index++] = inputL[inputIndex];
-        result[index++] = inputR[inputIndex];
-        inputIndex++;
-    }
+    while (index < length) { result[index++] = inputL[inputIndex]; result[index++] = inputR[inputIndex]; inputIndex++; }
     return result;
 }
 
@@ -166,11 +136,7 @@ function floatTo16BitPCM(output, offset, input) {
 }
 
 function writeString(view, offset, string) {
-    for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
-    }
+    for (let i = 0; i < string.length; i++) { view.setUint8(offset + i, string.charCodeAt(i)); }
 }
 
-window.addEventListener('load', () => {
-    setTimeout(initRecorder, 500);
-});
+window.addEventListener('load', () => { setTimeout(initRecorder, 500); });
