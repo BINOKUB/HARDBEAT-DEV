@@ -94,6 +94,14 @@ window.playSnare = function(isAccent) { const buffer = window.audioCtx.createBuf
 window.playHiHat = function(isOpen, isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.5, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let tone = window.hhSettings.tone || 8000; let d = isOpen ? (window.hhSettings.decayOpen || 0.3) : (window.hhSettings.decayClose || 0.05); let l = isOpen ? (window.hhSettings.levelOpen || 0.5) : (window.hhSettings.levelClose || 0.4); if (isAccent) { l = Math.min(1.0, l * window.globalAccentBoost); d += 0.05; tone += 500; } filt.frequency.value = tone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(l, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + d); noise.start(); }
 window.playDrumFM = function(isAccent) { const car = window.audioCtx.createOscillator(); const mod = window.audioCtx.createOscillator(); const modG = window.audioCtx.createGain(); const mainG = window.audioCtx.createGain(); mod.frequency.value = window.fmSettings.modPitch || 50; let amt = window.fmSettings.fmAmount || 100; let lvl = window.fmSettings.level || 0.5; let d = window.fmSettings.decay || 0.3; if (isAccent) { lvl = Math.min(1.0, lvl * window.globalAccentBoost); amt += 50; d += 0.1; } modG.gain.value = amt; car.frequency.value = window.fmSettings.carrierPitch || 100; mod.connect(modG); modG.connect(car.frequency); car.connect(mainG); mainG.connect(masterGain); mainG.gain.setValueAtTime(lvl, window.audioCtx.currentTime); mainG.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + d); car.start(); mod.start(); car.stop(window.audioCtx.currentTime + d); mod.stop(window.audioCtx.currentTime + d); }
 
+// --- PONT POUR LE PREVIEW (AUDITION) ---
+window.playSynthSound = function(seqId, freq, duration, slide, disto) {
+    // On traduit la demande du module Preview pour le moteur audio V7
+    const vol = (seqId === 3) ? window.synthVol3 : window.synthVol2;
+    // On appelle la vraie fonction interne
+    playSynthNote(freq, vol, seqId);
+};
+
 function playSynthNote(freq, volume, seqId) {
     if (!freq || freq < 20) return;
     const targetVol = (typeof volume === 'number') ? volume : 0.5;
