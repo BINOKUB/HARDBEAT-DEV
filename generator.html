@@ -2,358 +2,191 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>HARDBEAT PRESET GENERATOR</title>
+    <title>HARDBEAT GENERATOR V3 (HUMAN MODE)</title>
     <style>
-        :root {
-            --bg-color: #0d0d0d;
-            --panel: #151515;
-            --border: #333;
-            --cyan: #00f3ff;
-            --text: #a0a0a0;
-            --input-bg: #080808;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            padding: 40px;
-            margin: 0;
-        }
-
-        .container {
-            width: 900px;
-            background: var(--panel);
-            border: 2px solid var(--border);
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
-
-        h1 {
-            color: var(--cyan);
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            letter-spacing: 5px;
-            text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
-            margin-bottom: 40px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 14px;
-            color: #fff;
-            background: #222;
-            padding: 5px 10px;
-            display: inline-block;
-            margin-top: 30px;
-            border-left: 3px solid var(--cyan);
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .grid-5 {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-size: 11px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: var(--cyan);
-        }
-
-        input, select {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px;
-            font-family: 'Courier New', monospace;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--cyan);
-            box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
-        }
-
-        .helper {
-            font-size: 10px;
-            color: #555;
-            margin-top: 3px;
-            font-style: italic;
-        }
-
-        textarea {
-            width: 100%;
-            height: 300px;
-            background: #050505;
-            border: 1px solid var(--cyan);
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            padding: 20px;
-            box-sizing: border-box;
-            font-size: 12px;
-            margin-top: 20px;
-        }
-
-        button {
-            width: 100%;
-            padding: 20px;
-            background: var(--cyan);
-            color: #000;
-            font-weight: bold;
-            font-size: 18px;
-            border: none;
-            cursor: pointer;
-            margin-top: 30px;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        button:hover {
-            background: #fff;
-            box-shadow: 0 0 20px var(--cyan);
-        }
-
-        .section-box {
-            border: 1px dashed #333;
-            padding: 15px;
-            margin-top: 10px;
-        }
-
+        :root { --bg: #0d0d0d; --panel: #1a1a1a; --cyan: #00f3ff; --purple: #a855f7; --text: #ccc; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: var(--panel); padding: 30px; border: 1px solid #333; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        h1 { color: var(--cyan); text-align: center; border-bottom: 1px solid #333; padding-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        h2 { color: #fff; background: #333; padding: 8px 15px; margin-top: 30px; border-left: 5px solid #555; font-size: 14px; }
+        .row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .col { flex: 1; }
+        label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+        input[type="text"], input[type="number"] { width: 100%; background: #050505; border: 1px solid #444; color: #fff; padding: 8px; box-sizing: border-box; font-family: monospace; font-size: 13px; }
+        input:focus { border-color: var(--cyan); outline: none; }
+        textarea { width: 100%; height: 250px; background: #050505; color: #0f0; border: 1px solid #333; padding: 15px; margin-top: 20px; font-family: monospace; }
+        button { width: 100%; padding: 15px; background: var(--cyan); border: none; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+        button:hover { background: #fff; box-shadow: 0 0 15px var(--cyan); }
+        
+        .measure-box { border: 1px solid #333; padding: 15px; background: #111; }
+        .measure-title { font-size: 12px; font-weight: bold; color: var(--cyan); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .purple .measure-title { color: var(--purple); }
+        
+        .helper { font-size: 11px; color: #aaa; margin-bottom: 20px; background: #222; padding: 10px; border-left: 3px solid var(--cyan); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>HARDBEAT // PRESET GENERATOR</h1>
+    <h1>Generator V3 | Human Mode (1-64)</h1>
+    
+    <div class="row">
+        <div class="col"><label>ID (ex: my_track)</label><input type="text" id="p-id" value="new_track_01"></div>
+        <div class="col"><label>Nom Affiché</label><input type="text" id="p-name" value="MY TECHNO TRACK"></div>
+        <div class="col"><label>BPM</label><input type="number" id="p-bpm" value="138"></div>
+    </div>
 
-    <div class="grid-2">
-        <div class="form-group">
-            <label>ID DU PRESET (Unique, minuscules, sans espace)</label>
-            <input type="text" id="p-id" placeholder="ex: dark_techno_1">
+    <h2 style="border-color: #fff">DRUMS (Comptez de 1 à 16)</h2>
+    <div class="row">
+        <div class="col"><label>KICK (ex: 1, 5, 9, 13)</label><input type="text" id="d-0" value="1, 5, 9, 13"></div>
+        <div class="col"><label>SNARE (ex: 5, 13)</label><input type="text" id="d-1" value="5, 13"></div>
+        <div class="col"><label>HHC (ex: 3, 7, 11, 15)</label><input type="text" id="d-2" value="3, 7, 11, 15"></div>
+        <div class="col"><label>HHO</label><input type="text" id="d-3" value=""></div>
+        <div class="col"><label>FM</label><input type="text" id="d-4" value=""></div>
+    </div>
+
+    <h2 style="border-color: var(--cyan)">SYNTH 2 (CYAN)</h2>
+    <p class="helper">
+        <strong>Mode Humain Activé :</strong> Ne calculez plus les zéros !<br>
+        Mesure 1 = Pas 1 à 16 <br>
+        Mesure 2 = Pas 17 à 32 <br>
+        Mesure 3 = Pas 33 à 48 <br>
+        Mesure 4 = Pas 49 à 64
+    </p>
+    
+    <div class="row">
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 1 (1 - 16)</div>
+            <label>STEPS (ex: 1, 11)</label><input type="text" id="s2-m1-seq" value="1, 11, 14, 16">
+            <label>FREQS (Hz)</label><input type="text" id="s2-m1-frq" value="313, 262, 350, 316">
         </div>
-        <div class="form-group">
-            <label>NOM AFFICHÉ (Dans le menu)</label>
-            <input type="text" id="p-name" placeholder="ex: DARK BUNKER (135 BPM)">
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 2 (17 - 32)</div>
+            <label>STEPS (ex: 17, 20)</label><input type="text" id="s2-m2-seq" value="17">
+            <label>FREQS</label><input type="text" id="s2-m2-frq" value="313">
+        </div>
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 3 (33 - 48)</div>
+            <label>STEPS</label><input type="text" id="s2-m3-seq" placeholder="">
+            <label>FREQS</label><input type="text" id="s2-m3-frq" placeholder="">
+        </div>
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 4 (49 - 64)</div>
+            <label>STEPS</label><input type="text" id="s2-m4-seq" placeholder="">
+            <label>FREQS</label><input type="text" id="s2-m4-frq" placeholder="">
         </div>
     </div>
 
-    <div class="grid-2">
-        <div class="form-group">
-            <label>BPM</label>
-            <input type="number" id="p-bpm" value="130">
+    <h2 style="border-color: var(--purple)">SYNTH 3 (VIOLET)</h2>
+    
+    <div class="row purple">
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 1 (1 - 16)</div>
+            <label>STEPS</label><input type="text" id="s3-m1-seq" placeholder="">
+            <label>FREQS</label><input type="text" id="s3-m1-frq" placeholder="">
         </div>
-        <div class="form-group">
-            <label>SWING (0 - 50%)</label>
-            <input type="number" id="p-swing" value="0">
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 2 (17 - 32)</div>
+            <label>STEPS</label><input type="text" id="s3-m2-seq" placeholder="">
+            <label>FREQS</label><input type="text" id="s3-m2-frq" placeholder="">
         </div>
-    </div>
-
-    <div class="form-group">
-        <label>MASTER LENGTH (Longueur Totale)</label>
-        <select id="p-masterLen">
-            <option value="16">16 Steps (1 Mesure)</option>
-            <option value="32">32 Steps (2 Mesures)</option>
-            <option value="64" selected>64 Steps (4 Mesures)</option>
-        </select>
-    </div>
-
-    <h2>TRACK LENGTHS (POLYRYTHMIE)</h2>
-    <div class="section-box grid-5">
-        <div class="form-group">
-            <label>KICK LEN</label>
-            <input type="number" id="len-0" value="16" min="1" max="64">
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 3 (33 - 48)</div>
+            <label>STEPS</label><input type="text" id="s3-m3-seq" placeholder="">
+            <label>FREQS</label><input type="text" id="s3-m3-frq" placeholder="">
         </div>
-        <div class="form-group">
-            <label>SNARE LEN</label>
-            <input type="number" id="len-1" value="16" min="1" max="64">
-        </div>
-        <div class="form-group">
-            <label>HHC LEN</label>
-            <input type="number" id="len-2" value="16" min="1" max="64">
-        </div>
-        <div class="form-group">
-            <label>HHO LEN</label>
-            <input type="number" id="len-3" value="16" min="1" max="64">
-        </div>
-        <div class="form-group">
-            <label>FM LEN</label>
-            <input type="number" id="len-4" value="16" min="1" max="64">
+        <div class="col measure-box">
+            <div class="measure-title">MESURE 4 (49 - 64)</div>
+            <label>STEPS (ex: 61, 62, 63)</label><input type="text" id="s3-m4-seq" value="61, 62, 63">
+            <label>FREQS</label><input type="text" id="s3-m4-frq" value="208, 360, 310">
         </div>
     </div>
 
-    <h2>SÉQUENCES DRUMS</h2>
-    <div class="section-box">
-        <p class="helper">Entrez les numéros des cases actives séparés par des virgules (Commence à 0). Ex: 0, 4, 8, 12</p>
-        
-        <div class="form-group">
-            <label>KICK SÉQUENCE</label>
-            <input type="text" id="seq-0" placeholder="0, 4, 8, 12...">
-        </div>
-        <div class="form-group">
-            <label>SNARE SÉQUENCE</label>
-            <input type="text" id="seq-1" placeholder="4, 12...">
-        </div>
-        <div class="form-group">
-            <label>HI-HAT CLOSED SÉQUENCE</label>
-            <input type="text" id="seq-2" placeholder="2, 6, 10, 14...">
-        </div>
-        <div class="form-group">
-            <label>HI-HAT OPEN SÉQUENCE</label>
-            <input type="text" id="seq-3" placeholder="10...">
-        </div>
-        <div class="form-group">
-            <label>FM PERC SÉQUENCE</label>
-            <input type="text" id="seq-4" placeholder="">
-        </div>
-    </div>
-
-    <h2>ACCENTS DRUMS</h2>
-    <div class="section-box">
-        <div class="form-group">
-            <label>KICK ACCENTS (Cases fortes)</label>
-            <input type="text" id="acc-0" placeholder="0...">
-        </div>
-        <p class="helper">Note: Pour ce générateur rapide, seuls les accents Kick sont demandés, les autres seront vides par défaut (modifiable dans le code généré).</p>
-    </div>
-
-    <h2>SYNTHÉTISEURS</h2>
-    <div class="section-box">
-        <div class="grid-2">
-            <div>
-                <label>SEQ 2 (CYAN) - NOTES (ex: 0, 2, 5)</label>
-                <input type="text" id="seq-synth2" placeholder="">
-            </div>
-            <div>
-                <label>SEQ 2 - FRÉQUENCE(S)</label>
-                <input type="text" id="freq-synth2" placeholder="440" value="440">
-                <p class="helper">Entrez un seul nombre pour une fréquence fixe, OU une liste [440, 550...] pour une mélodie.</p>
-            </div>
-        </div>
-        <br>
-        <div class="grid-2">
-            <div>
-                <label>SEQ 3 (VIOLET) - NOTES</label>
-                <input type="text" id="seq-synth3" placeholder="">
-            </div>
-            <div>
-                <label>SEQ 3 - FRÉQUENCE(S)</label>
-                <input type="text" id="freq-synth3" placeholder="110" value="110">
-            </div>
-        </div>
-    </div>
-
-    <button onclick="generateCode()">GÉNÉRER LE CODE JS</button>
-
-    <h2>RÉSULTAT (À copier dans presets.js)</h2>
+    <button onclick="generate()">GÉNÉRER LE CODE JS</button>
     <textarea id="output" readonly onclick="this.select()"></textarea>
-
 </div>
 
 <script>
-    function generateCode() {
+    // Convertit "1, 5, 9" en [0, 4, 8] (Humain vers Machine)
+    function parseInputHuman(str) {
+        if(!str.trim()) return [];
+        return str.split(',')
+                  .map(x => parseFloat(x.trim()))
+                  .filter(x => !isNaN(x))
+                  .map(x => x - 1) // LE CÉLÈBRE -1 !
+                  .filter(x => x >= 0 && x < 64); // Sécurité
+    }
+
+    // Convertit juste les fréquences (pas de -1 ici)
+    function parseFreqs(str) {
+        if(!str.trim()) return [];
+        return str.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+    }
+
+    function buildSynthTrack(prefix) {
+        let fullSeq = [];
+        let fullFreqs = new Array(64).fill(440); // 440 par défaut
+
+        for(let m=0; m<4; m++) {
+            // Ici on n'a plus besoin d'offset car l'utilisateur tape "17" qui devient "16" direct
+            let steps = parseInputHuman(document.getElementById(`${prefix}-m${m+1}-seq`).value);
+            let freqs = parseFreqs(document.getElementById(`${prefix}-m${m+1}-frq`).value);
+
+            steps.forEach((machineIndex, i) => {
+                // On ajoute le pas machine (ex: 16)
+                fullSeq.push(machineIndex);
+
+                // On met la fréquence au bon endroit
+                if(freqs[i]) {
+                    fullFreqs[machineIndex] = freqs[i];
+                }
+            });
+        }
+        return { seq: fullSeq, freqs: fullFreqs };
+    }
+
+    function generate() {
         const id = document.getElementById('p-id').value || "my_preset";
         const name = document.getElementById('p-name').value || "MY PRESET";
         const bpm = document.getElementById('p-bpm').value;
-        const swing = document.getElementById('p-swing').value;
-        const masterLen = document.getElementById('p-masterLen').value;
 
-        // Track Lengths
-        const lens = [
-            document.getElementById('len-0').value,
-            document.getElementById('len-1').value,
-            document.getElementById('len-2').value,
-            document.getElementById('len-3').value,
-            document.getElementById('len-4').value
-        ];
+        // Drums (Humain vers Machine)
+        const d0 = parseInputHuman(document.getElementById('d-0').value).join(', ');
+        const d1 = parseInputHuman(document.getElementById('d-1').value).join(', ');
+        const d2 = parseInputHuman(document.getElementById('d-2').value).join(', ');
+        const d3 = parseInputHuman(document.getElementById('d-3').value).join(', ');
+        const d4 = parseInputHuman(document.getElementById('d-4').value).join(', ');
 
-        // Sequences Drums
-        const getSeq = (id) => {
-            const val = document.getElementById(id).value.trim();
-            if(!val) return "makeSeq([])";
-            return `makeSeq([${val}])`;
-        };
+        // Synths Logic
+        const s2 = buildSynthTrack('s2');
+        const s3 = buildSynthTrack('s3');
 
-        const drumSeqs = [
-            getSeq('seq-0'), getSeq('seq-1'), getSeq('seq-2'), getSeq('seq-3'), getSeq('seq-4')
-        ];
-        
-        const accSeqs = [
-            getSeq('acc-0'), "makeSeq([])", "makeSeq([])", "makeSeq([])", "makeSeq([])"
-        ];
-
-        // Synths
-        const synth2Seq = getSeq('seq-synth2');
-        const synth3Seq = getSeq('seq-synth3');
-
-        // Freq Logic
-        const formatFreq = (val, len) => {
-            val = val.trim();
-            if(val.includes(',')) {
-                // C'est un tableau
-                return `[${val}]`; // On suppose que l'utilisateur a collé des valeurs valides
-            } else {
-                // C'est un nombre unique
-                return `new Array(${len}).fill(${val || 440})`;
-            }
-        };
-
-        const freq2 = formatFreq(document.getElementById('freq-synth2').value, masterLen);
-        const freq3 = formatFreq(document.getElementById('freq-synth3').value, masterLen);
-
-        // Construction du JSON
-        const finalCode = `
+        const code = `
     "${id}": {
         name: "${name}",
-        masterLength: ${masterLen},
+        masterLength: 64,
         bpm: ${bpm},
-        swing: ${swing},
-        trackLengths: [${lens.join(', ')}],
+        swing: 0,
+        trackLengths: [16, 16, 16, 16, 16],
         drums: {
             seq: [
-                ${drumSeqs[0]},
-                ${drumSeqs[1]},
-                ${drumSeqs[2]},
-                ${drumSeqs[3]},
-                ${drumSeqs[4]}
+                makeSeq([${d0}]),
+                makeSeq([${d1}]),
+                makeSeq([${d2}]),
+                makeSeq([${d3}]),
+                makeSeq([${d4}])
             ],
-            accents: [
-                ${accSeqs[0]},
-                ${accSeqs[1]},
-                ${accSeqs[2]},
-                ${accSeqs[3]},
-                ${accSeqs[4]}
-            ]
+            accents: [makeSeq([]), makeSeq([]), makeSeq([]), makeSeq([]), makeSeq([])]
         },
         synths: {
-            seq2: ${synth2Seq},
-            seq3: ${synth3Seq}
+            seq2: makeSeq([${s2.seq.join(', ')}]),
+            seq3: makeSeq([${s3.seq.join(', ')}])
         },
-        freqs2: ${freq2},
-        freqs3: ${freq3}
+        freqs2: [${s2.freqs.join(', ')}],
+        freqs3: [${s3.freqs.join(', ')}]
     },`;
 
-        document.getElementById('output').value = finalCode;
+        document.getElementById('output').value = code;
     }
 </script>
 
