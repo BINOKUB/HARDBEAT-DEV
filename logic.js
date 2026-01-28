@@ -571,3 +571,74 @@ function initFreqSnapshots() {
         };
     });
 }
+
+/* ==========================================
+   PRESET LOADER (A ajouter à la fin de logic.js)
+   ========================================== */
+
+window.loadPreset = function(presetKey) {
+    // 1. On vérifie si le preset existe
+    if (!window.presets || !window.presets[presetKey]) {
+        console.error("Preset introuvable ou presets.js non chargé.");
+        return;
+    }
+
+    const p = window.presets[presetKey];
+    console.log("Loading Preset:", p.name);
+
+    // 2. CHARGEMENT BASIQUE
+    if(document.getElementById('display-bpm1')) document.getElementById('display-bpm1').innerText = p.bpm;
+    window.masterLength = p.masterLength || 16;
+    window.trackLengths = p.trackLengths || [16, 16, 16, 16, 16]; 
+
+    // 3. DRUMS & ACCENTS (DRUMS)
+    // On copie les données pour ne pas modifier le preset original en mémoire
+    window.drumSequences = p.drums.seq.map(s => [...s]); 
+    // Si le preset a des accents drums, on les charge, sinon on met du vide
+    window.drumAccents = p.drums.accents ? p.drums.accents.map(s => [...s]) : Array.from({length:5}, () => Array(64).fill(false));
+
+    // 4. SYNTHS (NOTES & FRÉQUENCES)
+    window.synthSequences.seq2 = [...p.synths.seq2];
+    window.synthSequences.seq3 = [...p.synths.seq3];
+    
+    window.freqDataSeq2 = p.freqs2 ? [...p.freqs2] : Array(64).fill(440);
+    window.freqDataSeq3 = p.freqs3 ? [...p.freqs3] : Array(64).fill(440);
+
+    // 5. SYNTHS (ACCENTS - NOUVEAU V5)
+    // C'est ici qu'on gère la compatibilité.
+    
+    // Pour Seq 2
+    if (p.accents2) {
+        window.synthAccents.seq2 = [...p.accents2];
+    } else {
+        // Si c'est un vieux preset, on efface les accents précédents pour ne pas avoir de "fantômes"
+        window.synthAccents.seq2 = Array(64).fill(false);
+    }
+
+    // Pour Seq 3
+    if (p.accents3) {
+        window.synthAccents.seq3 = [...p.accents3];
+    } else {
+        window.synthAccents.seq3 = Array(64).fill(false);
+    }
+
+    // 6. ACTUALISATION DE L'INTERFACE
+    // On met à jour les Sliders de longueur (Polyrythmie)
+    const inputs = ['kick-steps', 'snare-steps', 'hhc-steps', 'hho-steps', 'fm-steps'];
+    inputs.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if(el) el.value = window.trackLengths[i];
+    });
+
+    // On rafraîchit la grille visuelle
+    if (typeof refreshGridVisuals === 'function') refreshGridVisuals();
+    
+    // On rafraîchit les faders de fréquences
+    if (typeof refreshFadersVisuals === 'function') {
+        refreshFadersVisuals(2);
+        // On ne rafraîchit le 3 que si l'extension est ouverte, pour éviter les erreurs
+        if(document.getElementById('grid-freq-seq3')) refreshFadersVisuals(3);
+    }
+    
+    console.log("Preset chargé avec succès !");
+};
