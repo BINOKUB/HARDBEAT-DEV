@@ -13,7 +13,7 @@
             <div class="logo">HARDBEAT PRO <span style="font-size:0.4em; color:#00f3ff; vertical-align:super;">64</span></div>
             
             <div class="memory-bank">
-                <select id="preset-selector" style="background:#000; color:#00f3ff; border:1px solid #333; font-family:'Courier New'; font-weight:bold; font-size:10px; height:25px; margin-right:10px; cursor:pointer;">
+                <select id="preset-selector" onchange="loadPreset(this.value)" style="background:#000; color:#00f3ff; border:1px solid #333; font-family:'Courier New'; font-weight:bold; font-size:10px; height:25px; margin-right:10px; cursor:pointer;">
                     <option value="">-- LOAD PRESET --</option>
                     <option value="init">INIT / BLANK</option>
                     <option value="rumble">BERLIN RUMBLE</option>
