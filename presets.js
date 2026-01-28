@@ -30,7 +30,7 @@ const FACTORY_PRESETS = {
     "POLYSWEET": {
         name: "RANDOM-X-001",
         masterLength: 64,
-        bpm: 138,
+        bpm: 107,
         swing: 0,
         trackLengths: [16, 16, 3, 16, 16],
         drums: {
