@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HARDBEAT PRO 64 | HANDBOOK</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --panel: #111;
+            --text: #ddd;
+            --cyan: #00f3ff;
+            --purple: #a855f7;
+            --yellow: #ffcc00;
+            --border: 1px solid #333;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* HEADER */
+        header {
+            border-bottom: 2px solid var(--cyan);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        h1 { color: #fff; font-size: 2.5rem; margin: 0; letter-spacing: 2px; }
+        .version { color: var(--cyan); font-weight: bold; }
+
+        /* SECTIONS */
+        section {
+            background: var(--panel);
+            border: var(--border);
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 4px solid #333;
+        }
+
+        h2 { margin-top: 0; color: #fff; text-transform: uppercase; border-bottom: 1px dashed #333; padding-bottom: 10px; }
+        
+        h3 { color: var(--cyan); margin-top: 25px; margin-bottom: 10px; font-size: 1.1rem; }
+        h3.purple { color: var(--purple); }
+        h3.yellow { color: var(--yellow); }
+
+        p { margin-bottom: 15px; font-size: 0.95rem; color: #aaa; }
+        strong { color: #fff; }
+
+        /* LISTS */
+        ul { list-style: none; padding-left: 10px; }
+        ul li { margin-bottom: 8px; position: relative; padding-left: 20px; }
+        ul li::before { content: "►"; color: #555; position: absolute; left: 0; font-size: 0.8rem; }
+
+        .key {
+            display: inline-block;
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .back-link {
+            display: block; text-align: center; margin-top: 50px; color: #666; text-decoration: none;
+        }
+        .back-link:hover { color: #fff; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>HARDBEAT PRO 64</h1>
+        <div class="version">OFFICIAL USER HANDBOOK (V1.0)</div>
+    </header>
+
+    <section style="border-left-color: var(--cyan);">
+        <h2>1. Architecture Système</h2>
+        <p>Hardbeat Pro est une station de travail Techno basée sur une architecture <strong>64 Pas (4 Mesures)</strong>. Contrairement aux séquenceurs classiques limités à 16 temps, Hardbeat permet de composer des boucles longues et évolutives.</p>
+        
+        <h3>Navigation (Paging)</h3>
+        <p>L'interface affiche 16 pas à la fois. Utilisez les flèches <span class="key">&lt;&lt;</span> et <span class="key">&gt;&gt;</span> situées en haut de chaque section pour naviguer entre les mesures :</p>
+        <ul>
+            <li><strong>Page 1 :</strong> Pas 1 à 16</li>
+            <li><strong>Page 2 :</strong> Pas 17 à 32</li>
+            <li><strong>Page 3 :</strong> Pas 33 à 48</li>
+            <li><strong>Page 4 :</strong> Pas 49 à 64</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>2. Drums & Polyrythmie</h2>
+        <p>La section rythmique comporte 5 pistes : Kick, Snare, Hi-Hat Closed (HHC), Hi-Hat Open (HHO) et FM Perc.</p>
+
+        <h3>Le moteur Polyrythmique</h3>
+        <p>Chaque piste de batterie possède son propre slider de longueur (Loop Length). C'est l'arme secrète du Hardgroove.</p>
+        <ul>
+            <li><strong>Standard :</strong> Réglez sur 16 pour une boucle normale (4/4).</li>
+            <li><strong>Décalé :</strong> Réglez sur 3, 5, 12... pour que l'instrument se décale par rapport au Kick à chaque tour.</li>
+            <li><strong>Longue évolution :</strong> Réglez sur 64 pour écrire un pattern unique sur 4 mesures sans répétition.</li>
+        </ul>
+    </section>
+
+    <section style="border-left-color: var(--purple);">
+        <h2>3. Synthétiseurs de Fréquence</h2>
+        <p>Deux synthétiseurs monophoniques sont disponibles pour sculpter vos textures.</p>
+        
+        <h3 class="purple">SEQ 2 (Lead / Texture)</h3>
+        <p>Le synthé principal (Cyan). Idéal pour les séquences hypnotiques et les leads.</p>
+
+        <h3 class="purple">SEQ 3 (Extension / Rumble)</h3>
+        <p>Accessible via le bouton <span class="key">+ EXTEND</span>. Ce module supplémentaire (Violet) est conçu pour les basses fréquences et le renforcement du groove (Rumble).</p>
+
+        <h3>Sliders de Fréquence (Hz)</h3>
+        <p>Chaque pas possède un fader dédié (50Hz - 880Hz).<br>
+        <strong>Astuce :</strong> Touchez un fader pour entendre la note (Preview) avant de placer votre pas sur la grille.</p>
+    </section>
+
+    <section style="border-left-color: var(--yellow);">
+        <h2>4. Accents & Dynamique</h2>
+        <p>Pour éviter le son "robotique", Hardbeat Pro gère les accents (vélocité).</p>
+        
+        <h3 class="yellow">Accents Drums (Visibles)</h3>
+        <p>La ligne du bas de chaque piste Drum (les petits carrés) active l'accent. Un pas accentué joue plus fort et avec plus d'impact.</p>
+
+        <h3 class="yellow">Accents Synths (Fantômes)</h3>
+        <p>Les synthétiseurs gèrent aussi les accents (Volume + Ouverture du Filtre). Ces accents ne sont pas visibles sur l'interface pour garder la clarté, mais ils sont programmables via le <strong>Preset Generator</strong>.</p>
+    </section>
+
+    <section>
+        <h2>5. Outils Live & Export</h2>
+        
+        <h3>Snapshots (Mémoire Fréquences)</h3>
+        <p>Le module de droite permet de sauvegarder l'état des faders du Synth 2.</p>
+        <ol>
+            <li>Cliquez sur <span class="key">S</span> (Le bouton clignote rouge).</li>
+            <li>Cliquez sur un Slot (1-4) pour sauver.</li>
+            <li>En jeu, cliquez sur le Slot pour rappeler instantanément la mélodie.</li>
+        </ol>
+
+        <h3>Export Audio (.WAV)</h3>
+        <p>Cliquez sur <span class="key">REC</span> pour armer l'enregistrement. Le bouton devient rouge. L'enregistrement capture la sortie Master exacte (y compris vos manipulations en direct). Cliquez à nouveau pour stopper et télécharger le fichier WAV Studio Quality.</p>
+    </section>
+
+    <section>
+        <h2>6. Le Preset Generator</h2>
+        <p>Pour composer des morceaux complexes, utilisez l'outil externe <code>generator.html</code>.</p>
+        <ul>
+            <li>Remplissez les séquences Drum et Synth (Mode Humain : 1 à 64).</li>
+            <li>Définissez les longueurs de boucles pour la polyrythmie.</li>
+            <li>Définissez les fréquences précises.</li>
+            <li>Ajoutez les accents dans les champs dédiés (cases jaunes).</li>
+        </ul>
+        <p>Le générateur crée un bloc de code à coller dans le fichier <code>presets.js</code> de l'application.</p>
+    </section>
+
+    <a href="index.html" class="back-link">← RETOUR AU HUB</a>
+
+</div>
+
+</body>
+</html>
