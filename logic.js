@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (V11 - FINAL GOLD)
+   HARDBEAT PRO - UI LOGIC (V12 - SYNTH ACCENTS SUPPORT)
    ========================================== */
 
 let masterTimer; 
@@ -14,6 +14,10 @@ window.isSaveMode = false;
 window.drumSequences = Array.from({ length: 5 }, () => Array(64).fill(false));
 window.drumAccents = Array.from({ length: 5 }, () => Array(64).fill(false));
 window.synthSequences = { seq2: Array(64).fill(false), seq3: Array(64).fill(false) };
+
+// NOUVEAU : Mémoire pour les accents Synthés (Invisibles mais audibles)
+window.synthAccents = { seq2: Array(64).fill(false), seq3: Array(64).fill(false) };
+
 window.freqDataSeq2 = Array(64).fill(440);
 window.freqDataSeq3 = Array(64).fill(440);
 
@@ -233,47 +237,9 @@ function initSeq3Extension() {
     });
 }
 
-// --- SNAPSHOTS (MEMORY) ---
-function initFreqSnapshots() {
-    window.freqSnapshots = [null, null, null, null]; 
-    let isSnapshotSaveMode = false;
-
-    const btnSave = document.getElementById('btn-snap-save');
-    const slots = document.querySelectorAll('.btn-snap-slot');
-
-    if(!btnSave) return;
-
-    btnSave.onclick = () => {
-        isSnapshotSaveMode = !isSnapshotSaveMode;
-        btnSave.classList.toggle('saving', isSnapshotSaveMode);
-    };
-
-    slots.forEach(slotBtn => {
-        slotBtn.onclick = () => {
-            const slotIndex = parseInt(slotBtn.dataset.slot);
-            if (isSnapshotSaveMode) {
-                // SAVE
-                window.freqSnapshots[slotIndex] = [...window.freqDataSeq2];
-                slotBtn.classList.add('has-data');
-                isSnapshotSaveMode = false;
-                btnSave.classList.remove('saving');
-                slotBtn.classList.add('flash-load');
-                setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
-            } else {
-                // LOAD
-                if (window.freqSnapshots[slotIndex]) {
-                    window.freqDataSeq2 = [...window.freqSnapshots[slotIndex]];
-                    refreshFadersVisuals(2);
-                    slotBtn.classList.add('flash-load');
-                    setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
-                }
-            }
-        };
-    });
-}
-
 function initAudioPreview() {
     console.log("Audio Preview V4: Active.");
+
     const triggerPreview = (target, type) => {
         const section = target.closest('.rack-section');
         if (!section) return;
@@ -285,6 +251,7 @@ function initAudioPreview() {
         }
 
         if (seqId !== 2 && seqId !== 3) return;
+
         let freq = 0;
         if (type === 'fader') {
             freq = parseFloat(target.value);
@@ -316,7 +283,7 @@ function initAudioPreview() {
    MAIN INIT 
    ========================================== */
 window.addEventListener('load', () => {
-    console.log("Initialisation Logic V11 (Final)...");
+    console.log("Initialisation Logic V12 (Final)...");
     
     if (!window.audioCtx) console.error("ERREUR : audio.js manquant !");
 
@@ -346,12 +313,11 @@ window.addEventListener('load', () => {
     const playBtn = document.getElementById('master-play-stop');
     if (playBtn) playBtn.onclick = () => togglePlay(playBtn);
    
-    // ICI : ON LANCE LES SNAPSHOTS
-    initFreqSnapshots();
+    if(typeof initFreqSnapshots === 'function') initFreqSnapshots();
     
     setTimeout(initAudioPreview, 800);
 
-    console.log("Logic V11 : Prêt.");
+    console.log("Logic V12 : Prêt.");
 });
 
 // --- PLAYBACK ENGINE ---
@@ -430,10 +396,24 @@ let currentSynthStep = 0;
 function triggerSynths(masterStep) {
     if(window.playSynthStep) {
         const isActive2 = window.synthSequences.seq2[masterStep];
-        if(window.freqDataSeq2) window.playSynthStep(masterStep, window.freqDataSeq2[masterStep], 2, isActive2);
+        
+        // CHECK ACCENT MEMORY
+        let isAccent2 = false;
+        if(window.synthAccents && window.synthAccents.seq2) {
+            isAccent2 = window.synthAccents.seq2[masterStep];
+        }
+
+        if(window.freqDataSeq2) window.playSynthStep(masterStep, window.freqDataSeq2[masterStep], 2, isActive2, isAccent2);
 
         const isActive3 = window.synthSequences.seq3[masterStep];
-        if(window.freqDataSeq3) window.playSynthStep(masterStep, window.freqDataSeq3[masterStep], 3, isActive3);
+        
+        // CHECK ACCENT MEMORY 3
+        let isAccent3 = false;
+        if(window.synthAccents && window.synthAccents.seq3) {
+            isAccent3 = window.synthAccents.seq3[masterStep];
+        }
+
+        if(window.freqDataSeq3) window.playSynthStep(masterStep, window.freqDataSeq3[masterStep], 3, isActive3, isAccent3);
     }
 }
 
@@ -561,3 +541,33 @@ document.addEventListener('click', (e) => {
     if (e.target.classList.contains('btn-synth-mute')) { const target = parseInt(e.target.dataset.target); if(window.toggleMuteSynth) window.toggleMuteSynth(target, !e.target.classList.contains('active')); e.target.classList.toggle('active'); return; }
     if (e.target.classList.contains('btn-random')) { const target = parseInt(e.target.dataset.target); const selector = (target === 3) ? '#grid-freq-seq3 .freq-fader' : '#grid-freq-seq2 .freq-fader'; const faders = document.querySelectorAll(selector); const btn = e.target; btn.style.background = (target === 3) ? "#a855f7" : "#00f3ff"; btn.style.color = "#000"; setTimeout(() => { btn.style.background = ""; btn.style.color = ""; }, 100); faders.forEach(fader => { const randomFreq = Math.floor(Math.random() * (880 - 50) + 50); fader.value = randomFreq; fader.dispatchEvent(new Event('input', { bubbles: true })); }); return; }
 });
+
+// --- SNAPSHOTS (MEMORY) ---
+function initFreqSnapshots() {
+    window.freqSnapshots = [null, null, null, null]; 
+    let isSnapshotSaveMode = false;
+    const btnSave = document.getElementById('btn-snap-save');
+    const slots = document.querySelectorAll('.btn-snap-slot');
+    if(!btnSave) return;
+    btnSave.onclick = () => { isSnapshotSaveMode = !isSnapshotSaveMode; btnSave.classList.toggle('saving', isSnapshotSaveMode); };
+    slots.forEach(slotBtn => {
+        slotBtn.onclick = () => {
+            const slotIndex = parseInt(slotBtn.dataset.slot);
+            if (isSnapshotSaveMode) {
+                window.freqSnapshots[slotIndex] = [...window.freqDataSeq2];
+                slotBtn.classList.add('has-data');
+                isSnapshotSaveMode = false;
+                btnSave.classList.remove('saving');
+                slotBtn.classList.add('flash-load');
+                setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
+            } else {
+                if (window.freqSnapshots[slotIndex]) {
+                    window.freqDataSeq2 = [...window.freqSnapshots[slotIndex]];
+                    refreshFadersVisuals(2);
+                    slotBtn.classList.add('flash-load');
+                    setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
+                }
+            }
+        };
+    });
+}
