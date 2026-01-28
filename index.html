@@ -12,6 +12,7 @@
             --cyan: #00f3ff;
             --purple: #a855f7;
             --green: #0f0;
+            --yellow: #ffcc00;
             --border: 1px solid #333;
         }
 
@@ -130,6 +131,26 @@
         ul.roadmap li::before { content: "►"; color: var(--purple); position: absolute; left: 0; top: 0; font-size: 0.8rem; }
         ul.roadmap li.done { color: #555; text-decoration: line-through; }
         ul.roadmap li.done::before { content: "✔"; color: var(--green); }
+        ul.roadmap li.new { color: #fff; font-weight: bold; }
+        ul.roadmap li.new::before { content: "★"; color: var(--yellow); }
+
+        /* --- TOOLS LINKS --- */
+        .tool-link {
+            display: block;
+            background: #1a1a1a;
+            color: #aaa;
+            text-decoration: none;
+            padding: 10px;
+            margin-bottom: 5px;
+            border: 1px solid #333;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .tool-link:hover {
+            border-color: var(--yellow);
+            color: var(--yellow);
+            background: #222;
+        }
 
         /* --- FOOTER --- */
         footer {
@@ -154,7 +175,7 @@
     <header>
         <h1>HARDBEAT PRO</h1>
         <div class="subtitle">BROWSER BASED TECHNO WORKSTATION</div>
-        <a href="HARDBEAT-PRO.html" target="_new" class="btn-main">START ENGINE</a>
+        <a href="HARDBEAT-PRO.html" class="btn-main">START ENGINE</a>
     </header>
 
     <div class="container">
@@ -171,35 +192,47 @@
 
         <aside>
             <div class="sidebar-box">
-                <h3> >> DERNIÈRES NOUVEAUTÉS </h3>
+                <h3 style="margin-top:0"> >> PATCH NOTES </h3>
                 <ul class="updates">
                     <li>
-                        <span class="date">17 JAN 2026</span>
-                        <div class="text">Lancement officiel de la <strong>V1.0 Stable</strong>. Intégration du moteur "Smart Random" pour les drums et les synthés.</div>
+                        <span class="date">28 JAN 2026</span>
+                        <div class="text"><strong>VERSION GOLD (V12)</strong><br>
+                        - Export Audio (.WAV) Studio Quality<br>
+                        - Polyrythmie Réelle (64 Pas)<br>
+                        - Gestion des Accents (Drums & Synths)<br>
+                        - Snapshots de Fréquences (Live Mode)</div>
                     </li>
                     <li>
-                        <span class="date">16 JAN 2026</span>
-                        <div class="text">Ajout du <strong>SEQ 3 (Rumble)</strong> pour les basses fréquences.</div>
+                        <span class="date">26 JAN 2026</span>
+                        <div class="text">Ajout du <strong>SEQ 3 (Rumble)</strong> et correction des moteurs audio.</div>
                     </li>
                 </ul>
             </div>
 
             <div class="sidebar-box">
-                <h3>IDÉES À VENIR (Roadmap)</h3>
+                <h3>OUTILS DE PRODUCTION</h3>
+                <p style="font-size:0.8rem; color:#666; margin-bottom:10px;">Générateurs de code pour presets :</p>
+                <a href="generator_accents.html" target="_blank" class="tool-link">⚡ GENERATEUR V5 (ACCENTS)</a>
+                <a href="generator_poly.html" target="_blank" class="tool-link">🌀 GENERATEUR V4 (POLY)</a>
+            </div>
+
+            <div class="sidebar-box">
+                <h3>ROADMAP (ETAT ACTUEL)</h3>
                 <ul class="roadmap">
                     <li class="done">Moteur Audio Low-Latency</li>
                     <li class="done">Sauvegarde Locale</li>
                     <li class="done">Randomizer Intelligent</li>
-                    <li>Export Audio (WAV)</li>
-                    <li>Mode "Dark Techno" (Skin Alternatif)</li>
-                    <li>Banque de Presets Artistes</li>
+                    <li class="done">Export Audio (WAV)</li>
+                    <li class="done">Polyrythmie Avancée</li>
+                    <li class="done">Presets Artistes (Via Script)</li>
+                    <li class="new">Interface "Dark Techno" Finale</li>
                 </ul>
             </div>
 
             <div class="sidebar-box" style="text-align:center;">
                 <h3>DOCUMENTATION</h3>
-                <p style="font-size:0.8rem; margin-bottom:15px;">Le manuel complet pour maîtriser la bête.</p>
-                <a href="MANUEL.pdf" target="_new" class="dl-btn">📄 TÉLÉCHARGER LE PDF</a>
+                <p style="font-size:0.8rem; margin-bottom:15px;">Fiche technique et manuel d'utilisation.</p>
+                <a href="MANUEL.pdf" target="_new" class="dl-btn">📄 FICHE TECHNIQUE</a>
             </div>
         </aside>
 
@@ -213,34 +246,29 @@
     <script>
         /* ========================================================
            ZONE DE CONFIGURATION VIDEOS
-           Ajoute tes vidéos ici. Format : { titre: "...", fichier: "...", desc: "..." },
            ======================================================== */
         
         const myVideos = [
             {
+                titre: "Demo Hardgroove V1",
+                fichier: "TEST.mp4", 
+                desc: "Premier test d'export audio et polyrythmie."
+            },
+            {
                 titre: "4 Recettes Polyrythmiques",
                 fichier: "SAMPLE-4-RECETTE.mp4",
-                desc: "Démonstration des techniques de décalage temporel (3 vs 4, Rush, Industriel)."
-            },
-            
-            // COPIE CE BLOC POUR AJOUTER UNE NOUVELLE VIDEO :
-            /*
-            {
-                titre: "Mon Nouveau Jam",
-                fichier: "NOM_DU_FICHIER.mp4",
-                desc: "Description courte de la vidéo."
-            },
-            */
+                desc: "Démonstration des techniques de décalage temporel."
+            }
+            // Tu peux ajouter d'autres vidéos ici
         ];
 
         /* ========================================================
-           FIN DE LA CONFIGURATION (Ne touche pas en dessous)
+           SCRIPT GALERIE
            ======================================================== */
 
         const container = document.getElementById('gallery-container');
 
         myVideos.forEach(vid => {
-            // Création automatique du HTML
             const card = document.createElement('div');
             card.className = 'video-card';
             card.innerHTML = `
@@ -259,4 +287,3 @@
 
 </body>
 </html>
-
