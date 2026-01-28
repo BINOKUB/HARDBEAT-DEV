@@ -2,131 +2,125 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>HARDBEAT GENERATOR V4 (POLYRHYTHM)</title>
+    <title>HARDBEAT GENERATOR V5 (ACCENTS)</title>
     <style>
-        :root { --bg: #0d0d0d; --panel: #1a1a1a; --cyan: #00f3ff; --purple: #a855f7; --text: #ccc; }
+        :root { --bg: #0d0d0d; --panel: #1a1a1a; --cyan: #00f3ff; --purple: #a855f7; --yellow: #ffcc00; --text: #ccc; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: var(--panel); padding: 30px; border: 1px solid #333; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
-        h1 { color: var(--cyan); text-align: center; border-bottom: 1px solid #333; padding-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
-        h2 { color: #fff; background: #333; padding: 8px 15px; margin-top: 30px; border-left: 5px solid #555; font-size: 14px; }
-        .row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .container { max-width: 1100px; margin: 0 auto; background: var(--panel); padding: 30px; border: 1px solid #333; }
+        h1 { color: var(--cyan); text-align: center; border-bottom: 1px solid #333; padding-bottom: 20px; }
+        h2 { color: #fff; background: #333; padding: 8px 15px; margin-top: 30px; border-left: 5px solid #555; }
+        .row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
         .col { flex: 1; }
-        label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
-        input[type="text"], input[type="number"] { width: 100%; background: #050505; border: 1px solid #444; color: #fff; padding: 8px; box-sizing: border-box; font-family: monospace; font-size: 13px; }
+        label { display: block; font-size: 10px; color: #888; margin-bottom: 3px; font-weight: bold; text-transform: uppercase; }
+        input[type="text"], input[type="number"] { width: 100%; background: #050505; border: 1px solid #444; color: #fff; padding: 8px; font-family: monospace; font-size: 13px; }
         input:focus { border-color: var(--cyan); outline: none; }
         
-        /* Style pour les inputs de longueur (Polyrythmie) */
-        .len-input { border-color: #666 !important; color: #ffff00 !important; font-weight: bold; }
+        /* Styles Spécifiques */
+        .len-input { border-color: #666 !important; color: #aaa !important; width: 50px !important; text-align: center; }
+        .acc-input { border-color: var(--yellow) !important; color: var(--yellow) !important; }
         
-        textarea { width: 100%; height: 250px; background: #050505; color: #0f0; border: 1px solid #333; padding: 15px; margin-top: 20px; font-family: monospace; }
-        button { width: 100%; padding: 15px; background: var(--cyan); border: none; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
-        button:hover { background: #fff; box-shadow: 0 0 15px var(--cyan); }
+        textarea { width: 100%; height: 300px; background: #050505; color: #0f0; border: 1px solid #333; padding: 15px; margin-top: 20px; font-family: monospace; }
+        button { width: 100%; padding: 15px; background: var(--cyan); border: none; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 16px; text-transform: uppercase; }
+        button:hover { background: #fff; }
         
-        .measure-box { border: 1px solid #333; padding: 15px; background: #111; }
-        .measure-title { font-size: 12px; font-weight: bold; color: var(--cyan); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .measure-box { border: 1px solid #333; padding: 10px; background: #111; }
+        .measure-title { font-size: 11px; font-weight: bold; color: var(--cyan); margin-bottom: 8px; border-bottom: 1px solid #333; }
         .purple .measure-title { color: var(--purple); }
-        
-        .helper { font-size: 11px; color: #aaa; margin-bottom: 20px; background: #222; padding: 10px; border-left: 3px solid var(--cyan); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Generator V4 | Polyrythmie</h1>
+    <h1>Generator V5 | Accents Edition</h1>
     
     <div class="row">
-        <div class="col"><label>ID</label><input type="text" id="p-id" value="poly_test"></div>
-        <div class="col"><label>Nom Affiché</label><input type="text" id="p-name" value="POLY TEST"></div>
+        <div class="col"><label>ID</label><input type="text" id="p-id" value="polysweet_acc"></div>
+        <div class="col"><label>Nom</label><input type="text" id="p-name" value="POLY ACCENT"></div>
         <div class="col"><label>BPM</label><input type="number" id="p-bpm" value="138"></div>
     </div>
 
-    <h2 style="border-color: #fff">DRUMS & POLYRYTHMIE</h2>
-    <p class="helper">
-        <strong>LOOP LEN :</strong> C'est la longueur de la boucle. Mettez <strong>16</strong> pour une mesure normale.<br>
-        Mettez <strong>3</strong>, <strong>5</strong>, ou <strong>12</strong> pour créer des décalages polyrythmiques.
-    </p>
-
+    <h2 style="border-color: #fff">DRUMS & ACCENTS</h2>
     <div class="row">
         <div class="col">
-            <label style="color:#ffff00">LOOP LEN</label>
-            <input type="number" id="l-0" value="16" class="len-input">
-            <label style="margin-top:10px">KICK SEQ</label>
-            <input type="text" id="d-0" value="1, 5, 9, 13">
+            <label>LEN</label><input type="number" id="l-0" value="16" class="len-input">
+            <label>KICK SEQ</label><input type="text" id="d-0" value="1, 5, 9, 13">
+            <label style="color:var(--yellow)">ACCENT (ex: 1)</label><input type="text" id="a-0" value="1" class="acc-input">
         </div>
         <div class="col">
-            <label style="color:#ffff00">LOOP LEN</label>
-            <input type="number" id="l-1" value="16" class="len-input">
-            <label style="margin-top:10px">SNARE SEQ</label>
-            <input type="text" id="d-1" value="5, 13">
+            <label>LEN</label><input type="number" id="l-1" value="16" class="len-input">
+            <label>SNARE SEQ</label><input type="text" id="d-1" value="5, 13">
+            <label style="color:var(--yellow)">ACCENT (ex: 5, 13)</label><input type="text" id="a-1" value="5, 13" class="acc-input">
         </div>
         <div class="col">
-            <label style="color:#ffff00">LOOP LEN</label>
-            <input type="number" id="l-2" value="16" class="len-input">
-            <label style="margin-top:10px">HHC SEQ</label>
-            <input type="text" id="d-2" value="3, 7, 11, 15">
+            <label>LEN</label><input type="number" id="l-2" value="3" class="len-input">
+            <label>HHC SEQ</label><input type="text" id="d-2" value="1, 2, 3">
+            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-2" value="1" class="acc-input">
         </div>
         <div class="col">
-            <label style="color:#ffff00">LOOP LEN</label>
-            <input type="number" id="l-3" value="16" class="len-input">
-            <label style="margin-top:10px">HHO SEQ</label>
-            <input type="text" id="d-3" value="">
+            <label>LEN</label><input type="number" id="l-3" value="16" class="len-input">
+            <label>HHO SEQ</label><input type="text" id="d-3" value="">
+            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-3" value="" class="acc-input">
         </div>
         <div class="col">
-            <label style="color:#ffff00">LOOP LEN</label>
-            <input type="number" id="l-4" value="16" class="len-input">
-            <label style="margin-top:10px">FM SEQ</label>
-            <input type="text" id="d-4" value="">
+            <label>LEN</label><input type="number" id="l-4" value="16" class="len-input">
+            <label>FM SEQ</label><input type="text" id="d-4" value="">
+            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-4" value="" class="acc-input">
         </div>
     </div>
 
     <h2 style="border-color: var(--cyan)">SYNTH 2 (CYAN)</h2>
-    <p class="helper">Mesure 1 (1-16) | Mesure 2 (17-32) | Mesure 3 (33-48) | Mesure 4 (49-64)</p>
-    
     <div class="row">
         <div class="col measure-box">
-            <div class="measure-title">MESURE 1</div>
+            <div class="measure-title">MESURE 1 (1-16)</div>
             <label>STEPS</label><input type="text" id="s2-m1-seq" value="1, 11, 14, 16">
             <label>FREQS</label><input type="text" id="s2-m1-frq" value="313, 262, 350, 316">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m1-acc" value="1" class="acc-input">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 2</div>
+            <div class="measure-title">MESURE 2 (17-32)</div>
             <label>STEPS</label><input type="text" id="s2-m2-seq" value="17">
             <label>FREQS</label><input type="text" id="s2-m2-frq" value="313">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m2-acc" value="17" class="acc-input">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 3</div>
+            <div class="measure-title">MESURE 3 (33-48)</div>
             <label>STEPS</label><input type="text" id="s2-m3-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s2-m3-frq" placeholder="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m3-acc" placeholder="" class="acc-input">
         </div>
         <div class="col measure-box">
-            <div class="measure-title">MESURE 4</div>
+            <div class="measure-title">MESURE 4 (49-64)</div>
             <label>STEPS</label><input type="text" id="s2-m4-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s2-m4-frq" placeholder="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m4-acc" placeholder="" class="acc-input">
         </div>
     </div>
 
     <h2 style="border-color: var(--purple)">SYNTH 3 (VIOLET)</h2>
-    
     <div class="row purple">
         <div class="col measure-box">
             <div class="measure-title">MESURE 1</div>
             <label>STEPS</label><input type="text" id="s3-m1-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s3-m1-frq" placeholder="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m1-acc" placeholder="" class="acc-input">
         </div>
         <div class="col measure-box">
             <div class="measure-title">MESURE 2</div>
             <label>STEPS</label><input type="text" id="s3-m2-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s3-m2-frq" placeholder="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m2-acc" placeholder="" class="acc-input">
         </div>
         <div class="col measure-box">
             <div class="measure-title">MESURE 3</div>
             <label>STEPS</label><input type="text" id="s3-m3-seq" placeholder="">
             <label>FREQS</label><input type="text" id="s3-m3-frq" placeholder="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m3-acc" placeholder="" class="acc-input">
         </div>
         <div class="col measure-box">
             <div class="measure-title">MESURE 4</div>
             <label>STEPS</label><input type="text" id="s3-m4-seq" value="61, 62, 63">
             <label>FREQS</label><input type="text" id="s3-m4-frq" value="208, 360, 310">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m4-acc" value="61" class="acc-input">
         </div>
     </div>
 
@@ -135,16 +129,12 @@
 </div>
 
 <script>
-    // Convertit "1, 5" en [0, 4] (Humain vers Machine)
+    // Parsing Humain -> Machine (-1)
     function parseInputHuman(str) {
         if(!str.trim()) return [];
-        return str.split(',')
-                  .map(x => parseFloat(x.trim()))
-                  .filter(x => !isNaN(x))
-                  .map(x => x - 1)
-                  .filter(x => x >= 0 && x < 64);
+        return str.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x)).map(x => x - 1).filter(x => x >= 0 && x < 64);
     }
-
+    // Parsing Fréquences (Pas de -1)
     function parseFreqs(str) {
         if(!str.trim()) return [];
         return str.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
@@ -152,18 +142,24 @@
 
     function buildSynthTrack(prefix) {
         let fullSeq = [];
+        let fullAccents = []; // Nouveau tableau d'accents
         let fullFreqs = new Array(64).fill(440);
 
         for(let m=0; m<4; m++) {
             let steps = parseInputHuman(document.getElementById(`${prefix}-m${m+1}-seq`).value);
             let freqs = parseFreqs(document.getElementById(`${prefix}-m${m+1}-frq`).value);
+            let accs  = parseInputHuman(document.getElementById(`${prefix}-m${m+1}-acc`).value);
 
             steps.forEach((machineIndex, i) => {
                 fullSeq.push(machineIndex);
                 if(freqs[i]) fullFreqs[machineIndex] = freqs[i];
             });
+            
+            accs.forEach(accIndex => {
+                fullAccents.push(accIndex);
+            });
         }
-        return { seq: fullSeq, freqs: fullFreqs };
+        return { seq: fullSeq, freqs: fullFreqs, accents: fullAccents };
     }
 
     function generate() {
@@ -171,20 +167,17 @@
         const name = document.getElementById('p-name').value || "MY PRESET";
         const bpm = document.getElementById('p-bpm').value;
 
-        // TRACK LENGTHS (Polyrythmie)
-        const l0 = document.getElementById('l-0').value || 16;
-        const l1 = document.getElementById('l-1').value || 16;
-        const l2 = document.getElementById('l-2').value || 16;
-        const l3 = document.getElementById('l-3').value || 16;
-        const l4 = document.getElementById('l-4').value || 16;
+        // Track Lengths
+        const ls = [0,1,2,3,4].map(i => document.getElementById(`l-${i}`).value || 16);
 
-        // Drums Patterns
-        const d0 = parseInputHuman(document.getElementById('d-0').value).join(', ');
-        const d1 = parseInputHuman(document.getElementById('d-1').value).join(', ');
-        const d2 = parseInputHuman(document.getElementById('d-2').value).join(', ');
-        const d3 = parseInputHuman(document.getElementById('d-3').value).join(', ');
-        const d4 = parseInputHuman(document.getElementById('d-4').value).join(', ');
+        // Drums Logic
+        let drumSeqs = [], drumAccs = [];
+        for(let i=0; i<5; i++) {
+            drumSeqs.push(parseInputHuman(document.getElementById(`d-${i}`).value).join(', '));
+            drumAccs.push(parseInputHuman(document.getElementById(`a-${i}`).value).join(', '));
+        }
 
+        // Synths Logic
         const s2 = buildSynthTrack('s2');
         const s3 = buildSynthTrack('s3');
 
@@ -194,23 +187,23 @@
         masterLength: 64,
         bpm: ${bpm},
         swing: 0,
-        trackLengths: [${l0}, ${l1}, ${l2}, ${l3}, ${l4}],
+        trackLengths: [${ls.join(', ')}],
         drums: {
             seq: [
-                makeSeq([${d0}]),
-                makeSeq([${d1}]),
-                makeSeq([${d2}]),
-                makeSeq([${d3}]),
-                makeSeq([${d4}])
+                makeSeq([${drumSeqs[0]}]), makeSeq([${drumSeqs[1]}]), makeSeq([${drumSeqs[2]}]), makeSeq([${drumSeqs[3]}]), makeSeq([${drumSeqs[4]}])
             ],
-            accents: [makeSeq([]), makeSeq([]), makeSeq([]), makeSeq([]), makeSeq([])]
+            accents: [
+                makeSeq([${drumAccs[0]}]), makeSeq([${drumAccs[1]}]), makeSeq([${drumAccs[2]}]), makeSeq([${drumAccs[3]}]), makeSeq([${drumAccs[4]}])
+            ]
         },
         synths: {
             seq2: makeSeq([${s2.seq.join(', ')}]),
             seq3: makeSeq([${s3.seq.join(', ')}])
         },
         freqs2: [${s2.freqs.join(', ')}],
-        freqs3: [${s3.freqs.join(', ')}]
+        freqs3: [${s3.freqs.join(', ')}],
+        accents2: makeSeq([${s2.accents.join(', ')}]),
+        accents3: makeSeq([${s3.accents.join(', ')}])
     },`;
 
         document.getElementById('output').value = code;
