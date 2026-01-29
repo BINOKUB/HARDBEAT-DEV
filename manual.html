@@ -3,177 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARDBEAT PRO 64 | HANDBOOK</title>
+    <title>DOCS | HARDBEAT PRO</title>
     <style>
         :root {
-            --bg: #050505;
-            --panel: #111;
-            --text: #ddd;
+            --bg-dark: #050505;
+            --sidebar-bg: #0a0a0a;
+            --text-main: #ccc;
+            --text-light: #fff;
             --cyan: #00f3ff;
             --purple: #a855f7;
             --yellow: #ffcc00;
-            --border: 1px solid #333;
+            --border: 1px solid #222;
         }
+
+        * { box-sizing: border-box; }
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', 'Courier New', monospace;
-            line-height: 1.6;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', 'Roboto', monospace;
             margin: 0;
             padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        /* --- SIDEBAR (GAUCHE) --- */
+        nav {
+            width: 280px;
+            background: var(--sidebar-bg);
+            border-right: var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+            flex-shrink: 0;
         }
 
-        /* HEADER */
-        header {
-            border-bottom: 2px solid var(--cyan);
-            padding-bottom: 20px;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        h1 { color: #fff; font-size: 2.5rem; margin: 0; letter-spacing: 2px; }
-        .version { color: var(--cyan); font-weight: bold; }
-
-        /* SECTIONS */
-        section {
-            background: var(--panel);
-            border: var(--border);
-            padding: 30px;
+        .brand {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            color: #fff;
             margin-bottom: 30px;
-            border-left: 4px solid #333;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        h2 { margin-top: 0; color: #fff; text-transform: uppercase; border-bottom: 1px dashed #333; padding-bottom: 10px; }
+        nav a {
+            color: #888;
+            text-decoration: none;
+            padding: 10px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            border-left: 2px solid transparent;
+            transition: 0.2s;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--cyan);
+            background: rgba(255, 255, 255, 0.05);
+            border-left-color: var(--cyan);
+        }
         
-        h3 { color: var(--cyan); margin-top: 25px; margin-bottom: 10px; font-size: 1.1rem; }
+        nav a.sub-link { padding-left: 25px; font-size: 0.85rem; }
+
+        /* Lien Spécial Wiki */
+        nav a.wiki-link {
+            color: var(--yellow);
+            margin-top: 20px;
+            border: 1px dashed #333;
+        }
+        nav a.wiki-link:hover {
+            border-color: var(--yellow);
+            background: rgba(255, 204, 0, 0.05);
+            border-left-color: transparent;
+        }
+
+        .back-btn {
+            margin-top: auto;
+            padding: 12px;
+            background: #111;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            border: 1px solid #333;
+            font-size: 0.8rem;
+        }
+        .back-btn:hover { border-color: var(--purple); color: var(--purple); }
+
+        /* --- CONTENT (DROITE) --- */
+        main {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        h1 { font-size: 2.5rem; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: var(--purple); margin-bottom: 40px; font-family: monospace; }
+
+        h2 { 
+            color: #fff; 
+            border-bottom: 1px solid #333; 
+            padding-bottom: 10px; 
+            margin-top: 50px; 
+            scroll-margin-top: 20px; 
+        }
+        
+        h3 { color: var(--cyan); margin-top: 30px; }
         h3.purple { color: var(--purple); }
         h3.yellow { color: var(--yellow); }
 
-        p { margin-bottom: 15px; font-size: 0.95rem; color: #aaa; }
-        strong { color: #fff; }
-
-        /* LISTS */
-        ul { list-style: none; padding-left: 10px; }
-        ul li { margin-bottom: 8px; position: relative; padding-left: 20px; }
-        ul li::before { content: "►"; color: #555; position: absolute; left: 0; font-size: 0.8rem; }
-
-        .key {
-            display: inline-block;
-            background: #222;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
-            font-size: 0.8rem;
+        p { line-height: 1.7; margin-bottom: 15px; }
+        
+        code { background: #111; padding: 2px 6px; border-radius: 4px; color: var(--yellow); font-family: monospace; }
+        
+        .alert {
+            background: rgba(168, 85, 247, 0.1);
+            border-left: 4px solid var(--purple);
+            padding: 15px;
+            margin: 20px 0;
+            color: #ddd;
+            font-size: 0.9rem;
         }
 
-        .back-link {
-            display: block; text-align: center; margin-top: 50px; color: #666; text-decoration: none;
+        /* --- MOBILE --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; height: auto; overflow: auto; }
+            nav { width: 100%; height: auto; border-right: none; border-bottom: var(--border); }
+            main { padding: 20px; overflow: visible; }
         }
-        .back-link:hover { color: #fff; }
-
     </style>
 </head>
 <body>
 
-<div class="container">
-
-    <header>
-        <h1>HARDBEAT PRO 64</h1>
-        <div class="version">OFFICIAL USER HANDBOOK (V1.0)</div>
-    </header>
-
-    <section style="border-left-color: var(--cyan);">
-        <h2>1. Architecture Système</h2>
-        <p>Hardbeat Pro est une station de travail Techno basée sur une architecture <strong>64 Pas (4 Mesures)</strong>. Contrairement aux séquenceurs classiques limités à 16 temps, Hardbeat permet de composer des boucles longues et évolutives.</p>
+    <nav>
+        <div class="brand">HB-PRO DOCS</div>
         
-        <h3>Navigation (Paging)</h3>
-        <p>L'interface affiche 16 pas à la fois. Utilisez les flèches <span class="key">&lt;&lt;</span> et <span class="key">&gt;&gt;</span> situées en haut de chaque section pour naviguer entre les mesures :</p>
-        <ul>
-            <li><strong>Page 1 :</strong> Pas 1 à 16</li>
-            <li><strong>Page 2 :</strong> Pas 17 à 32</li>
-            <li><strong>Page 3 :</strong> Pas 33 à 48</li>
-            <li><strong>Page 4 :</strong> Pas 49 à 64</li>
-        </ul>
-    </section>
-
-    <section>
-        <h2>2. Drums & Polyrythmie</h2>
-        <p>La section rythmique comporte 5 pistes : Kick, Snare, Hi-Hat Closed (HHC), Hi-Hat Open (HHO) et FM Perc.</p>
-
-        <h3>Le moteur Polyrythmique</h3>
-        <p>Chaque piste de batterie possède son propre slider de longueur (Loop Length). C'est l'arme secrète du Hardgroove.</p>
-        <ul>
-            <li><strong>Standard :</strong> Réglez sur 16 pour une boucle normale (4/4).</li>
-            <li><strong>Décalé :</strong> Réglez sur 3, 5, 12... pour que l'instrument se décale par rapport au Kick à chaque tour.</li>
-            <li><strong>Longue évolution :</strong> Réglez sur 64 pour écrire un pattern unique sur 4 mesures sans répétition.</li>
-        </ul>
-    </section>
-
-    <section style="border-left-color: var(--purple);">
-        <h2>3. Synthétiseurs de Fréquence</h2>
-        <p>Deux synthétiseurs monophoniques sont disponibles pour sculpter vos textures.</p>
+        <a href="#intro" class="active">1. Introduction</a>
+        <a href="#architecture">2. Architecture 64 Pas</a>
         
-        <h3 class="purple">SEQ 2 (Lead / Texture)</h3>
-        <p>Le synthé principal (Cyan). Idéal pour les séquences hypnotiques et les leads.</p>
-
-        <h3 class="purple">SEQ 3 (Extension / Rumble)</h3>
-        <p>Accessible via le bouton <span class="key">+ EXTEND</span>. Ce module supplémentaire (Violet) est conçu pour les basses fréquences et le renforcement du groove (Rumble).</p>
-
-        <h3>Sliders de Fréquence (Hz)</h3>
-        <p>Chaque pas possède un fader dédié (50Hz - 880Hz).<br>
-        <strong>Astuce :</strong> Touchez un fader pour entendre la note (Preview) avant de placer votre pas sur la grille.</p>
-    </section>
-
-    <section style="border-left-color: var(--yellow);">
-        <h2>4. Accents & Dynamique</h2>
-        <p>Pour éviter le son "robotique", Hardbeat Pro gère les accents (vélocité).</p>
+        <a href="#drums">3. Drums & Polyrythmie</a>
+        <a href="#drums-loop" class="sub-link">↳ Loop Lengths</a>
         
-        <h3 class="yellow">Accents Drums (Visibles)</h3>
-        <p>La ligne du bas de chaque piste Drum (les petits carrés) active l'accent. Un pas accentué joue plus fort et avec plus d'impact.</p>
-
-        <h3 class="yellow">Accents Synths (Fantômes)</h3>
-        <p>Les synthétiseurs gèrent aussi les accents (Volume + Ouverture du Filtre). Ces accents ne sont pas visibles sur l'interface pour garder la clarté, mais ils sont programmables via le <strong>Preset Generator</strong>.</p>
-    </section>
-
-    <section>
-        <h2>5. Outils Live & Export</h2>
+        <a href="#synths">4. Synthétiseurs</a>
+        <a href="#synths-seq2" class="sub-link">↳ SEQ 2 (Lead)</a>
+        <a href="#synths-seq3" class="sub-link">↳ SEQ 3 (Rumble)</a>
         
-        <h3>Snapshots (Mémoire Fréquences)</h3>
-        <p>Le module de droite permet de sauvegarder l'état des faders du Synth 2.</p>
-        <ol>
-            <li>Cliquez sur <span class="key">S</span> (Le bouton clignote rouge).</li>
-            <li>Cliquez sur un Slot (1-4) pour sauver.</li>
-            <li>En jeu, cliquez sur le Slot pour rappeler instantanément la mélodie.</li>
-        </ol>
+        <a href="#accents">5. Gestion des Accents</a>
+        
+        <a href="#export">6. Export & Save</a>
+        
+        <a href="#generator">7. Preset Generator</a>
 
-        <h3>Export Audio (.WAV)</h3>
-        <p>Cliquez sur <span class="key">REC</span> pour armer l'enregistrement. Le bouton devient rouge. L'enregistrement capture la sortie Master exacte (y compris vos manipulations en direct). Cliquez à nouveau pour stopper et télécharger le fichier WAV Studio Quality.</p>
-    </section>
+        <a href="https://github.com/binokub/HARDBEAT-DEV/wiki" target="_blank" class="wiki-link">⚙️ DEV WIKI (GITHUB)</a>
 
-    <section>
-        <h2>6. Le Preset Generator</h2>
-        <p>Pour composer des morceaux complexes, utilisez l'outil externe <code>generator.html</code>.</p>
-        <ul>
-            <li>Remplissez les séquences Drum et Synth (Mode Humain : 1 à 64).</li>
-            <li>Définissez les longueurs de boucles pour la polyrythmie.</li>
-            <li>Définissez les fréquences précises.</li>
-            <li>Ajoutez les accents dans les champs dédiés (cases jaunes).</li>
-        </ul>
-        <p>Le générateur crée un bloc de code à coller dans le fichier <code>presets.js</code> de l'application.</p>
-    </section>
+        <a href="index.html" class="back-btn">← RETOUR AU HUB</a>
+    </nav>
 
-    <a href="index.html" class="back-link">← RETOUR AU HUB</a>
+    <main>
+        <div class="container">
+            
+            <section id="intro">
+                <h1>HARDBEAT PRO 64</h1>
+                <div class="subtitle">MANUEL UTILISATEUR V12 (GOLD)</div>
+                <p>Bienvenue dans la documentation officielle. Hardbeat Pro est une workstation techno "Browser-based" conçue pour la performance live et la composition Hardgroove.</p>
+                <div class="alert">
+                    <strong>Note :</strong> Cette application utilise l'API Web Audio native pour une latence nulle. Chrome, Edge ou Brave sont recommandés.
+                </div>
+            </section>
 
-</div>
+            <section id="architecture">
+                <h2>1. Architecture Système</h2>
+                <p>Le cœur du système repose sur un séquenceur de <strong>64 Pas (4 Mesures)</strong>. Cela permet de créer des motifs évolutifs qui ne se répètent pas bêtement toutes les 4 secondes.</p>
+                <h3>Navigation (Paging)</h3>
+                <p>Utilisez les boutons <code>&lt;&lt;</code> et <code>&gt;&gt;</code> pour changer de page (1-16, 17-32, etc.). La lecture continue sur les 64 pas même si vous ne visualisez que la page 1.</p>
+            </section>
+
+            <section id="drums">
+                <h2>2. Drums & Polyrythmie</h2>
+                <p>5 Pistes dédiées : Kick, Snare, HH Close, HH Open, FM Perc.</p>
+                
+                <h3 id="drums-loop">Le Concept de Loop Length</h3>
+                <p>C'est la force de Hardbeat Pro. Chaque piste possède son propre slider de longueur (Steps).</p>
+                <ul>
+                    <li>Si vous réglez le HHC sur <strong>3 pas</strong> et le Kick sur <strong>4 pas</strong>, ils vont se décaler en permanence.</li>
+                    <li>C'est la clé du "Rolling Techno" et des rythmes industriels.</li>
+                </ul>
+            </section>
+
+            <section id="synths">
+                <h2>3. Synthétiseurs de Fréquence</h2>
+                
+                <h3 class="purple" id="synths-seq2">SEQ 2 (Lead / Cyan)</h3>
+                <p>Synthétiseur monophonique avec distorsion légère. Chaque pas possède son propre fader de fréquence (Hz).</p>
+
+                <h3 class="purple" id="synths-seq3">SEQ 3 (Rumble / Violet)</h3>
+                <p>Extension dédiée aux basses fréquences. Filtre passe-bas résonant et distorsion lourde pour créer le "fond" du mix.</p>
+            </section>
+
+            <section id="accents">
+                <h2>4. Dynamique & Accents</h2>
+                <h3 class="yellow">Accents Drums</h3>
+                <p>Cliquez sur la ligne inférieure des pads (carrés) pour activer un accent. Le son sera plus fort (+20%) et plus percutant.</p>
+
+                <h3 class="yellow">Accents Synths (Fantômes)</h3>
+                <p>Les synthés gèrent aussi les accents (ouverture du filtre + gain). Ces accents ne sont pas visibles sur l'interface principale pour ne pas surcharger la vue, mais sont programmables via le Générateur.</p>
+            </section>
+
+            <section id="export">
+                <h2>5. Outils Live & Export</h2>
+                <h3>Snapshots (Mémoire)</h3>
+                <p>Permet de sauvegarder l'état des faders du Synth 2 dans 4 slots de mémoire vive pour des transitions instantanées en Live.</p>
+                
+                <h3>Export WAV</h3>
+                <p>Le bouton <code>REC</code> capture la sortie Master (ce que vous entendez) en fichier <strong>.WAV 16-bit Stéréo</strong> prêt pour votre DAW (Ableton, FL Studio, etc.).</p>
+            </section>
+
+            <section id="generator">
+                <h2>6. Le Preset Generator</h2>
+                <p>Pour coder vos morceaux, n'écrivez pas le JSON à la main. Utilisez l'outil dédié :</p>
+                <p><a href="generator.html" target="_blank" style="color:var(--cyan)">⚡ Ouvrir le Générateur V5</a></p>
+                <p>Il gère automatiquement la conversion des index (1-64 vers 0-63) et le formatage des accents.</p>
+            </section>
+
+            <section id="devs">
+                <h2>7. Ressources Développeurs</h2>
+                <p>Vous souhaitez comprendre le code source, l'architecture Audio (Web Audio API) ou modifier le moteur ?</p>
+                <p>Consultez le Wiki technique complet sur le dépôt GitHub :</p>
+                <p>
+                    <a href="https://github.com/binokub/HARDBEAT-DEV/wiki" target="_blank" style="color:var(--yellow); font-weight:bold; text-decoration:none; border-bottom:1px solid var(--yellow);">
+                        ➔ ACCÉDER AU WIKI TECHNIQUE (GITHUB)
+                    </a>
+                </p>
+            </section>
+
+            <br><br><br>
+            <p style="text-align:center; color:#555; font-size:0.8rem;">Hardbeat Pro Documentation © 2026 - Binokub.com</p>
+        </div>
+    </main>
+
+    <script>
+        const navLi = document.querySelectorAll('nav a:not(.back-btn):not(.wiki-link)');
+        navLi.forEach(a => {
+            a.addEventListener('click', () => {
+                navLi.forEach(n => n.classList.remove('active'));
+                a.classList.add('active');
+            });
+        });
+    </script>
 
 </body>
 </html>
