@@ -15,6 +15,7 @@
 <br>
 
 🔗 **[LANCER L'APPLICATION (LIVE DEMO)](https://binokub.github.io/HARDBEAT-DEV/HARDBEAT-PRO.html)**
+📘 **[OUVRIR LE MANUEL (HANDBOOK)](https://binokub.github.io/HARDBEAT-DEV/manual.html)**
 
 ---
 
