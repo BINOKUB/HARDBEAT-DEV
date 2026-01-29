@@ -7,6 +7,13 @@
 
 **Hardbeat Pro** est une boîte à rythmes et un synthétiseur techno tournant entièrement dans le navigateur. Conçue pour la performance live et la composition de **Hardgroove** et de **Techno Industrielle**, elle se distingue par son moteur audio natif à faible latence et sa gestion avancée de la polyrythmie.
 
+
+<br>
+<div align="center">
+  <img src="screenshot.png" alt="Interface Hardbeat Pro" width="800">
+</div>
+<br>
+
 🔗 **[LANCER L'APPLICATION (LIVE DEMO)](https://binokub.github.io/HARDBEAT-DEV/HARDBEAT-PRO.html)**
 
 ---
@@ -58,6 +65,3 @@ recorder.js : Moteur d'encodage WAV.
  Licence
 Projet Open Source. Conçu par Binokub.
 Code is Art. Techno is Life.
-
-
-![Interface Hardbeat](screenshot.png)
