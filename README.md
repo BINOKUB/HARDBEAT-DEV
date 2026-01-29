@@ -45,16 +45,18 @@ Le projet contient une documentation complète pour les musiciens et les dévelo
  Preset Generator : Outil interne pour générer le code JSON des patterns complexes.
 
  Structure du Code
-js/audio.js : Le cœur du moteur sonore (Oscillateurs, Filtres, FX).
+audio.js : Le cœur du moteur sonore (Oscillateurs, Filtres, FX).
 
-js/logic.js : Le cerveau du séquenceur (Boucle temporelle, UI updates).
+logic.js : Le cerveau du séquenceur (Boucle temporelle, UI updates).
 
-js/presets.js : La base de données des motifs.
+presets.js : La base de données des motifs.
 
-js/storage.js : Gestion de la sauvegarde locale.
+storage.js : Gestion de la sauvegarde locale.
 
-js/recorder.js : Moteur d'encodage WAV.
+recorder.js : Moteur d'encodage WAV.
 
  Licence
 Projet Open Source. Conçu par Binokub.
 Code is Art. Techno is Life.
+
+![Interface Hardbeat Pro](screenshot.png)
