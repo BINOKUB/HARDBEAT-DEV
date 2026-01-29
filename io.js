@@ -1,5 +1,76 @@
-// ------------------------------------------------------
-    // 2. IMPORT : Version "Force Brute"
+/* ==========================================
+   HARDBEAT PRO - IO SYSTEM (V13 Beta)
+   Gère l'Import / Export des presets JSON
+   Compatible avec logic.js V12
+   ========================================== */
+
+const IO = {
+
+    // ------------------------------------------------------
+    // 1. EXPORT : Sauvegarde l'état actuel
+    // ------------------------------------------------------
+    exportPreset: function() {
+        try {
+            console.log("💾 Export en cours...");
+
+            // --- CORRECTION ID BPM ---
+            // On vérifie si l'élément existe avant de lire son texte
+            const bpmElement = document.getElementById('display_bpm1');
+            const bpmVal = bpmElement ? parseInt(bpmElement.innerText) : 120; 
+
+            // Récupération du Swing
+            const swingElement = document.getElementById('global-swing');
+            const swingVal = swingElement ? parseInt(swingElement.value) : 0;
+
+            const exportData = {
+                name: "User Preset " + new Date().toLocaleTimeString(),
+                version: "V13",
+                bpm: bpmVal,
+                swing: swingVal,
+                masterLength: (typeof window.masterLength !== 'undefined') ? window.masterLength : 16,
+                trackLengths: (typeof window.trackLengths !== 'undefined') ? window.trackLengths : [16,16,16,16,16],
+                
+                drums: {
+                    seq: (typeof window.drumSequences !== 'undefined') ? window.drumSequences : [],
+                    accents: (typeof window.drumAccents !== 'undefined') ? window.drumAccents : []
+                },
+                
+                synths: {
+                    seq2: (window.synthSequences) ? window.synthSequences.seq2 : [],
+                    seq3: (window.synthSequences) ? window.synthSequences.seq3 : []
+                },
+
+                freqs2: window.freqDataSeq2 || [],
+                freqs3: window.freqDataSeq3 || [],
+                
+                accents2: (window.synthAccents) ? window.synthAccents.seq2 : [],
+                accents3: (window.synthAccents) ? window.synthAccents.seq3 : []
+            };
+
+            // Création du fichier
+            const jsonStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `HARDBEAT_${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            console.log("✅ Export terminé.");
+
+        } catch (err) {
+            console.error("❌ Erreur Export:", err);
+            alert("Erreur technique export : " + err.message);
+        }
+    },
+
+
+    // ------------------------------------------------------
+    // 2. IMPORT : Version Force Brute (Met à jour le moteur)
     // ------------------------------------------------------
     importPreset: function(event) {
         const file = event.target.files[0];
@@ -14,21 +85,19 @@
 
                 // --- 1. Paramètres Globaux ---
                 
-                // BPM : On met à jour TOUT ce qui existe
+                // BPM : Mise à jour TOTALE (Écran + Moteur + Variable)
                 if (data.bpm) {
-                    const safeBpm = Math.min(Math.max(data.bpm, 40), 300); // Clamping (Sécurité)
+                    const safeBpm = Math.min(Math.max(data.bpm, 40), 300);
                     
-                    // A. Mise à jour visuelle (DOM)
+                    // A. Écran
                     const bpmEl = document.getElementById('display_bpm1');
                     if(bpmEl) bpmEl.innerText = safeBpm;
 
-                    // B. Mise à jour Variable Globale (Si elle existe)
+                    // B. Variable Globale (Si accessible)
                     if (typeof window.bpm !== 'undefined') window.bpm = safeBpm;
                     
-                    // C. Tentative de mise à jour variable locale (Si accessible)
-                    try { bpm = safeBpm; } catch(err) { /* Variable non accessible, pas grave */ }
-
-                    console.log(`✅ BPM mis à jour : ${safeBpm} (Reçu: ${data.bpm})`);
+                    // C. Variable locale (Essai)
+                    try { bpm = safeBpm; } catch(err) { }
                 }
 
                 // Swing
@@ -36,7 +105,7 @@
                     const swingSlider = document.getElementById('global-swing');
                     if(swingSlider) {
                         swingSlider.value = data.swing;
-                        swingSlider.dispatchEvent(new Event('input')); // Force logic.js à lire la valeur
+                        swingSlider.dispatchEvent(new Event('input')); // Force la mise à jour
                     }
                 }
 
@@ -61,14 +130,14 @@
                     if(document.getElementById('grid-seq3')) refreshFadersVisuals(3);
                 }
 
-                // Mise à jour des sliders de steps
+                // Sliders de steps
                 const stepSliders = ['kick-steps', 'snare-steps', 'hhc-steps', 'hho-steps', 'fm-steps'];
                 stepSliders.forEach((id, idx) => {
                     const el = document.getElementById(id);
                     if(el && window.trackLengths[idx]) el.value = window.trackLengths[idx];
                 });
 
-                alert(`Preset chargé ! BPM: ${data.bpm > 300 ? 300 : data.bpm}`);
+                alert(`Preset chargé ! BPM: ${data.bpm}`);
 
             } catch (err) {
                 console.error("❌ Erreur Import:", err);
@@ -80,3 +149,4 @@
 
         reader.readAsText(file);
     }
+};
