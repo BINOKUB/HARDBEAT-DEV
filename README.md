@@ -29,3 +29,32 @@ Ce projet ne nécessite aucune installation de dépendance (npm, node_modules...
 ### 1. Cloner le dépôt
 ```bash
 git clone [https://github.com/binokub/HARDBEAT-DEV.git](https://github.com/binokub/HARDBEAT-DEV.git)
+
+2. Lancer l'application
+Ouvrez simplement le fichier HARDBEAT-PRO.html dans un navigateur moderne (Chrome, Brave, Edge).
+
+Note pour l'Export WAV : En raison des politiques de sécurité des navigateurs (CORS), la fonction d'export audio fonctionne mieux si le projet est hébergé sur un serveur local (ex: Live Server sous VS Code) plutôt qu'en ouverture de fichier directe (file://).
+
+ Documentation
+Le projet contient une documentation complète pour les musiciens et les développeurs.
+
+ Manuel Utilisateur (Handbook) : Le guide complet pour apprendre à utiliser la machine.
+
+ Wiki Technique (GitHub) : Documentation de l'architecture code, du moteur audio et de la structure des données JSON.
+
+ Preset Generator : Outil interne pour générer le code JSON des patterns complexes.
+
+ Structure du Code
+js/audio.js : Le cœur du moteur sonore (Oscillateurs, Filtres, FX).
+
+js/logic.js : Le cerveau du séquenceur (Boucle temporelle, UI updates).
+
+js/presets.js : La base de données des motifs.
+
+js/storage.js : Gestion de la sauvegarde locale.
+
+js/recorder.js : Moteur d'encodage WAV.
+
+ Licence
+Projet Open Source. Conçu par Binokub.
+Code is Art. Techno is Life.
