@@ -35,7 +35,7 @@ Ce projet ne nécessite aucune installation de dépendance (npm, node_modules...
 
 ### 1. Cloner le dépôt
 ```bash
-git clone [https://github.com/binokub/HARDBEAT-DEV.git](https://github.com/binokub/HARDBEAT-DEV.git)
+git clone https://github.com/binokub/HARDBEAT-DEV.git
 
 2. Lancer l'application
 Ouvrez simplement le fichier HARDBEAT-PRO.html dans un navigateur moderne (Chrome, Brave, Edge).
