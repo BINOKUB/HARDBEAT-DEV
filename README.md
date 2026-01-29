@@ -59,4 +59,5 @@ recorder.js : Moteur d'encodage WAV.
 Projet Open Source. Conçu par Binokub.
 Code is Art. Techno is Life.
 
-![Interface Hardbeat Pro](screenshot.png)
+
+![Interface Hardbeat](screenshot.png)
