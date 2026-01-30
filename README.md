@@ -19,53 +19,57 @@
 
 ---
 
-##  Fonctionnalités Clés
+# 🎹 HARDBEAT PRO (V13)
+> Le Séquenceur Techno Web Ultime. Basses lourdes, rythmes complexes et persistance des données.
 
-* **Séquenceur 64 Pas :** 4 mesures complètes pour des boucles évolutives (pas limitées à 16 temps).
-* **Polyrythmie Réelle :** Chaque piste (Kick, Snare, HHC...) possède son propre curseur de longueur de boucle (Loop Length). Créez des décalages complexes (ex: 3 temps vs 4 temps) en un clic.
-* **Moteur Audio "Rumble" :** Synthétiseur de basses fréquences dédié (SEQ 3) avec distorsion et filtrage pour le son techno moderne.
-* **Export WAV Studio :** Enregistrement de la sortie Master en temps réel vers un fichier `.wav` non compressé.
-* **Accents Dynamiques :** Gestion de la vélocité sur les Drums et "Ghost Accents" (ouverture de filtre) sur les Synthés.
-* **Zéro Framework :** Construit en 100% Vanilla JavaScript (ES6) pour une performance maximale sans bloatware.
+[Lien vers l'Application V13](https://binokub.github.io/HARDBEAT-DEV/HARDBEAT-PRO.html)
 
 ---
 
-##  Installation & Développement
+## 📅 NOUVEAUTÉS V13 (Gold)
+**Date :** 29 Janvier 2026
+* **💾 Système I/O (Input/Output) :** Sauvegarde et Chargement complet des presets.
+* **📂 Format JSON :** Les utilisateurs téléchargent leur propre fichier de sauvegarde.
+* **⚙️ Moteur Audio :** Synchronisation totale entre le fichier importé et le moteur audio (BPM, Swing, Séquences).
+* **🛡️ Sécurité :** Protection anti-crash sur le BPM (Clamping 40-300).
 
-Ce projet ne nécessite aucune installation de dépendance (npm, node_modules...). Il utilise les standards web natifs.
+---
 
-### 1. Cloner le dépôt
-```bash
-git clone https://github.com/binokub/HARDBEAT-DEV.git
+## 📖 MANUEL UTILISATEUR
 
-2. Lancer l'application
-Ouvrez simplement le fichier HARDBEAT-PRO.html dans un navigateur moderne (Chrome, Brave, Edge).
+### Comment sauvegarder ma musique ?
+Hardbeat Pro V13 vous permet de sauvegarder vos performances localement. Aucune donnée n'est envoyée dans le cloud, tout reste sur votre machine.
 
-Note pour l'Export WAV : En raison des politiques de sécurité des navigateurs (CORS), la fonction d'export audio fonctionne mieux si le projet est hébergé sur un serveur local (ex: Live Server sous VS Code) plutôt qu'en ouverture de fichier directe (file://).
+1.  **Sauvegarder (SAVE) :**
+    * Cliquez sur le bouton **SAVE** (Cyan).
+    * Un fichier `HARDBEAT_[date].json` est téléchargé.
+    * Il contient tout : Tempo, Notes, Fréquences, Swing.
 
- Documentation
-Le projet contient une documentation complète pour les musiciens et les développeurs.
+2.  **Charger (LOAD) :**
+    * Cliquez sur le bouton **LOAD** (Orange).
+    * Sélectionnez votre fichier `.json`.
+    * La machine se met à jour instantanément.
 
- Manuel Utilisateur (Handbook) : Le guide complet pour apprendre à utiliser la machine.
+> **Astuce Pro :** Vous pouvez charger un preset d'usine, le modifier légèrement, et le sauvegarder sous un nouveau nom sur votre ordinateur.
 
- Wiki Technique (GitHub) : Documentation de l'architecture code, du moteur audio et de la structure des données JSON.
+---
 
- Preset Generator : Outil interne pour générer le code JSON des patterns complexes.
+## 🛠️ DOCUMENTATION TECHNIQUE (Pour les Développeurs)
 
- Structure du Code
-###  Interfaces (HTML)
-* `index.html` : **Le Hub.** Page d'accueil vitrine avec démos vidéos.
-* `HARDBEAT-PRO.html` : **L'Application.** La workstation principale (V12).
-* `manual.html` : **Le Manuel.** Documentation utilisateur intégrée.
-* `generator.html` : **L'Outil.** Générateur de code JSON pour les presets complexes.
+### Architecture I/O (`io.js`)
+Le système d'import/export fonctionne en isolation pour garantir la stabilité.
 
-###  Moteur (JS)
-* `js/audio.js` : Architecture sonore (Oscillateurs, Filtres, Rumble, FX).
-* `js/logic.js` : Séquenceur (Boucle temporelle, Polyrythmie, UI).
-* `js/presets.js` : Base de données des patterns (Factory Presets).
-* `js/storage.js` : Système de sauvegarde (LocalStorage).
-* `js/recorder.js` : Module d'encodage et export WAV.
+**Structure du JSON :**
+```json
+{
+  "version": "V13",
+  "bpm": 138,
+  "swing": 0,
+  "drums": { "seq": [...], "accents": [...] },
+  "synths": { "seq2": [...], "freqs2": [...] }
+}
+Moteur Audio (logic.js) :
+Depuis la V13, le moteur expose window.bpm pour permettre le pilotage externe par le module d'importation.
 
- Licence
-Projet Open Source. Conçu par Binokub.
-Code is Art. Techno is Life.
+© Crédits
+Développé par Binokub - 2026
