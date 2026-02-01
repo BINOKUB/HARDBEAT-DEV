@@ -258,4 +258,4 @@ window.playSynthSound = function(seqId, freq, duration, slide, disto) {
     playSynthNote(freq, vol, seqId, false); // Pas d'accent en preview
 };
 
-console.log("AUDIO V8: Accents Synths Acti
+console.log("AUDIO V8: Accents Synths Activés !");
