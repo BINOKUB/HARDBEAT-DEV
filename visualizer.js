@@ -1,48 +1,42 @@
-// --- MODULE VISUALIZER (OSCILLOSCOPE) ---
-// Ce module est indépendant. Il se greffe sur l'AudioContext existant.
-
+/* ==========================================
+   HARDBEAT PRO - VISUALIZER MODULE (OSCILLOSCOPE)
+   ========================================== */
 window.initOscilloscope = function(audioCtx, sourceNode, canvasId) {
     const canvas = document.getElementById(canvasId);
-    if (!canvas) {
-        console.warn("Canvas oscilloscope introuvable : " + canvasId);
-        return;
-    }
+    if (!canvas) return; // Si l'écran n'est pas dans le HTML, on ne fait rien.
 
-    console.log("Oscilloscope : Initialisation...");
+    console.log("VISUALIZER : Initialisation de l'écran...");
 
-    // 1. Création de l'analyseur
+    const ctx = canvas.getContext("2d");
     const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048; // Résolution (plus c'est haut, plus c'est précis mais lourd)
     
-    // 2. Connexion : Source -> Analyseur
-    // (Note: On ne connecte pas l'analyseur à la destination, il est juste en "écoute" parallèle)
-    sourceNode.connect(analyser);
-
-    // 3. Préparation des données
+    // Réglages de précision
+    analyser.fftSize = 2048; 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
-    const ctx = canvas.getContext("2d");
 
-    // 4. Boucle de dessin (Isolée ici)
+    // Connexion : On écoute la source sans couper le son
+    sourceNode.connect(analyser);
+
     function draw() {
         requestAnimationFrame(draw);
 
         analyser.getByteTimeDomainData(dataArray);
 
-        // Fond de l'écran (Noir total)
-        ctx.fillStyle = "rgb(10, 10, 10)";
+        // 1. Fond de l'écran (Noir Profond)
+        ctx.fillStyle = "#000"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Paramètres de la ligne
+        // 2. La Ligne (Cyan Néon Hardbeat)
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "#00ffcc"; // Cyan Hardbeat (ou #d649ff pour Violet FM)
+        ctx.strokeStyle = "#00f3ff"; 
         ctx.beginPath();
 
         const sliceWidth = canvas.width * 1.0 / bufferLength;
         let x = 0;
 
         for (let i = 0; i < bufferLength; i++) {
-            const v = dataArray[i] / 128.0; // Normalisation
+            const v = dataArray[i] / 128.0; // Normalisation (0 à 2)
             const y = v * canvas.height / 2;
 
             if (i === 0) {
@@ -58,7 +52,6 @@ window.initOscilloscope = function(audioCtx, sourceNode, canvasId) {
         ctx.stroke();
     }
 
-    // Lancer l'animation
-    draw();
-    console.log("Oscilloscope : Actif 🟢");
+    draw(); // Lancement de la boucle
+    console.log("VISUALIZER : Actif 🟢");
 };
