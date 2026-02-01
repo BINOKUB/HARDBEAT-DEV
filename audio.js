@@ -22,6 +22,14 @@ masterGain.connect(masterLimiter);
 masterLimiter.connect(window.audioCtx.destination);
 masterGain.gain.value = 0.5;
 
+// --- FONCTION HI-HAT (CLEAN NOISE FIX) ---
+// On génère le buffer de bruit UNE SEULE FOIS pour économiser le CPU
+// (Place ces 3 lignes EN DEHORS de la fonction, tout en haut du fichier audio.js si possible, 
+// sinon laisse-les dedans, ça marche aussi mais c'est moins optimisé).
+const hhBuffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.5, window.audioCtx.sampleRate);
+const hhData = hhBuffer.getChannelData(0);
+for (let i = 0; i < hhData.length; i++) hhData[i] = Math.random() * 2 - 1;
+
 // --- ETAT GLOBAL ---
 window.isPlaying = false;
 window.globalAccentBoost = 1.4; // Multiplicateur de volume pour l'accent
@@ -82,9 +90,49 @@ window.toggleMuteSynth = function(seqId, isMuted) { if (seqId === 2) window.isMu
 window.playMetronome = function(isDownbeat) { const osc = window.audioCtx.createOscillator(); const g = window.audioCtx.createGain(); osc.connect(g); g.connect(masterGain); osc.frequency.value = isDownbeat ? 1200 : 800; g.gain.setValueAtTime(0.3, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + 0.05); osc.start(); osc.stop(window.audioCtx.currentTime + 0.05); }
 window.playKick = function(isAccent) { const osc = window.audioCtx.createOscillator(); const g = window.audioCtx.createGain(); osc.connect(g); g.connect(masterGain); let lvl = window.kickSettings.level; let decayMod = window.kickSettings.decay; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); decayMod += 0.1; } osc.frequency.setValueAtTime(window.kickSettings.pitch || 150, window.audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(0.01, window.audioCtx.currentTime + decayMod); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + decayMod); osc.start(); osc.stop(window.audioCtx.currentTime + decayMod); }
 window.playSnare = function(isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.2, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let baseTone = window.snareSettings.tone || 1000; let lvl = window.snareSettings.level; let snap = window.snareSettings.snappy || 1; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); baseTone += 200; snap += 0.2; } filt.frequency.value = baseTone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + (0.2 * snap)); noise.start(); }
-window.playHiHat = function(isOpen, isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.5, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let tone = window.hhSettings.tone || 8000; let d = isOpen ? (window.hhSettings.decayOpen || 0.3) : (window.hhSettings.decayClose || 0.05); let l = isOpen ? (window.hhSettings.levelOpen || 0.5) : (window.hhSettings.levelClose || 0.4); if (isAccent) { l = Math.min(1.0, l * window.globalAccentBoost); d += 0.05; tone += 500; } filt.frequency.value = tone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(l, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + d); noise.start(); }
 
-// --- FONCTION FM MELODIQUE V15 (RATIO LOCK) ---
+window.playHiHat = function(isOpen, isAccent) {
+    // On utilise le buffer pré-calculé (plus propre)
+    const noise = window.audioCtx.createBufferSource();
+    noise.buffer = hhBuffer; 
+
+    const filt = window.audioCtx.createBiquadFilter();
+    filt.type = 'highpass';
+    
+    let tone = window.hhSettings.tone || 8000;
+    let d = isOpen ? (window.hhSettings.decayOpen || 0.3) : (window.hhSettings.decayClose || 0.05);
+    let l = isOpen ? (window.hhSettings.levelOpen || 0.5) : (window.hhSettings.levelClose || 0.4);
+
+    if (isAccent) {
+        l = Math.min(1.0, l * window.globalAccentBoost);
+        d += 0.05;
+        tone += 500;
+    }
+
+    filt.frequency.value = tone;
+
+    const g = window.audioCtx.createGain();
+    
+    noise.connect(filt);
+    filt.connect(g);
+    g.connect(masterGain);
+
+    // ENVELOPPE CORRIGÉE (SILENCE ABSOLU)
+    const now = window.audioCtx.currentTime;
+    g.gain.setValueAtTime(l, now);
+    
+    // 1. On descend très vite (exponentiel) pour le claquement
+    g.gain.exponentialRampToValueAtTime(0.01, now + d);
+    
+    // 2. LA GUILLOTINE : On force une descente linéaire vers 0 pur juste après
+    // Cela coupe le "souffle" résiduel que le compresseur remontait.
+    g.gain.linearRampToValueAtTime(0, now + d + 0.05); 
+
+    noise.start();
+    // On arrête le node un poil plus tard pour être sûr
+    noise.stop(now + d + 0.1); 
+};
+
 // --- FONCTION FM MELODIQUE V16 (RATIO LOCK + SCALING) ---
 window.playDrumFM = function(isAccent, stepIndex) {
     const car = window.audioCtx.createOscillator();
@@ -151,7 +199,6 @@ window.playDrumFM = function(isAccent, stepIndex) {
     mod.stop(window.audioCtx.currentTime + decay);
 };
 
-
 // --- PLAY SYNTH (UPDATED FOR ACCENTS) ---
 function playSynthNote(freq, volume, seqId, isAccent) {
     if (!freq || freq < 20) return;
@@ -211,4 +258,4 @@ window.playSynthSound = function(seqId, freq, duration, slide, disto) {
     playSynthNote(freq, vol, seqId, false); // Pas d'accent en preview
 };
 
-console.log("AUDIO V8: Accents Synths Activés !");
+console.log("AUDIO V8: Accents Synths Acti
