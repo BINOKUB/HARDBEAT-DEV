@@ -762,3 +762,60 @@ div.hz-label, span.hz-label, .hz-label {
     50% { transform: scale(0.95); box-shadow: 0 0 5px #ff0000; }
     100% { transform: scale(1); box-shadow: 0 0 20px #ff0000; }
 }
+
+/* ==========================================
+   FM MELODIC FADERS (NEW V14)
+   ========================================== */
+#fm-faders-container {
+    display: none; /* Caché par défaut */
+    grid-template-columns: repeat(16, var(--col-width));
+    gap: var(--grid-gap);
+    justify-content: center;
+    margin-top: 5px;
+    padding: 10px 0;
+    border-top: 1px dashed #333;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+/* Quand on ajoute la classe .visible via JS, ça s'affiche en grille */
+#fm-faders-container.visible {
+    display: grid !important;
+    animation: slide-down 0.2s ease-out;
+}
+
+@keyframes slide-down {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fm-fader-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 90px; /* Plus court que les synths */
+}
+
+.fm-freq-fader {
+    appearance: slider-vertical;
+    width: 15px; /* Un peu plus large pour le doigt */
+    height: 60px; /* Court et précis */
+    background: #111;
+    cursor: ns-resize;
+    border: 1px solid #444;
+    border-radius: 2px;
+}
+
+.fm-freq-fader:hover {
+    background: #222;
+    border-color: #aaa;
+}
+
+/* Label Hz spécifique pour le FM (plus petit) */
+.fm-hz-label {
+    font-size: 10px !important;
+    color: #888;
+    margin-bottom: 5px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
