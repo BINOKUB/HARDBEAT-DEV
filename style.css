@@ -776,6 +776,8 @@ div.hz-label, span.hz-label, .hz-label {
     border-top: 1px dashed #333;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 4px;
+   width: 100%; /* Force la largeur totale */
+    clear: both; /* Force le retour à la ligne */
 }
 
 /* Quand on ajoute la classe .visible via JS, ça s'affiche en grille */
