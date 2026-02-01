@@ -81,12 +81,45 @@ function setupLengthControls() {
     const btns = document.querySelectorAll('.btn-length');
     btns.forEach(btn => {
         btn.addEventListener('click', () => {
+            // 1. GESTION VISUELLE DES BOUTONS
             btns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            window.masterLength = parseInt(btn.dataset.length);
+            
+            // 2. MISE A JOUR DU MASTER
+            const newLength = parseInt(btn.dataset.length);
+            window.masterLength = newLength;
+
+            // --- DEBUT DU CORRECTIF ---
+            
+            // 3. AUTO-SYNC : On aligne les pistes de batterie sur la nouvelle longueur
+            // C'est ça qui "débloque" l'accès aux pages 17-32 pour le moteur audio
+            for(let i=0; i<5; i++) {
+                // On met à jour la longueur logique de la piste
+                window.trackLengths[i] = newLength;
+                
+                // Sécurité : Si le curseur était trop loin, on le ramène à 0 pour éviter un bug
+                if (trackCursors[i] >= newLength) trackCursors[i] = 0;
+            }
+
+            // 4. MISE A JOUR VISUELLE DES SLIDERS (KICK-STEPS, SNARE-STEPS...)
+            // Pour que l'interface montre bien "32" ou "64" et pas "16"
+            const inputs = ['kick-steps', 'snare-steps', 'hhc-steps', 'hho-steps', 'fm-steps'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.value = newLength; // Le slider se déplace visuellement
+                    // Petite astuce : on augmente le max si besoin pour pas bloquer le slider
+                    if(parseInt(el.max) < newLength) el.max = newLength; 
+                }
+            });
+
+            // --- FIN DU CORRECTIF ---
+
+            // 5. GESTION DES PAGES (Si on réduit la taille, on revient page 1)
             if (currentPageSeq1 * 16 >= window.masterLength) { currentPageSeq1 = 0; updatePageIndicator('seq1'); }
             if (currentPageSeq2 * 16 >= window.masterLength) { currentPageSeq2 = 0; updatePageIndicator('seq2'); }
             if (currentPageSeq3 * 16 >= window.masterLength) { currentPageSeq3 = 0; updatePageIndicator('seq3'); }
+            
             updateNavButtonsState();
             refreshGridVisuals();
             refreshFadersVisuals(2);
@@ -94,7 +127,6 @@ function setupLengthControls() {
         });
     });
 }
-
 function setupPageNavigation() {
     const p1 = document.getElementById('btn-prev-page-seq1');
     const n1 = document.getElementById('btn-next-page-seq1');
