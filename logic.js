@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (V12 - SYNTH ACCENTS SUPPORT)
+   HARDBEAT PRO - UI LOGIC (V14 - FM HZ SUPPORT)
    ========================================== */
 
 let masterTimer; 
@@ -687,110 +687,6 @@ function initFreqSnapshots() {
         };
     });
 }
-
-/* ==========================================
-   SYSTEME DE MEMOIRE (SLOTS 1-4) - V15 FIXED
-   ========================================== */
-window.initStorageSystem = function() {
-    console.log("Init Storage System V15 (FM Support)...");
-    
-    // On récupère les 4 slots de mémoire
-    const slots = [1, 2, 3, 4];
-    
-    slots.forEach(num => {
-        const btn = document.getElementById(`btn-mem-${num}`); // Assure-toi que tes boutons ont ces IDs dans le HTML
-        // Si tu utilises le système de snapshots existant (btn-snap-slot), adapte ici.
-        // D'après ton code précédent, tu utilisais initFreqSnapshots.
-        // Je vais fusionner la logique pour que tout soit sauvegardé.
-    });
-};
-
-// REMPLACE LA FONCTION initFreqSnapshots EXISTANTE PAR CELLE-CI :
-// Elle sauvegarde TOUT (Drums + Synths + FM Faders) dans les slots.
-
-window.initFreqSnapshots = function() {
-    window.memSlots = [null, null, null, null]; 
-    let isSaveMode = false;
-    
-    const btnSave = document.getElementById('btn-snap-save'); // Le bouton [S]
-    const slots = document.querySelectorAll('.btn-snap-slot'); // Les boutons [1][2][3][4]
-
-    if(!btnSave) return;
-
-    // Bascule Mode Sauvegarde
-    btnSave.onclick = () => { 
-        isSaveMode = !isSaveMode; 
-        btnSave.classList.toggle('saving', isSaveMode); 
-    };
-
-    slots.forEach(slotBtn => {
-        slotBtn.onclick = () => {
-            const slotIndex = parseInt(slotBtn.dataset.slot);
-
-            if (isSaveMode) {
-                // --- SAUVEGARDE ---
-                const snapshot = {
-                    drums: window.drumSequences.map(t => [...t]),
-                    accents: window.drumAccents.map(t => [...t]),
-                    synth2: [...window.synthSequences.seq2],
-                    freqs2: [...window.freqDataSeq2], // Faders Synth 2
-                    fmFreqs: [...window.fmFreqData]   // <--- AJOUT CRUCIAL (Tes faders FM)
-                };
-                
-                if(window.synthSequences.seq3) {
-                    snapshot.synth3 = [...window.synthSequences.seq3];
-                    snapshot.freqs3 = [...window.freqDataSeq3];
-                }
-
-                window.memSlots[slotIndex] = snapshot;
-                
-                slotBtn.classList.add('has-data');
-                isSaveMode = false;
-                btnSave.classList.remove('saving');
-                
-                // Petit flash visuel
-                slotBtn.classList.add('flash-load');
-                setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
-                console.log(`Slot ${slotIndex + 1} Saved!`);
-
-            } else {
-                // --- CHARGEMENT ---
-                const data = window.memSlots[slotIndex];
-                if (data) {
-                    // Restauration Drums
-                    window.drumSequences = data.drums.map(t => [...t]);
-                    window.drumAccents = data.accents.map(t => [...t]);
-                    
-                    // Restauration Synths
-                    window.synthSequences.seq2 = [...data.synth2];
-                    window.freqDataSeq2 = [...data.freqs2];
-
-                    if(data.synth3) {
-                        window.synthSequences.seq3 = [...data.synth3];
-                        window.freqDataSeq3 = [...data.freqs3];
-                    }
-
-                    // Restauration FM (Le Correctif)
-                    if(data.fmFreqs) {
-                        window.fmFreqData = [...data.fmFreqs];
-                    } else {
-                        window.fmFreqData = Array(64).fill(100); // Compatibilité vieux snapshots
-                    }
-
-                    // Rafraîchissement total de l'interface
-                    refreshGridVisuals();
-                    refreshFadersVisuals(2);
-                    if(document.getElementById('grid-seq3')) refreshFadersVisuals(3);
-                    refreshFMFaders(); // <--- On force l'affichage des faders violets
-
-                    slotBtn.classList.add('flash-load');
-                    setTimeout(() => slotBtn.classList.remove('flash-load'), 200);
-                    console.log(`Slot ${slotIndex + 1} Loaded!`);
-                }
-            }
-        };
-    });
-};
 
 /* ==========================================
    PRESET LOADER (A ajouter à la fin de logic.js)
