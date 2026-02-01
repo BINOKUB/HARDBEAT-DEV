@@ -317,7 +317,7 @@ function initAudioPreview() {
 
 // --- GESTION DES FADERS FM (CONTEXTUEL) ---
 function initFMExtension() {
-    // 1. Création du container HTML sous la grille de batterie
+    // 1. Création du container HTML
     const grid1 = document.getElementById('grid-seq1');
     if(!grid1) return;
     
@@ -333,17 +333,21 @@ function initFMExtension() {
         </div>`;
     }
     fmContainer.innerHTML = html;
-    grid1.parentNode.insertBefore(fmContainer, grid1.nextSibling); // Insère JUSTE APRÈS la grille
 
-    // 2. Ecouteurs d'événements (Sauvegarde des valeurs)
+    // --- CORRECTION DU PLACEMENT ---
+    // On l'ajoute à la fin de la section (sous la grille et le slider accent)
+    const section = grid1.closest('.rack-section');
+    section.appendChild(fmContainer); 
+    // -------------------------------
+
+    // 2. Ecouteurs d'événements
     const faders = fmContainer.querySelectorAll('.fm-freq-fader');
     faders.forEach(f => {
         f.oninput = (e) => {
             const val = parseInt(e.target.value);
-            const idx = parseInt(e.target.dataset.realIndex); // Sera défini par le refresh
+            const idx = parseInt(e.target.dataset.realIndex); 
             if(!isNaN(idx)) window.fmFreqData[idx] = val;
             
-            // Mise à jour visuelle du label
             const label = e.target.previousElementSibling;
             if(label) label.innerText = val;
         };
