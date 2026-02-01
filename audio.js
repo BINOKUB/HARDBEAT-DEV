@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - AUDIO ENGINE (V8 - SYNTH ACCENTS)
+   HARDBEAT PRO - AUDIO ENGINE (V8 - SYNTH ACCENTS) - DEV
    ========================================== */
 window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 window.masterGain = window.audioCtx.createGain();
