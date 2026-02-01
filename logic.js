@@ -398,6 +398,7 @@ window.addEventListener('load', () => {
     if (!window.audioCtx) console.error("ERREUR : audio.js manquant !");
 
     initGrid('grid-seq1'); 
+   initFMExtension();
     initGrid('grid-seq2'); 
     initFaders('grid-freq-seq2', 2);
     
