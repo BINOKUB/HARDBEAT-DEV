@@ -83,29 +83,37 @@ window.playMetronome = function(isDownbeat) { const osc = window.audioCtx.create
 window.playKick = function(isAccent) { const osc = window.audioCtx.createOscillator(); const g = window.audioCtx.createGain(); osc.connect(g); g.connect(masterGain); let lvl = window.kickSettings.level; let decayMod = window.kickSettings.decay; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); decayMod += 0.1; } osc.frequency.setValueAtTime(window.kickSettings.pitch || 150, window.audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(0.01, window.audioCtx.currentTime + decayMod); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + decayMod); osc.start(); osc.stop(window.audioCtx.currentTime + decayMod); }
 window.playSnare = function(isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.2, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let baseTone = window.snareSettings.tone || 1000; let lvl = window.snareSettings.level; let snap = window.snareSettings.snappy || 1; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); baseTone += 200; snap += 0.2; } filt.frequency.value = baseTone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + (0.2 * snap)); noise.start(); }
 window.playHiHat = function(isOpen, isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.5, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let tone = window.hhSettings.tone || 8000; let d = isOpen ? (window.hhSettings.decayOpen || 0.3) : (window.hhSettings.decayClose || 0.05); let l = isOpen ? (window.hhSettings.levelOpen || 0.5) : (window.hhSettings.levelClose || 0.4); if (isAccent) { l = Math.min(1.0, l * window.globalAccentBoost); d += 0.05; tone += 500; } filt.frequency.value = tone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(l, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + d); noise.start(); }
+
+// --- FONCTION FM MELODIQUE V15 (RATIO LOCK) ---
 window.playDrumFM = function(isAccent, stepIndex) {
     const car = window.audioCtx.createOscillator();
     const mod = window.audioCtx.createOscillator();
     const modG = window.audioCtx.createGain();
     const mainG = window.audioCtx.createGain();
 
-    // 1. LOGIQUE DE FRÉQUENCE (P-LOCK)
-    // On récupère la fréquence du Fader pour ce pas précis
+    // 1. RECUPERATION DU FADER (NOTE DE BASE)
     let baseFreq = 100;
     if (typeof stepIndex === 'number' && window.fmFreqData && window.fmFreqData[stepIndex]) {
         baseFreq = window.fmFreqData[stepIndex];
     }
 
-    // 2. LOGIQUE DU BOUTON "CARRIER" (TRANSPOSE / RATIO)
-    // Le bouton du haut agit comme un multiplicateur global (Ratio)
-    // Si le bouton est à 100 (défaut), ratio = 1. Si 200, ratio = 2 (Octave au-dessus).
-    const globalKnobVal = window.fmSettings.carrierPitch || 100;
-    const ratio = globalKnobVal / 100; 
+    // 2. GESTION DU BOUTON "CARRIER" (TRANSPOSE GLOBALE)
+    // 100 = Normal (x1), 200 = Octave au-dessus (x2), 50 = Octave en-dessous (x0.5)
+    const transposeVal = window.fmSettings.carrierPitch || 100;
+    const transposeRatio = transposeVal / 100; 
     
-    const finalFreq = baseFreq * ratio;
+    const finalCarrierFreq = baseFreq * transposeRatio;
 
-    // Reste du code FM standard...
-    mod.frequency.value = window.fmSettings.modPitch || 50;
+    // 3. GESTION DU BOUTON "MOD" (HARMONIC RATIO) - LE FIX EST ICI !
+    // Au lieu d'être une fréquence fixe en Hz, c'est un Ratio de la porteuse.
+    // 50 = Ratio 1:1 (Son pur), 100 = Ratio 2:1 (Octave), etc.
+    const modKnobVal = window.fmSettings.modPitch || 50;
+    // On divise par 50 pour que le bouton à midi (50) donne un ratio de 1.0
+    const modRatio = modKnobVal / 50; 
+
+    const finalModFreq = finalCarrierFreq * modRatio; // <--- LE SECRET MUSICAL
+
+    // Reste du code (Enveloppes, Accents...)
     let amt = window.fmSettings.fmAmount || 100;
     let lvl = window.fmSettings.level || 0.5;
     let d = window.fmSettings.decay || 0.3;
@@ -117,7 +125,10 @@ window.playDrumFM = function(isAccent, stepIndex) {
     }
 
     modG.gain.value = amt;
-    car.frequency.value = finalFreq; // On utilise notre fréquence calculée
+    
+    // Application des fréquences calculées
+    car.frequency.value = finalCarrierFreq; 
+    mod.frequency.value = finalModFreq;
 
     mod.connect(modG);
     modG.connect(car.frequency);
@@ -132,6 +143,9 @@ window.playDrumFM = function(isAccent, stepIndex) {
     car.stop(window.audioCtx.currentTime + d);
     mod.stop(window.audioCtx.currentTime + d);
 };
+
+
+
 // --- PLAY SYNTH (UPDATED FOR ACCENTS) ---
 function playSynthNote(freq, volume, seqId, isAccent) {
     if (!freq || freq < 20) return;
