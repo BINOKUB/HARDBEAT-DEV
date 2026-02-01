@@ -107,8 +107,6 @@
 
         .video-card:hover { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,0,0,0.5); }
         
-        .video-card video { width: 100%; border-radius: 2px; background: #000; }
-        
         .vid-info { padding: 10px 5px 0 5px; }
         .vid-title { font-weight: bold; color: #fff; font-size: 1.1rem; margin-bottom: 5px; }
         .vid-desc { font-size: 0.8rem; color: #888; }
@@ -195,31 +193,41 @@
                 <h3 style="margin-top:0"> >> PATCH NOTES </h3>
                 <ul class="updates">
                     <li>
+                        <span class="date">30 JAN 2026</span>
+                        <div class="text"><strong>VERSION GOLD (V13)</strong><br>
+                        - Sauvegarde/Chargement (.JSON)<br>
+                        - Moteur Audio Web-Api PWA<br>
+                        - Ouverture Communauté<br>
+                        - Sécurité Données (I/O)</div>
+                    </li>
+                    <li>
                         <span class="date">28 JAN 2026</span>
-                        <div class="text"><strong>VERSION GOLD (V12)</strong><br>
+                        <div class="text"><strong>UPDATE (V12)</strong><br>
                         - Export Audio (.WAV) Studio Quality<br>
                         - Polyrythmie Réelle (64 Pas)<br>
                         - Gestion des Accents (Drums & Synths)<br>
                         - Snapshots de Fréquences (Live Mode)</div>
                     </li>
-                    <li>
-                        <span class="date">26 JAN 2026</span>
-                        <div class="text">Ajout du <strong>SEQ 3 (Rumble)</strong> et correction des moteurs audio.</div>
-                    </li>
                 </ul>
             </div>
 
-          <div class="sidebar-box">
+            <div class="sidebar-box">
                 <h3>OUTILS DE PRODUCTION</h3>
                 <p style="font-size:0.8rem; color:#666; margin-bottom:10px;">Créez vos propres presets :</p>
-                <a href="generator.html" target="_blank" class="tool-link">⚡ PRESET GENERATOR (V5)</a>
+                <a href="generator.html" target="_blank" class="tool-link">PRESET GENERATOR (V5)</a>
+            </div>
+
+            <div class="sidebar-box">
+                <h3>COMMUNAUTÉ</h3>
+                <p style="font-size:0.8rem; color:#666; margin-bottom:10px;">Partagez vos sons et signalez les bugs :</p>
+                <a href="https://forum.binokub.com" target="_blank" class="tool-link" style="border-color: var(--cyan); color: var(--cyan);"> REJOINDRE LE QG</a>
             </div>
 
             <div class="sidebar-box">
                 <h3>ROADMAP (ETAT ACTUEL)</h3>
                 <ul class="roadmap">
                     <li class="done">Moteur Audio Low-Latency</li>
-                    <li class="done">Sauvegarde Locale</li>
+                    <li class="done">Sauvegarde Locale JSON</li>
                     <li class="done">Randomizer Intelligent</li>
                     <li class="done">Export Audio (WAV)</li>
                     <li class="done">Polyrythmie Avancée</li>
@@ -231,7 +239,7 @@
            <div class="sidebar-box" style="text-align:center;">
                 <h3>DOCUMENTATION</h3>
                 <p style="font-size:0.8rem; margin-bottom:15px;">Fiche technique et manuel d'utilisation.</p>
-                <a href="manual.html" target="_blank" class="dl-btn">📄 OUVRIR LE HANDBOOK</a>
+                <a href="manual.html" target="_blank" class="dl-btn"> OUVRIR LE HANDBOOK</a>
             </div>
         </aside>
 
@@ -249,20 +257,42 @@
         
         const myVideos = [
             {
-                titre: "Demo Hardgroove V1",
-                fichier: "TEST.mp4", 
-                desc: "Premier test d'export audio et polyrythmie."
+                // VIDEO 1 : LE TUTORIEL (Base)
+                type: "youtube",
+                id: "R3om_JVmBEM", 
+                titre: "TUTORIEL : POLYRYTHMIE & EXPORT",
+                desc: "Démonstration officielle : Workflow, Accents, Polyrythmie 3-pas et Export WAV."
             },
             {
-                titre: "4 Recettes Polyrythmiques",
-                fichier: "SAMPLE-4-RECETTE.mp4",
-                desc: "Démonstration des techniques de décalage temporel."
-            }
-            // Tu peux ajouter d'autres vidéos ici
+                // VIDEO 2 : LE MODE RANDOM (Nouvelle)
+                type: "youtube",
+                id: "RmZvoIJWoX4", 
+                titre: "MODE RANDOM : GÉNÉRATEUR INFINI",
+                desc: "Comment créer un track complet en 30 secondes grâce à l'algorithme aléatoire."
+            },
+           {
+                type: "youtube",
+                id: "D88nIKM8Q1k", 
+                titre: "DÉCOUVERTE : PRESETS D'USINE",
+                desc: "Explorez la banque de sons et les styles intégrés pour démarrer instantanément."
+            },
+            {
+        type: "youtube",
+        id: "q7z9qU4HQpw", 
+        titre: "POLYRYTHMIE AVANCÉE",
+        desc: "Réduire le Kick à une boucle de 2 pas (Effet Rumble immédiat)"
+    },
+            {
+        type: "youtube",
+        id: "U_a9k2bw3Qg", 
+        titre: "No DAW required",
+        desc: "Hardbeat Pro: Creating Industrial FM Basslines in the Browser"
+    },
+
         ];
 
         /* ========================================================
-           SCRIPT GALERIE
+           SCRIPT GALERIE (HYBRIDE YOUTUBE / LOCAL)
            ======================================================== */
 
         const container = document.getElementById('gallery-container');
@@ -270,11 +300,34 @@
         myVideos.forEach(vid => {
             const card = document.createElement('div');
             card.className = 'video-card';
+            
+            let mediaHTML = '';
+            
+            // Logique de détection
+            if (vid.type === "youtube") {
+                // Création d'un embed responsive pour YouTube
+                mediaHTML = `
+                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                        <iframe 
+                            src="https://www.youtube.com/embed/${vid.id}" 
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                `;
+            } else {
+                // Lecteur vidéo standard HTML5 pour les fichiers locaux
+                mediaHTML = `
+                    <video controls preload="metadata" style="width:100%; border-radius:2px; background:#000;">
+                        <source src="${vid.fichier}" type="video/mp4">
+                        Votre navigateur ne supporte pas la vidéo.
+                    </video>
+                `;
+            }
+
             card.innerHTML = `
-                <video controls preload="metadata">
-                    <source src="${vid.fichier}" type="video/mp4">
-                    Votre navigateur ne supporte pas la vidéo.
-                </video>
+                ${mediaHTML}
                 <div class="vid-info">
                     <div class="vid-title">${vid.titre}</div>
                     <div class="vid-desc">${vid.desc}</div>
