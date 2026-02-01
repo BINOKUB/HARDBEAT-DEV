@@ -598,6 +598,7 @@ window.refreshGridVisuals = function() {
     };
     updateSynthGrid('seq2', 2, currentPageSeq2);
     if(window.synthSequences.seq3) updateSynthGrid('seq3', 3, currentPageSeq3);
+   refreshFMFaders();
 };
 
 window.refreshFadersVisuals = function(seqId) {
