@@ -31,7 +31,7 @@ for (let i = 0; i < hhData.length; i++) hhData[i] = Math.random() * 2 - 1;
 window.isPlaying = false;
 window.globalAccentBoost = 1.4; 
 
-window.kickSettings = { pitch: 150, decay: 0.5, level: 0.8 };
+window.kickSettings = { pitch: 150, decay: 0.5, level: 0.8, rumble: 0 };
 window.snareSettings = { snappy: 1, tone: 1000, level: 0.6 };
 window.hhSettings = { tone: 8000, decayClose: 0.05, decayOpen: 0.3, levelClose: 0.4, levelOpen: 0.5 };
 window.fmSettings = { carrierPitch: 100, modPitch: 50, fmAmount: 100, decay: 0.3, level: 0.5 };
@@ -85,7 +85,83 @@ window.toggleMuteSynth = function(seqId, isMuted) { if (seqId === 2) window.isMu
 
 // --- PLAYBACK ---
 window.playMetronome = function(isDownbeat) { const osc = window.audioCtx.createOscillator(); const g = window.audioCtx.createGain(); osc.connect(g); g.connect(masterGain); osc.frequency.value = isDownbeat ? 1200 : 800; g.gain.setValueAtTime(0.3, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + 0.05); osc.start(); osc.stop(window.audioCtx.currentTime + 0.05); }
-window.playKick = function(isAccent) { const osc = window.audioCtx.createOscillator(); const g = window.audioCtx.createGain(); osc.connect(g); g.connect(masterGain); let lvl = window.kickSettings.level; let decayMod = window.kickSettings.decay; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); decayMod += 0.1; } osc.frequency.setValueAtTime(window.kickSettings.pitch || 150, window.audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(0.01, window.audioCtx.currentTime + decayMod); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + decayMod); osc.start(); osc.stop(window.audioCtx.currentTime + decayMod); }
+
+window.playKick = function(isAccent) {
+    const t = window.audioCtx.currentTime;
+    
+    // --- 1. LE KICK PRINCIPAL (CLEAN) ---
+    const osc = window.audioCtx.createOscillator();
+    const g = window.audioCtx.createGain();
+    
+    osc.connect(g);
+    g.connect(masterGain); // Sortie directe
+
+    let lvl = window.kickSettings.level;
+    let decayMod = window.kickSettings.decay;
+
+    if (isAccent) {
+        lvl = Math.min(1.2, lvl * window.globalAccentBoost);
+        decayMod += 0.1;
+    }
+
+    // Enveloppe de Pitch (Le "Pouw")
+    osc.frequency.setValueAtTime(window.kickSettings.pitch || 150, t);
+    osc.frequency.exponentialRampToValueAtTime(0.01, t + decayMod);
+
+    // Enveloppe de Volume
+    g.gain.setValueAtTime(lvl, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + decayMod);
+
+    osc.start(t);
+    osc.stop(t + decayMod + 0.5); // On laisse un peu de marge pour le stop
+
+    // --- 2. LE RUMBLE ENGINE (L'Effet Techno) ---
+    // On ne le déclenche que si le potard est monté
+    if (window.kickSettings.rumble && window.kickSettings.rumble > 0.05) {
+        
+        // Création de la chaîne Rumble
+        const rumbleGain = window.audioCtx.createGain();
+        const rumbleFilter = window.audioCtx.createBiquadFilter();
+        const rumbleDelay = window.audioCtx.createDelay();
+        const rumbleDisto = window.audioCtx.createWaveShaper();
+
+        // Réglages Rumble
+        // 1. DELAY : On décale le grondement de 30ms pour laisser passer l'attaque du kick (le "Clack")
+        rumbleDelay.delayTime.value = 0.03; 
+
+        // 2. DISTO : On salit le son pour qu'il prenne de la place
+        function makeDistortionCurve(amount) {
+            let k = amount, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180, i = 0, x;
+            for ( ; i < n_samples; ++i ) {
+                x = i * 2 / n_samples - 1;
+                curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
+            }
+            return curve;
+        }
+        rumbleDisto.curve = makeDistortionCurve(50); // Disto modérée
+        rumbleDisto.oversample = '2x';
+
+        // 3. FILTER : On ne garde que les graves (le grondement)
+        rumbleFilter.type = 'lowpass';
+        rumbleFilter.frequency.value = 120; // Coupe tout au-dessus de 120Hz
+
+        // 4. GAIN : Contrôlé par le potard violet
+        // On booste un peu la valeur car le filtre mange du volume
+        rumbleGain.gain.setValueAtTime(window.kickSettings.rumble * 0.8, t);
+        // Le rumble dure un peu plus longtemps que le kick
+        rumbleGain.gain.exponentialRampToValueAtTime(0.001, t + decayMod + 0.2); 
+
+        // CONNEXIONS : Osc -> Delay -> Disto -> Filter -> Gain -> Master
+        // On dérive le signal de l'oscillateur du kick
+        osc.connect(rumbleDelay);
+        rumbleDelay.connect(rumbleDisto);
+        rumbleDisto.connect(rumbleFilter);
+        rumbleFilter.connect(rumbleGain);
+        rumbleGain.connect(masterGain);
+    }
+};
+
+
 window.playSnare = function(isAccent) { const buffer = window.audioCtx.createBuffer(1, window.audioCtx.sampleRate * 0.2, window.audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1; const noise = window.audioCtx.createBufferSource(); noise.buffer = buffer; const filt = window.audioCtx.createBiquadFilter(); filt.type = 'highpass'; let baseTone = window.snareSettings.tone || 1000; let lvl = window.snareSettings.level; let snap = window.snareSettings.snappy || 1; if (isAccent) { lvl = Math.min(1.2, lvl * window.globalAccentBoost); baseTone += 200; snap += 0.2; } filt.frequency.value = baseTone; const g = window.audioCtx.createGain(); noise.connect(filt); filt.connect(g); g.connect(masterGain); g.gain.setValueAtTime(lvl, window.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + (0.2 * snap)); noise.start(); }
 
 window.playHiHat = function(isOpen, isAccent) {
