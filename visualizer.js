@@ -3,19 +3,19 @@
    ========================================== */
 window.initOscilloscope = function(audioCtx, sourceNode, canvasId) {
     const canvas = document.getElementById(canvasId);
-    if (!canvas) return; // Si l'écran n'est pas dans le HTML, on ne fait rien.
+    if (!canvas) return; 
 
-    console.log("VISUALIZER : Initialisation de l'écran...");
+    console.log("VISUALIZER : Initialisation...");
 
     const ctx = canvas.getContext("2d");
     const analyser = audioCtx.createAnalyser();
     
-    // Réglages de précision
+    // Réglages : 2048 donne une ligne précise
     analyser.fftSize = 2048; 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
-    // Connexion : On écoute la source sans couper le son
+    // Connexion
     sourceNode.connect(analyser);
 
     function draw() {
@@ -24,19 +24,26 @@ window.initOscilloscope = function(audioCtx, sourceNode, canvasId) {
         analyser.getByteTimeDomainData(dataArray);
 
         // 1. Fond de l'écran (Noir Profond)
-        ctx.fillStyle = "#000"; 
+        // On utilise une légère transparence (0.2) pour créer un effet de traînée (Persistance rétinienne)
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 2. La Ligne (Cyan Néon Hardbeat)
+        // 2. Le Laser
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "#00f3ff"; 
+        ctx.strokeStyle = "#00f3ff"; // Cyan Hardbeat
+
+        // --- EFFET NEON / GLOW (C'est ici que ça se joue) ---
+        ctx.shadowBlur = 10;          // Taille du halo lumineux
+        ctx.shadowColor = "#00f3ff";  // Couleur du halo (Même que la ligne)
+        // ----------------------------------------------------
+
         ctx.beginPath();
 
         const sliceWidth = canvas.width * 1.0 / bufferLength;
         let x = 0;
 
         for (let i = 0; i < bufferLength; i++) {
-            const v = dataArray[i] / 128.0; // Normalisation (0 à 2)
+            const v = dataArray[i] / 128.0; 
             const y = v * canvas.height / 2;
 
             if (i === 0) {
@@ -50,8 +57,11 @@ window.initOscilloscope = function(audioCtx, sourceNode, canvasId) {
 
         ctx.lineTo(canvas.width, canvas.height / 2);
         ctx.stroke();
+        
+        // IMPORTANT : On coupe le glow après le dessin pour ne pas affecter le reste du canvas
+        ctx.shadowBlur = 0; 
     }
 
-    draw(); // Lancement de la boucle
+    draw(); 
     console.log("VISUALIZER : Actif 🟢");
 };
