@@ -1,26 +1,22 @@
 /* ==========================================
-   HARDBEAT PRO - IO SYSTEM (V13 FINAL PATCH)
-   Correction ID: display-bpm1
+   HARDBEAT PRO - IO SYSTEM (V14 - FM EXPORT FIX)
    ========================================== */
 
 const IO = {
 
-    // 1. EXPORT (Sauvegarde)
+    // 1. EXPORT (Sauvegarde Fichier)
     exportPreset: function() {
         try {
             console.log("💾 Export...");
 
-            // --- CORRECTION CRUCIALE ICI (Tiret au lieu de Underscore) ---
             const bpmElement = document.getElementById('display-bpm1'); 
-            
-            // Si on ne trouve pas l'élément, on log l'erreur pour comprendre
             if (!bpmElement) console.error("⚠️ ERREUR: Impossible de trouver 'display-bpm1'");
 
             const currentBpm = bpmElement ? parseInt(bpmElement.innerText) : 120;
 
             const exportData = {
                 name: "User Preset " + new Date().toLocaleTimeString(),
-                version: "V13",
+                version: "V14",
                 bpm: currentBpm, 
                 swing: parseInt(document.getElementById('global-swing').value),
                 masterLength: window.masterLength || 16,
@@ -28,7 +24,10 @@ const IO = {
                 
                 drums: {
                     seq: window.drumSequences || [],
-                    accents: window.drumAccents || []
+                    accents: window.drumAccents || [],
+                    // --- AJOUT : LES FREQUENCES FM DRUM ---
+                    fmFreqs: window.fmFreqData || []
+                    // --------------------------------------
                 },
                 
                 synths: {
@@ -60,7 +59,7 @@ const IO = {
     },
 
 
-    // 2. IMPORT (Chargement)
+    // 2. IMPORT (Chargement Fichier)
     importPreset: function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -71,19 +70,11 @@ const IO = {
             try {
                 const data = JSON.parse(e.target.result);
 
-                // --- MISE À JOUR DU BPM (Avec le bon ID) ---
+                // --- BPM ---
                 if (data.bpm) {
                     const safeBpm = Math.min(Math.max(data.bpm, 40), 300);
-                    
-                    // On met à jour l'écran (C'est ça que le moteur lit !)
                     const bpmEl = document.getElementById('display-bpm1');
-                    if(bpmEl) {
-                        bpmEl.innerText = safeBpm;
-                    } else {
-                        console.error("⚠️ ERREUR IMPORT: 'display-bpm1' introuvable !");
-                    }
-                    
-                    // On force aussi la variable globale au cas où
+                    if(bpmEl) bpmEl.innerText = safeBpm;
                     window.bpm = safeBpm;
                 }
 
@@ -98,6 +89,16 @@ const IO = {
                 if (data.trackLengths) window.trackLengths = data.trackLengths;
                 if (data.drums && data.drums.seq) window.drumSequences = data.drums.seq;
                 if (data.drums && data.drums.accents) window.drumAccents = data.drums.accents;
+                
+                // --- RESTAURATION FM DRUM ---
+                if (data.drums && data.drums.fmFreqs) {
+                    window.fmFreqData = data.drums.fmFreqs;
+                } else if(window.fmFreqData) {
+                    // Reset si pas de data dans le fichier
+                    window.fmFreqData.fill(100);
+                }
+                // ----------------------------
+
                 if (data.synths) {
                     if (data.synths.seq2) window.synthSequences.seq2 = data.synths.seq2;
                     if (data.synths.seq3) window.synthSequences.seq3 = data.synths.seq3;
@@ -113,6 +114,8 @@ const IO = {
                     refreshFadersVisuals(2);
                     if(document.getElementById('grid-seq3')) refreshFadersVisuals(3);
                 }
+                // --- REFRESH FM FADERS ---
+                if (typeof refreshFMFaders === 'function') refreshFMFaders();
                 
                 // Sliders
                 const ids = ['kick-steps', 'snare-steps', 'hhc-steps', 'hho-steps', 'fm-steps'];
@@ -121,7 +124,7 @@ const IO = {
                     if(el && window.trackLengths[i]) el.value = window.trackLengths[i]; 
                 });
 
-                alert(`Preset chargé ! BPM: ${data.bpm}`);
+                console.log(`Preset chargé ! BPM: ${data.bpm}`);
 
             } catch (err) {
                 alert("Fichier invalide.");
