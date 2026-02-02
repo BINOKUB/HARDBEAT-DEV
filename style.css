@@ -823,15 +823,27 @@ div.hz-label, span.hz-label, .hz-label {
 }
 
 
-/* --- MODULE OSCILLOSCOPE (VERSION COMPACTE) --- */
+/* --- HEADER STACK (Banque + Ecran) --- */
+.center-stack {
+    display: flex;
+    flex-direction: column; /* Empilement Vertical */
+    align-items: center;    /* Centré */
+    justify-content: center;
+    gap: 4px;               /* Petit espace entre la banque et l'écran */
+}
+
+/* --- MODULE OSCILLOSCOPE (VERSION WIDESCREEN) --- */
 #oscilloscope {
     display: block;
-    width: 80px;               /* Force la largeur visuelle */
-    height: 35px;
+    width: 280px;              /* Largeur fixe alignée avec la banque */
+    height: 30px;              /* Hauteur fine et élégante */
     background-color: #050505;
     border: 1px solid #333;
-    border-radius: 4px;
-    margin: 0 5px;             /* Marges réduites au minimum (5px) */
-    box-shadow: inset 0 0 10px rgba(0,0,0,1);
+    border-radius: 4px;       /* Arrondi en bas */
+    
+    /* Plus de marges latérales car il est empilé */
+    margin: 0; 
+    
+    box-shadow: inset 0 0 10px rgba(0,0,0,1), 0 0 5px rgba(0, 243, 255, 0.15);
     cursor: crosshair;
 }
