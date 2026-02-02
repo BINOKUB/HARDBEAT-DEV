@@ -815,11 +815,14 @@ div.hz-label, span.hz-label, .hz-label {
 
 /* Label Hz spécifique pour le FM (plus petit) */
 .fm-hz-label {
-    font-size: 10px !important;
-    color: #888;
-    margin-bottom: 5px;
+   font-size: 11px !important;       /* Un peu plus gros (était 9px/10px) */
+    font-weight: bold !important;     /* Gras */
+    color: #00f3ff !important;        /* Cyan Néon Hardbeat */
+    text-shadow: 0 0 5px rgba(0, 243, 255, 0.7); /* L'effet "Lumineu" */
     font-family: 'Courier New', monospace;
-    font-weight: bold;
+    margin-bottom: 4px;
+    display: block;
+    text-align: center;
 }
 
 
