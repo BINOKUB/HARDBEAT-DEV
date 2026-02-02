@@ -1,5 +1,5 @@
 /* ==========================================
-   HARDBEAT PRO - UI LOGIC (V14 - FM HZ SUPPORT)
+   HARDBEAT PRO - UI LOGIC (V15 - CHORD MODE UI)
    ========================================== */
 
 let masterTimer; 
@@ -7,8 +7,9 @@ let isMetroOn = false;
 let globalSwing = 0.06;
 
 // --- VARIABLES GLOBALES ---
-window.masterLength = 16;       
+window.masterLength = 16;        
 window.isSaveMode = false;
+window.isChordModeSeq3 = false; // <--- NOUVEAU : Variable d'état pour l'accord
 
 // Mémoire
 window.drumSequences = Array.from({ length: 5 }, () => Array(64).fill(false));
@@ -211,17 +212,29 @@ function generateSmartRhythm(trackIdx) {
             case 1: if (stepInBar === 4 || stepInBar === 12) { if (p > 0.05) { window.drumSequences[trackIdx][i] = true; window.drumAccents[trackIdx][i] = true; } } else if (stepInBar % 2 === 0) { if (p > 0.85) window.drumSequences[trackIdx][i] = true; } break;
             case 2: if (p > 0.3) window.drumSequences[trackIdx][i] = true; break;
             case 3: if (stepInBar === 2 || stepInBar === 6 || stepInBar === 10 || stepInBar === 14) { if (p > 0.2) window.drumSequences[trackIdx][i] = true; } break;
-            case 4: if (p > 0.7) window.drumSequences[trackIdx][i] = true; break;
+            case 4: if (p > 0.3) window.drumSequences[trackIdx][i] = true; break; // Corrigé pour FM Drum (0.3 au lieu de 0.7)
         }
+    }
+    // GENERATION DES FREQUENCES (Uniquement pour FM DRUM - Track 4)
+    if (trackIdx === 4) {
+        for (let i = 0; i < window.masterLength; i++) {
+            if (window.drumSequences[trackIdx][i]) {
+                const randomFreq = Math.floor(Math.random() * (300 - 50) + 50);
+                window.fmFreqData[i] = randomFreq;
+            }
+        }
+        if (window.refreshFMFaders) window.refreshFMFaders();
     }
 }
 
+// --- MODIF : AJOUT BOUTON CHORD DANS L'UI ---
 function initSeq3Extension() {
     const btn = document.getElementById('add-seq-btn');
     if (!btn) return;
     btn.addEventListener('click', () => {
         btn.disabled = true; btn.style.opacity = "0.3"; btn.innerText = "SEQ 3 ACTIVE";
         const zone = document.getElementById('extension-zone');
+        
         zone.innerHTML = `
         <section id="seq3-container" class="rack-section synth-instance" data-id="3">
             <div class="section-header">
@@ -244,8 +257,12 @@ function initSeq3Extension() {
             </div>
             <div class="freq-sliders-container" id="grid-freq-seq3"></div>
             <div class="step-grid" id="grid-seq3"></div>
+            
             <div class="synth-controls" style="display:flex; gap:10px; margin-top:10px; align-items:center;">
                 <button id="btn-mute-seq3" class="btn-synth-mute" data-target="3">MUTE SEQ 3</button>
+                
+                <button id="btn-chord-seq3" style="border:1px solid #a855f7; background:transparent; color:#a855f7; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:11px;">CHORD: OFF</button>
+                
                 <div class="random-unit"><button class="btn-random" data-target="3">RANDOMIZE SEQ 3</button></div>
             </div>
         </section>`;
@@ -256,7 +273,24 @@ function initSeq3Extension() {
         document.getElementById('btn-next-page-seq3').onclick = () => { if((currentPageSeq3 + 1) * 16 < window.masterLength) { currentPageSeq3++; updatePageIndicator('seq3'); refreshGridVisuals(); refreshFadersVisuals(3); }};
         updatePageIndicator('seq3');
 
-        // FORCE INIT FADERS & DATA
+        // LOGIQUE DU BOUTON CHORD
+        const btnChord = document.getElementById('btn-chord-seq3');
+        if(btnChord) {
+            btnChord.onclick = () => {
+                window.isChordModeSeq3 = !window.isChordModeSeq3;
+                
+                if(window.isChordModeSeq3) {
+                    btnChord.innerText = "CHORD: ON";
+                    btnChord.style.background = "#a855f7";
+                    btnChord.style.color = "#000";
+                } else {
+                    btnChord.innerText = "CHORD: OFF";
+                    btnChord.style.background = "transparent";
+                    btnChord.style.color = "#a855f7";
+                }
+            };
+        }
+
         const initialFaders3 = document.querySelectorAll('#grid-freq-seq3 .freq-fader');
         initialFaders3.forEach((f, i) => { window.freqDataSeq3[i] = parseFloat(f.value); });
 
@@ -265,6 +299,7 @@ function initSeq3Extension() {
         document.getElementById('synth3-res').oninput = (e) => { if(window.updateSynth3Res) window.updateSynth3Res(parseFloat(e.target.value)); };
         document.getElementById('synth3-cutoff').oninput = (e) => { if(window.updateSynth3Cutoff) window.updateSynth3Cutoff(parseFloat(e.target.value)); };
         document.getElementById('synth3-decay').oninput = (e) => { if(window.updateSynth3Decay) window.updateSynth3Decay(parseFloat(e.target.value)); };
+        
         document.getElementById('seq3-container').scrollIntoView({ behavior: 'smooth' });
         
         refreshGridVisuals();
@@ -335,7 +370,6 @@ function initFMExtension() {
     fmContainer.innerHTML = html;
 
     // --- CORRECTION DU PLACEMENT ---
-    // On l'ajoute à la fin de la section (sous la grille et le slider accent)
     const section = grid1.closest('.rack-section');
     section.appendChild(fmContainer); 
     // -------------------------------
