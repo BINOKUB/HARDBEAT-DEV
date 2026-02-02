@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>HARDBEAT GENERATOR V5 (ACCENTS)</title>
+    <title>HARDBEAT GENERATOR V6 (FM FREQ EDITION)</title>
     <style>
         :root { --bg: #0d0d0d; --panel: #1a1a1a; --cyan: #00f3ff; --purple: #a855f7; --yellow: #ffcc00; --text: #ccc; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; padding: 20px; }
@@ -18,6 +18,7 @@
         /* Styles Spécifiques */
         .len-input { border-color: #666 !important; color: #aaa !important; width: 50px !important; text-align: center; }
         .acc-input { border-color: var(--yellow) !important; color: var(--yellow) !important; }
+        .freq-input { border-color: var(--purple) !important; color: var(--purple) !important; }
         
         textarea { width: 100%; height: 300px; background: #050505; color: #0f0; border: 1px solid #333; padding: 15px; margin-top: 20px; font-family: monospace; }
         button { width: 100%; padding: 15px; background: var(--cyan); border: none; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 16px; text-transform: uppercase; }
@@ -31,40 +32,41 @@
 <body>
 
 <div class="container">
-    <h1>Generator V5 | Accents Edition</h1>
+    <h1>Generator V6 | FM Freq Edition</h1>
     
     <div class="row">
-        <div class="col"><label>ID</label><input type="text" id="p-id" value="polysweet_acc"></div>
-        <div class="col"><label>Nom</label><input type="text" id="p-name" value="POLY ACCENT"></div>
-        <div class="col"><label>BPM</label><input type="number" id="p-bpm" value="138"></div>
+        <div class="col"><label>ID</label><input type="text" id="p-id" value="fm_preset_01"></div>
+        <div class="col"><label>Nom</label><input type="text" id="p-name" value="FM BASS TEST"></div>
+        <div class="col"><label>BPM</label><input type="number" id="p-bpm" value="135"></div>
     </div>
 
-    <h2 style="border-color: #fff">DRUMS & ACCENTS</h2>
+    <h2 style="border-color: #fff">DRUMS & FM</h2>
     <div class="row">
         <div class="col">
             <label>LEN</label><input type="number" id="l-0" value="16" class="len-input">
             <label>KICK SEQ</label><input type="text" id="d-0" value="1, 5, 9, 13">
-            <label style="color:var(--yellow)">ACCENT (ex: 1)</label><input type="text" id="a-0" value="1" class="acc-input">
+            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-0" value="1" class="acc-input">
         </div>
         <div class="col">
             <label>LEN</label><input type="number" id="l-1" value="16" class="len-input">
             <label>SNARE SEQ</label><input type="text" id="d-1" value="5, 13">
-            <label style="color:var(--yellow)">ACCENT (ex: 5, 13)</label><input type="text" id="a-1" value="5, 13" class="acc-input">
+            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-1" value="5, 13" class="acc-input">
         </div>
         <div class="col">
-            <label>LEN</label><input type="number" id="l-2" value="3" class="len-input">
-            <label>HHC SEQ</label><input type="text" id="d-2" value="1, 2, 3">
+            <label>LEN</label><input type="number" id="l-2" value="16" class="len-input">
+            <label>HHC SEQ</label><input type="text" id="d-2" value="1, 3, 5, 7, 9, 11, 13, 15">
             <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-2" value="1" class="acc-input">
         </div>
         <div class="col">
             <label>LEN</label><input type="number" id="l-3" value="16" class="len-input">
-            <label>HHO SEQ</label><input type="text" id="d-3" value="">
+            <label>HHO SEQ</label><input type="text" id="d-3" value="3, 7, 11, 15">
             <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-3" value="" class="acc-input">
         </div>
         <div class="col">
             <label>LEN</label><input type="number" id="l-4" value="16" class="len-input">
-            <label>FM SEQ</label><input type="text" id="d-4" value="">
-            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-4" value="" class="acc-input">
+            <label>FM SEQ</label><input type="text" id="d-4" value="1, 4, 7, 10">
+            <label style="color:var(--purple)">FM FREQ (Ex: 100, 200)</label><input type="text" id="d-4-frq" value="100, 50, 100, 250" class="freq-input">
+            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-4" value="1" class="acc-input">
         </div>
     </div>
 
@@ -72,15 +74,15 @@
     <div class="row">
         <div class="col measure-box">
             <div class="measure-title">MESURE 1 (1-16)</div>
-            <label>STEPS</label><input type="text" id="s2-m1-seq" value="1, 11, 14, 16">
-            <label>FREQS</label><input type="text" id="s2-m1-frq" value="313, 262, 350, 316">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m1-acc" value="1" class="acc-input">
+            <label>STEPS</label><input type="text" id="s2-m1-seq" value="">
+            <label>FREQS</label><input type="text" id="s2-m1-frq" value="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m1-acc" value="" class="acc-input">
         </div>
         <div class="col measure-box">
             <div class="measure-title">MESURE 2 (17-32)</div>
-            <label>STEPS</label><input type="text" id="s2-m2-seq" value="17">
-            <label>FREQS</label><input type="text" id="s2-m2-frq" value="313">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m2-acc" value="17" class="acc-input">
+            <label>STEPS</label><input type="text" id="s2-m2-seq" value="">
+            <label>FREQS</label><input type="text" id="s2-m2-frq" value="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m2-acc" value="" class="acc-input">
         </div>
         <div class="col measure-box">
             <div class="measure-title">MESURE 3 (33-48)</div>
@@ -118,9 +120,9 @@
         </div>
         <div class="col measure-box">
             <div class="measure-title">MESURE 4</div>
-            <label>STEPS</label><input type="text" id="s3-m4-seq" value="61, 62, 63">
-            <label>FREQS</label><input type="text" id="s3-m4-frq" value="208, 360, 310">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m4-acc" value="61" class="acc-input">
+            <label>STEPS</label><input type="text" id="s3-m4-seq" value="">
+            <label>FREQS</label><input type="text" id="s3-m4-frq" value="">
+            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m4-acc" value="" class="acc-input">
         </div>
     </div>
 
@@ -142,7 +144,7 @@
 
     function buildSynthTrack(prefix) {
         let fullSeq = [];
-        let fullAccents = []; // Nouveau tableau d'accents
+        let fullAccents = []; 
         let fullFreqs = new Array(64).fill(440);
 
         for(let m=0; m<4; m++) {
@@ -170,12 +172,25 @@
         // Track Lengths
         const ls = [0,1,2,3,4].map(i => document.getElementById(`l-${i}`).value || 16);
 
-        // Drums Logic
+        // Drums Logic (Base)
         let drumSeqs = [], drumAccs = [];
         for(let i=0; i<5; i++) {
             drumSeqs.push(parseInputHuman(document.getElementById(`d-${i}`).value).join(', '));
             drumAccs.push(parseInputHuman(document.getElementById(`a-${i}`).value).join(', '));
         }
+
+        // --- NOUVEAU : FM DRUM FREQS LOGIC ---
+        // On mappe les fréquences entrées manuellement aux pas actifs
+        const fmSteps = parseInputHuman(document.getElementById('d-4').value);
+        const fmUserFreqs = parseFreqs(document.getElementById('d-4-frq').value);
+        let fmFreqsFull = new Array(64).fill(100); // 100Hz par défaut
+
+        fmSteps.forEach((stepIndex, i) => {
+            if(fmUserFreqs[i]) {
+                fmFreqsFull[stepIndex] = fmUserFreqs[i];
+            }
+        });
+        // -------------------------------------
 
         // Synths Logic
         const s2 = buildSynthTrack('s2');
@@ -194,7 +209,8 @@
             ],
             accents: [
                 makeSeq([${drumAccs[0]}]), makeSeq([${drumAccs[1]}]), makeSeq([${drumAccs[2]}]), makeSeq([${drumAccs[3]}]), makeSeq([${drumAccs[4]}])
-            ]
+            ],
+            fmFreqs: [${fmFreqsFull.join(', ')}]
         },
         synths: {
             seq2: makeSeq([${s2.seq.join(', ')}]),
