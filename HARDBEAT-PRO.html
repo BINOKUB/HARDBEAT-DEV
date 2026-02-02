@@ -9,53 +9,55 @@
 <body>
 
     <main id="rack-container">
+
         <header id="master-control">
-            <div class="logo">HARDBEAT PRO <span style="font-size:0.4em; color:#00f3ff; vertical-align:super;">64</span></div>
-            
-            <div class="memory-bank">
-                <select id="preset-selector" onchange="loadPreset(this.value)" style="background:#000; color:#00f3ff; border:1px solid #333; font-family:'Courier New'; font-weight:bold; font-size:10px; height:25px; margin-right:10px; cursor:pointer;">
-                    <option value="">-- LOAD PRESET --</option>
-                    <option value="init">INIT / BLANK</option>
-                    <option value="rumble">BERLIN RUMBLE</option>
-                    <option value="polymills">DETROIT POLY</option>
-                    <option value="hardgroove">HARDGROOVE</option>
-                    <option value="POLYSWEET">RANDOM-X-001</option>
-                    <option value="TEST-001">TEST-001</option>
-                </select>
+    <div class="logo">HARDBEAT PRO <span style="font-size:0.4em; color:#00f3ff; vertical-align:super;">64</span></div>
+    
+    <div class="center-stack">
+        <div class="memory-bank">
+            <select id="preset-selector" onchange="loadPreset(this.value)" style="background:#000; color:#00f3ff; border:1px solid #333; font-family:'Courier New'; font-weight:bold; font-size:10px; height:25px; margin-right:10px; cursor:pointer;">
+                <option value="">-- LOAD PRESET --</option>
+                <option value="init">INIT / BLANK</option>
+                <option value="rumble">BERLIN RUMBLE</option>
+                <option value="polymills">DETROIT POLY</option>
+                <option value="hardgroove">HARDGROOVE</option>
+                <option value="POLYSWEET">RANDOM-X-001</option>
+                <option value="TEST-001">TEST-001</option>
+            </select>
 
-                <span class="help-tip" data-text="Sauvegardez vos patterns (SAVE + Slot). CLIC DROIT sur un slot pour l'effacer.">?</span>
-                <button id="btn-clear-all" class="btn-mem-action">CLR</button>
-                <div style="width:1px; height:15px; background:#333; margin:0 5px;"></div>
-                <button id="btn-save-mode" class="btn-mem-action">SAVE</button>
-                <div class="slots-group">
-                    <button class="btn-mem-slot" data-slot="1">1</button>
-                    <button class="btn-mem-slot" data-slot="2">2</button>
-                    <button class="btn-mem-slot" data-slot="3">3</button>
-                    <button class="btn-mem-slot" data-slot="4">4</button>
-                </div>
+            <span class="help-tip" data-text="Sauvegardez vos patterns (SAVE + Slot). CLIC DROIT sur un slot pour l'effacer.">?</span>
+            <button id="btn-clear-all" class="btn-mem-action">CLR</button>
+            <div style="width:1px; height:15px; background:#333; margin:0 5px;"></div>
+            <button id="btn-save-mode" class="btn-mem-action">SAVE</button>
+            <div class="slots-group">
+                <button class="btn-mem-slot" data-slot="1">1</button>
+                <button class="btn-mem-slot" data-slot="2">2</button>
+                <button class="btn-mem-slot" data-slot="3">3</button>
+                <button class="btn-mem-slot" data-slot="4">4</button>
             </div>
+        </div>
 
-            <div class="length-control-panel" style="display:flex; align-items:center; gap:5px; margin-left:20px; border-left:1px solid #333; padding-left:5px;">
-                <label style="font-size:0.7rem; color:#666; display:block; margin-right:5px;">LENGTH</label>
-                <div class="length-btn-group">
-                    <button class="btn-length active" data-length="16">16</button>
-                    <button class="btn-length" data-length="32">32</button>
-                    <button class="btn-length" data-length="48">48</button>
-                    <button class="btn-length" data-length="64">64</button>
-                </div>
-            </div>
+        <canvas id="oscilloscope" width="280" height="30"></canvas>
+    </div>
 
-            <canvas id="oscilloscope" width="80" height="35"></canvas>
+    <div class="length-control-panel" style="display:flex; align-items:center; gap:5px; margin-left:15px; border-left:1px solid #333; padding-left:15px;">
+        <label style="font-size:0.7rem; color:#666; display:block; margin-right:5px;">LENGTH</label>
+        <div class="length-btn-group">
+            <button class="btn-length active" data-length="16">16</button>
+            <button class="btn-length" data-length="32">32</button>
+            <button class="btn-length" data-length="48">48</button>
+            <button class="btn-length" data-length="64">64</button>
+        </div>
+    </div>
+
     <div style="display:flex; align-items:center; gap:15px; margin-left:auto;">
-            
-            <div style="display:flex; align-items:center; gap:15px; margin-left:auto;">
-                <button id="master-play-stop">PLAY / STOP</button>
-                <div class="master-volume">
-                    <label>VOL</label>
-                    <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5" orient="vertical">
-                </div>
-                </div>
-        </header>
+        <button id="master-play-stop">PLAY / STOP</button>
+        <div class="master-volume">
+            <label>VOL</label>
+            <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5" orient="vertical">
+        </div>
+    </div>
+</header>
 
         <section id="seq1-container" class="rack-section">
             <div class="section-header">
