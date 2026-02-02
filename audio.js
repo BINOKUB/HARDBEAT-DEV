@@ -188,30 +188,30 @@ function playSynthNote(freq, volume, seqId, isAccent) {
 }
 
 // --- PONT TRIGGER (MODIFIÉ POUR ACCORDS SUR SEQ 3) ---
+/* ==========================================
+   MODIF : CHORD MODE (ON/OFF)
+   ========================================== */
 window.playSynthStep = function(stepIndex, freqValue, seqId, isActive, isAccent) {
     if (seqId === 2 && window.isMutedSeq2) return;
     if (seqId === 3 && window.isMutedSeq3) return;
     
     if (isActive) {
         if (seqId === 2) {
-            // SEQ 2 : MONO CLASSIQUE
-            const vol = window.synthVol2;
-            playSynthNote(freqValue, vol, 2, isAccent);
+            // SEQ 2 : TOUJOURS MONO
+            playSynthNote(freqValue, window.synthVol2, 2, isAccent);
         } 
         else if (seqId === 3) {
-            // SEQ 3 : MODE ACCORD (CHORD)
-            // On joue 3 notes pour faire un accord Mineur
-            // On baisse un peu le volume de chaque voix pour ne pas exploser les oreilles
-            const vol = window.synthVol3 * 0.4; 
-            
-            // Note 1 : Fondamentale
-            playSynthNote(freqValue, vol, 3, isAccent);
-            
-            // Note 2 : Tierce Mineure (x1.189)
-            playSynthNote(freqValue * 1.1892, vol, 3, isAccent);
-            
-            // Note 3 : Quinte (x1.498)
-            playSynthNote(freqValue * 1.4983, vol, 3, isAccent);
+            // SEQ 3 : VÉRIFICATION DU BOUTON CHORD
+            if (window.isChordModeSeq3 === true) {
+                // --- MODE ACCORD (ON) ---
+                const vol = window.synthVol3 * 0.4; // On baisse un peu le volume cumulé
+                playSynthNote(freqValue, vol, 3, isAccent);            // Note 1
+                playSynthNote(freqValue * 1.1892, vol, 3, isAccent);   // Note 2
+                playSynthNote(freqValue * 1.4983, vol, 3, isAccent);   // Note 3
+            } else {
+                // --- MODE MONO (OFF) - CLASSIQUE ---
+                playSynthNote(freqValue, window.synthVol3, 3, isAccent);
+            }
         }
     }
 };
