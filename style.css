@@ -850,3 +850,96 @@ div.hz-label, span.hz-label, .hz-label {
     box-shadow: inset 0 0 10px rgba(0,0,0,1), 0 0 5px rgba(0, 243, 255, 0.15);
     cursor: crosshair;
 }
+
+/* --- STYLE MPC MEMORY RACK (V18) --- */
+.memory-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 0 15px;
+}
+
+.memory-label {
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mem-pad {
+    width: 35px;
+    height: 35px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #666;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.1s;
+    user-select: none;
+}
+
+/* Slot qui contient des données (Allumé faible) */
+.mem-pad.has-data {
+    background: #004444;
+    color: #00ffff;
+    border-color: #008888;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.2);
+}
+
+/* Slot en train de jouer (Allumé fort) */
+.mem-pad.playing {
+    background: #00f3ff;
+    color: #000;
+    box-shadow: 0 0 10px #00f3ff;
+    transform: scale(0.95);
+}
+
+/* Mode Sauvegarde (Rouge) */
+.mem-pad.save-mode {
+    border-color: #ff0055;
+    color: #ff0055;
+}
+.mem-pad.save-mode:hover {
+    background: #ff0055;
+    color: #fff;
+}
+
+.memory-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.btn-action {
+    flex: 1;
+    background: #222;
+    border: 1px solid #444;
+    color: #888;
+    font-size: 10px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.btn-action.active {
+    background: #ff0055;
+    color: white;
+    border-color: #ff0055;
+}
