@@ -132,6 +132,9 @@
             font-size: 0.9rem;
         }
 
+        ul { margin-left: 20px; color: #aaa; }
+        li { margin-bottom: 8px; }
+
         /* --- MOBILE --- */
         @media (max-width: 768px) {
             body { flex-direction: column; height: auto; overflow: auto; }
@@ -155,9 +158,8 @@
         <a href="#synths-seq2" class="sub-link">↳ SEQ 2 (Lead)</a>
         <a href="#synths-seq3" class="sub-link">↳ SEQ 3 (Rumble)</a>
         
-        <a href="#accents">5. Gestion des Accents</a>
-        
-        <a href="#export">6. Export & Save</a>
+        <a href="#memory">5. Mémoire "Total Recall"</a>
+        <a href="#io-system">6. Import / Export JSON</a>
         
         <a href="#generator">7. Preset Generator</a>
 
@@ -171,16 +173,16 @@
             
             <section id="intro">
                 <h1>HARDBEAT PRO 64</h1>
-                <div class="subtitle">MANUEL UTILISATEUR V12 (GOLD)</div>
-                <p>Bienvenue dans la documentation officielle. Hardbeat Pro est une workstation techno "Browser-based" conçue pour la performance live et la composition Hardgroove.</p>
+                <div class="subtitle">MANUEL UTILISATEUR V21 (PLATINUM)</div>
+                <p>Bienvenue dans la documentation officielle. Hardbeat Pro est une workstation techno "Browser-based" conçue pour la performance live et la composition Hardgroove avancée.</p>
                 <div class="alert">
-                    <strong>Note :</strong> Cette application utilise l'API Web Audio native pour une latence nulle. Chrome, Edge ou Brave sont recommandés.
+                    <strong>Note :</strong> Cette application utilise l'API Web Audio native pour une latence nulle. Chrome, Edge ou Brave sont recommandés pour une stabilité optimale.
                 </div>
             </section>
 
             <section id="architecture">
                 <h2>1. Architecture Système</h2>
-                <p>Le cœur du système repose sur un séquenceur de <strong>64 Pas (4 Mesures)</strong>. Cela permet de créer des motifs évolutifs qui ne se répètent pas bêtement toutes les 4 secondes.</p>
+                <p>Le cœur du système repose sur un séquenceur de <strong>64 Pas (4 Mesures)</strong>. Cela permet de créer des motifs évolutifs qui ne se répètent pas simplement toutes les 4 secondes.</p>
                 <h3>Navigation (Paging)</h3>
                 <p>Utilisez les boutons <code>&lt;&lt;</code> et <code>&gt;&gt;</code> pour changer de page (1-16, 17-32, etc.). La lecture continue sur les 64 pas même si vous ne visualisez que la page 1.</p>
             </section>
@@ -193,8 +195,11 @@
                 <p>C'est la force de Hardbeat Pro. Chaque piste possède son propre slider de longueur (Steps).</p>
                 <ul>
                     <li>Si vous réglez le HHC sur <strong>3 pas</strong> et le Kick sur <strong>4 pas</strong>, ils vont se décaler en permanence.</li>
-                    <li>C'est la clé du "Rolling Techno" et des rythmes industriels.</li>
+                    <li>Le réglage de longueur est maintenant sauvegardé indépendamment pour chaque Slot mémoire.</li>
                 </ul>
+
+                <h3 class="yellow">Nouveau : Module Rumble</h3>
+                <p>Le Kick dispose désormais d'un contrôle <code>RUMBLE</code> dédié (Violet). Ce paramètre est également sauvegardé dans les mémoires.</p>
             </section>
 
             <section id="synths">
@@ -204,43 +209,51 @@
                 <p>Synthétiseur monophonique avec distorsion légère. Chaque pas possède son propre fader de fréquence (Hz).</p>
 
                 <h3 class="purple" id="synths-seq3">SEQ 3 (Rumble / Violet)</h3>
-                <p>Extension dédiée aux basses fréquences. Filtre passe-bas résonant et distorsion lourde pour créer le "fond" du mix.</p>
+                <p>Extension dédiée aux basses fréquences Hardgroove. Il possède un indicateur visuel sur la grille :</p>
+                <ul>
+                    <li><strong>M (Jaune) :</strong> Accord Majeur</li>
+                    <li><strong>m (Gris) :</strong> Accord Mineur</li>
+                </ul>
+                <p>Cliquez sur le petit rectangle sous le pad pour changer la qualité de l'accord.</p>
             </section>
 
-            <section id="accents">
-                <h2>4. Dynamique & Accents</h2>
-                <h3 class="yellow">Accents Drums</h3>
-                <p>Cliquez sur la ligne inférieure des pads (carrés) pour activer un accent. Le son sera plus fort (+20%) et plus percutant.</p>
-
-                <h3 class="yellow">Accents Synths (Fantômes)</h3>
-                <p>Les synthés gèrent aussi les accents (ouverture du filtre + gain). Ces accents ne sont pas visibles sur l'interface principale pour ne pas surcharger la vue, mais sont programmables via le Générateur.</p>
-            </section>
-
-            <section id="export">
-                <h2>5. Outils Live & Export</h2>
-                <h3>Snapshots (Mémoire)</h3>
-                <p>Permet de sauvegarder l'état des faders du Synth 2 dans 4 slots de mémoire vive pour des transitions instantanées en Live.</p>
+            <section id="memory">
+                <h2>5. Système de Mémoire "Total Recall"</h2>
+                <p>Hardbeat Pro V21 intègre un nouveau système de mémoire ultra-puissant.</p>
                 
-                <h3>Export WAV</h3>
-                <p>Le bouton <code>REC</code> capture la sortie Master (ce que vous entendez) en fichier <strong>.WAV 16-bit Stéréo</strong> prêt pour votre DAW (Ableton, FL Studio, etc.).</p>
+                <h3 class="yellow">8 Slots de Scène</h3>
+                <p>Les pads <code>1</code> à <code>8</code> en haut de l'interface permettent de stocker des "Scènes" complètes. Contrairement aux versions précédentes, ce système sauvegarde <strong>TOUT</strong> :</p>
+                <ul>
+                    <li>Les positions de tous les potentiomètres (Knobs) et Faders.</li>
+                    <li>L'état des boutons <strong>MUTE (M)</strong> et <strong>SOLO (S)</strong>.</li>
+                    <li>Les longueurs de pistes (Polyrhythms).</li>
+                    <li>Les séquences, accents et fréquences.</li>
+                </ul>
+
+                <h3>Utilisation</h3>
+                <ul>
+                    <li><strong>Sauver :</strong> Cliquez sur <code>SAVE</code> (il devient rouge), puis sur un pad (1-8).</li>
+                    <li><strong>Charger :</strong> Cliquez simplement sur un pad (1-8) ou utilisez les touches <code>1</code> à <code>8</code> de votre clavier.</li>
+                    <li><strong>Effacer un slot :</strong> Clic-Droit sur un pad mémoire.</li>
+                </ul>
+            </section>
+
+            <section id="io-system">
+                <h2>6. Import / Export (Backup)</h2>
+                <p>Pour ne jamais perdre votre travail, utilisez les nouveaux boutons dans l'encart "PRESET DATA" du header.</p>
+                
+                <h3 class="cyan">SAVE (Export .json)</h3>
+                <p>Télécharge un fichier complet contenant tout l'état de la machine (y compris les 8 slots mémoires, les réglages de sons, le rumble, etc.).</p>
+
+                <h3 class="yellow">LOAD (Import .json)</h3>
+                <p>Charge un fichier <code>.json</code> exporté. Le système restaure instantanément toute votre session.</p>
             </section>
 
             <section id="generator">
-                <h2>6. Le Preset Generator</h2>
-                <p>Pour coder vos morceaux, n'écrivez pas le JSON à la main. Utilisez l'outil dédié :</p>
-                <p><a href="generator.html" target="_blank" style="color:var(--cyan)">⚡ Ouvrir le Générateur V5</a></p>
-                <p>Il gère automatiquement la conversion des index (1-64 vers 0-63) et le formatage des accents.</p>
-            </section>
-
-            <section id="devs">
-                <h2>7. Ressources Développeurs</h2>
-                <p>Vous souhaitez comprendre le code source, l'architecture Audio (Web Audio API) ou modifier le moteur ?</p>
-                <p>Consultez le Wiki technique complet sur le dépôt GitHub :</p>
-                <p>
-                    <a href="https://github.com/binokub/HARDBEAT-DEV/wiki" target="_blank" style="color:var(--yellow); font-weight:bold; text-decoration:none; border-bottom:1px solid var(--yellow);">
-                        ➔ ACCÉDER AU WIKI TECHNIQUE (GITHUB)
-                    </a>
-                </p>
+                <h2>7. Le Preset Generator</h2>
+                <p>Pour coder vos morceaux en dur dans le code source (presets d'usine), utilisez l'outil dédié :</p>
+                <p><a href="generator.html" target="_blank" style="color:var(--cyan)"> Ouvrir le Générateur V19</a></p>
+                <p>Il permet de convertir vos exports JSON en code JavaScript permanent pour le fichier <code>presets.js</code>.</p>
             </section>
 
             <br><br><br>
