@@ -11,53 +11,63 @@
     <main id="rack-container">
 
         <header id="master-control">
-    <div class="logo">HARDBEAT PRO <span style="font-size:0.4em; color:#00f3ff; vertical-align:super;">64</span></div>
-    
-    <div class="center-stack">
-        <div class="memory-bank">
-            <select id="preset-selector" onchange="loadPreset(this.value)" style="background:#000; color:#00f3ff; border:1px solid #333; font-family:'Courier New'; font-weight:bold; font-size:10px; height:25px; margin-right:10px; cursor:pointer;">
-                <option value="">-- LOAD PRESET --</option>
-                <option value="init">INIT / BLANK</option>
-                <option value="rumble">BERLIN RUMBLE</option>
-                <option value="polymills">DETROIT POLY</option>
-                <option value="hardgroove">HARDGROOVE</option>
-                <option value="POLYSWEET">RANDOM-X-001</option>
-                <option value="BASS">FM BASS</option>
-            </select>
 
-            <span class="help-tip" data-text="Sauvegardez vos patterns (SAVE + Slot). CLIC DROIT sur un slot pour l'effacer.">?</span>
-            <button id="btn-clear-all" class="btn-mem-action">CLR</button>
-            <div style="width:1px; height:15px; background:#333; margin:0 5px;"></div>
-            <button id="btn-save-mode" class="btn-mem-action">SAVE</button>
-            <div class="slots-group">
-                <button class="btn-mem-slot" data-slot="1">1</button>
-                <button class="btn-mem-slot" data-slot="2">2</button>
-                <button class="btn-mem-slot" data-slot="3">3</button>
-                <button class="btn-mem-slot" data-slot="4">4</button>
+            <div class="logo">HARDBEAT PRO <span style="font-size:0.4em; color:#00f3ff; vertical-align:super;">64</span></div>
+            
+            <div class="center-stack">
+                <div style="margin-bottom: 5px; text-align: center;">
+                    <select id="preset-selector" onchange="loadPreset(this.value)" style="background:#000; color:#00f3ff; border:1px solid #333; font-family:'Courier New'; font-weight:bold; font-size:10px; height:20px; cursor:pointer;">
+                        <option value="">-- LOAD PRESET --</option>
+                        <option value="init">INIT / BLANK</option>
+                        <option value="rumble">BERLIN RUMBLE</option>
+                        <option value="polymills">DETROIT POLY</option>
+                        <option value="hardgroove">HARDGROOVE</option>
+			<option value="GROOVE2">HARDGROOVE 2</option>
+                        <option value="POLYSWEET">RANDOM-X-001</option>
+                        <option value="BASS">FM BASS</option>
+ 			<option value="GROOVE1">SYMFONIC GROOVE</option>
+                    </select>
+                </div>
+
+                <div class="memory-section">
+                    <div class="memory-label">SCENE MEMORY (1-8)</div>
+                    <div class="memory-grid">
+                        <div class="mem-pad" data-slot="0">1</div>
+                        <div class="mem-pad" data-slot="1">2</div>
+                        <div class="mem-pad" data-slot="2">3</div>
+                        <div class="mem-pad" data-slot="3">4</div>
+                        <div class="mem-pad" data-slot="4">5</div>
+                        <div class="mem-pad" data-slot="5">6</div>
+                        <div class="mem-pad" data-slot="6">7</div>
+                        <div class="mem-pad" data-slot="7">8</div>
+                    </div>
+                    <div class="memory-actions">
+                        <button id="btn-mem-save" class="btn-action">SAVE</button>
+                        <button id="btn-mem-clear" class="btn-action">CLEAR</button>
+                    </div>
+                </div>
+
+                <canvas id="oscilloscope" width="280" height="30" style="margin-top:5px;"></canvas>
             </div>
-        </div>
 
-        <canvas id="oscilloscope" width="280" height="30"></canvas>
-    </div>
+            <div class="length-control-panel" style="display:flex; align-items:center; gap:5px; margin-left:15px; border-left:1px solid #333; padding-left:15px;">
+                <label style="font-size:0.7rem; color:#666; display:block; margin-right:5px;">LENGTH</label>
+                <div class="length-btn-group">
+                    <button class="btn-length active" data-length="16">16</button>
+                    <button class="btn-length" data-length="32">32</button>
+                    <button class="btn-length" data-length="48">48</button>
+                    <button class="btn-length" data-length="64">64</button>
+                </div>
+            </div>
 
-    <div class="length-control-panel" style="display:flex; align-items:center; gap:5px; margin-left:15px; border-left:1px solid #333; padding-left:15px;">
-        <label style="font-size:0.7rem; color:#666; display:block; margin-right:5px;">LENGTH</label>
-        <div class="length-btn-group">
-            <button class="btn-length active" data-length="16">16</button>
-            <button class="btn-length" data-length="32">32</button>
-            <button class="btn-length" data-length="48">48</button>
-            <button class="btn-length" data-length="64">64</button>
-        </div>
-    </div>
-
-    <div style="display:flex; align-items:center; gap:15px; margin-left:auto;">
-        <button id="master-play-stop">PLAY / STOP</button>
-        <div class="master-volume">
-            <label>VOL</label>
-            <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5" orient="vertical">
-        </div>
-    </div>
-</header>
+            <div style="display:flex; align-items:center; gap:15px; margin-left:auto;">
+                <button id="master-play-stop">PLAY / STOP</button>
+                <div class="master-volume">
+                    <label>VOL</label>
+                    <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5" orient="vertical">
+                </div>
+            </div>
+        </header>
 
         <section id="seq1-container" class="rack-section">
             <div class="section-header">
@@ -87,19 +97,19 @@
                     
                     <button id="btn-rec" class="btn-recorder" title="Enregistrer Audio">REC</button>
 
-                <div style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
-    <div style="font-size: 10px; color: #888; margin-bottom: 5px;">PRESET DATA</div>
-    
-    <button onclick="IO.exportPreset()" style="background: #333; color: cyan; border: 1px solid cyan; padding: 5px 10px; cursor: pointer; font-family: monospace;">
-        SAVE
-    </button>
+                    <div style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
+                        <div style="font-size: 10px; color: #888; margin-bottom: 5px;">PRESET DATA</div>
+                        
+                        <button onclick="IO.exportPreset()" style="background: #333; color: cyan; border: 1px solid cyan; padding: 5px 10px; cursor: pointer; font-family: monospace;">
+                            SAVE
+                        </button>
 
-    <button onclick="document.getElementById('json-upload').click()" style="background: #333; color: orange; border: 1px solid orange; padding: 5px 10px; cursor: pointer; font-family: monospace; margin-left: 5px;">
-        LOAD
-    </button>
-    
-    <input type="file" id="json-upload" style="display: none;" accept=".json" onchange="IO.importPreset(event)">
-</div>
+                        <button onclick="document.getElementById('json-upload').click()" style="background: #333; color: orange; border: 1px solid orange; padding: 5px 10px; cursor: pointer; font-family: monospace; margin-left: 5px;">
+                            LOAD
+                        </button>
+                        
+                        <input type="file" id="json-upload" style="display: none;" accept=".json" onchange="IO.importPreset(event)">
+                    </div>
                     
                 </div>
             </div>
@@ -228,16 +238,6 @@
                 <div class="group"><label>DELAY TIME</label><input type="range" id="global-delay-time" min="0.1" max="1" step="0.05" value="0.375"></div>
             </div>
 
-            <div class="freq-memory-zone" style="display:flex; justify-content:center; gap:5px; margin-bottom:5px; background:#111; padding:5px; border-radius:4px; border:1px solid #333;">
-                <span style="font-size:10px; color:#666; font-weight:bold; margin-right:5px; align-self:center;">SNAPSHOTS ></span>
-                <button id="btn-snap-save" class="btn-snap-action" title="Save Snapshot">S</button>
-                <div style="width:1px; background:#444; margin:0 5px;"></div>
-                <button class="btn-snap-slot" data-slot="0">1</button>
-                <button class="btn-snap-slot" data-slot="1">2</button>
-                <button class="btn-snap-slot" data-slot="2">3</button>
-                <button class="btn-snap-slot" data-slot="3">4</button>
-            </div>
-            
             <div class="freq-sliders-container" id="grid-freq-seq2"></div>
             <div class="step-grid" id="grid-seq2"></div>
             
@@ -253,7 +253,7 @@
         <footer id="ui-footer"><button id="add-seq-btn">+ EXTEND TO SEQ 3 (HARDGROOVE LAYER)</button></footer>
     </main>
     
-<script src="visualizer.js"></script>
+    <script src="visualizer.js"></script>
     <script src="audio.js"></script>
     <script src="presets.js"></script>
     <script src="recorder.js"></script>
