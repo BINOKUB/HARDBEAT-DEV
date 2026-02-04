@@ -9,7 +9,7 @@ const makeSeq = (indices, len = 64) => {
     return arr;
 };
 
-const FACTORY_PRESETS = {
+window.FACTORY_PRESETS = {
     
     "init": {
         name: "INIT / BLANK",
@@ -52,31 +52,178 @@ const FACTORY_PRESETS = {
     },
 
 
-    "TEST-001": {
-        name: "TEST-001",
-        masterLength: 64,
-        bpm: 107,
+
+    "GROOVE2": {
+        name: "HARDGROOVE2",
+        masterLength: 16,
+        bpm: 120,
         swing: 0,
-        trackLengths: [16, 16, 3, 16, 16],
+        trackLengths: [16, 16, 16, 16, 16],
+        
+        // --- V19 CONTROLS ---
+        controls: {
+            "isChordMode": true,
+            "delay": 0,
+            "s2": {
+                    "disto": 0,
+                    "res": 5,
+                    "cutoff": 4,
+                    "decay": 0.2,
+                    "vol": 0.6
+                    },
+            "s3": {
+                    "disto": 0,
+                    "res": 6,
+                    "cutoff": 4,
+                    "decay": 0.8,
+                    "vol": 0.6
+            },
+            "kick": {
+                    "pitch": 113,
+                    "decay": 0.5,
+                    "level": 1,
+                    "rumble": 0
+            },
+            "snare": {
+                    "snappy": 0.6,
+                    "tone": 1000,
+                    "level": 0.6
+            },
+            "hh": {
+                    "tone": 6700,
+                    "decayClose": 0.05,
+                    "decayOpen": 0.35,
+                    "levelClose": 0.4,
+                    "levelOpen": 0.5
+            },
+            "fm": {
+                    "carrierPitch": 100,
+                    "modPitch": 50,
+                    "fmAmount": 100,
+                    "decay": 0.3,
+                    "level": 0.5
+            }
+},
+
         drums: {
             seq: [
-                makeSeq([0, 4, 8, 12]), makeSeq([4, 12]), makeSeq([0, 1, 2]), makeSeq([]), makeSeq([])
+                makeSeq([0, 3, 6, 9, 12, 15]), // KICK
+                makeSeq([5, 12]), // SNARE
+                makeSeq([1, 5, 9, 13]), // HHC
+                makeSeq([3, 7, 11, 15]), // HHO
+                makeSeq([11, 13])  // FM
             ],
             accents: [
-                makeSeq([0]), makeSeq([4, 12]), makeSeq([0]), makeSeq([]), makeSeq([])
-            ]
+                makeSeq([]),
+                makeSeq([]),
+                makeSeq([]),
+                makeSeq([]),
+                makeSeq([11, 13])
+            ],
+            fmFreqs: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 117, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
         },
+
         synths: {
-            seq2: makeSeq([0, 10, 13, 15, 16]),
-            seq3: makeSeq([60, 61, 62])
+            seq2: makeSeq([]),
+            seq3: makeSeq([1, 3, 5, 8]),
+            acc2: makeSeq([]),
+            acc3: makeSeq([])
         },
-        freqs2: [313, 440, 440, 440, 440, 440, 440, 440, 440, 440, 262, 440, 440, 350, 440, 316, 313, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440],
-        freqs3: [440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 208, 260, 310, 440],
-        accents2: makeSeq([13, 16]),
-        accents3: makeSeq([61])
+
+        freqs2: [440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440],
+        freqs3: [349, 168, 387, 222, 842, 146, 432, 171, 164, 837, 639, 727, 450, 318, 436, 195, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440],
+        
+        chords: {
+            qual: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+        }
     },
    
-   
+
+    "GROOVE1": {
+        name: "SYMFONIC GROOVE",
+        masterLength: 16,
+        bpm: 120,
+        swing: 6,
+        trackLengths: [3, 16, 16, 16, 4],
+        
+        // --- V19 CONTROLS ---
+        controls: {
+            "isChordMode": true,
+            "delay": 0,
+            "s2": {
+                    "disto": 0,
+                    "res": 5,
+                    "cutoff": 4,
+                    "decay": 0.2,
+                    "vol": 0.6
+                    },
+            "s3": {
+                    "disto": 0,
+                    "res": 7,
+                    "cutoff": 3.4,
+                    "decay": 0.65,
+                    "vol": 0.62
+            },
+            "kick": {
+                    "pitch": 150,
+                    "decay": 0.5,
+                    "level": 0.8,
+                    "rumble": 0
+            },
+            "snare": {
+                    "snappy": 0.6,
+                    "tone": 1000,
+                    "level": 0.6
+            },
+            "hh": {
+                    "tone": 8000,
+                    "decayClose": 0.05,
+                    "decayOpen": 0.3,
+                    "levelClose": 0.4,
+                    "levelOpen": 0.5
+            },
+            "fm": {
+                    "carrierPitch": 100,
+                    "modPitch": 50,
+                    "fmAmount": 100,
+                    "decay": 0.3,
+                    "level": 0.5
+            }
+},
+
+        drums: {
+            seq: [
+                makeSeq([0, 2]), // KICK
+                makeSeq([4, 12]), // SNARE
+                makeSeq([2, 6, 10, 14, 15]), // HHC
+                makeSeq([]), // HHO
+                makeSeq([0, 2, 3])  // FM
+            ],
+            accents: [
+                makeSeq([]),
+                makeSeq([]),
+                makeSeq([]),
+                makeSeq([]),
+                makeSeq([3])
+            ],
+            fmFreqs: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+        },
+
+        synths: {
+            seq2: makeSeq([]),
+            seq3: makeSeq([0, 3, 6, 9, 12]),
+            acc2: makeSeq([]),
+            acc3: makeSeq([])
+        },
+
+        freqs2: [440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440],
+        freqs3: [113, 440, 440, 135, 440, 440, 142, 440, 440, 113, 440, 113, 128, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440],
+        
+        chords: {
+            qual: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+        }
+    },   
+
    
   
     "POLYSWEET": {
