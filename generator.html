@@ -2,227 +2,269 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>HARDBEAT GENERATOR V6 (FM FREQ EDITION)</title>
+    <title>HARDBEAT FACTORY - CONVERTER V21 (SECURE)</title>
     <style>
         :root { --bg: #0d0d0d; --panel: #1a1a1a; --cyan: #00f3ff; --purple: #a855f7; --yellow: #ffcc00; --text: #ccc; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; background: var(--panel); padding: 30px; border: 1px solid #333; }
-        h1 { color: var(--cyan); text-align: center; border-bottom: 1px solid #333; padding-bottom: 20px; }
-        h2 { color: #fff; background: #333; padding: 8px 15px; margin-top: 30px; border-left: 5px solid #555; }
-        .row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 900px; background: var(--panel); padding: 30px; border: 1px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        
+        h1 { color: var(--purple); text-align: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-top: 0; }
+        .subtitle { text-align: center; color: #666; font-size: 12px; margin-bottom: 30px; }
+
+        /* DROP ZONE */
+        .drop-zone {
+            border: 2px dashed #444;
+            border-radius: 10px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: pointer; /* Indique que c'est cliquable */
+            transition: 0.3s;
+            background: #111;
+            color: #666;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .drop-zone:hover { border-color: var(--cyan); color: var(--cyan); background: #151515; }
+        .drop-zone.active { border-color: var(--yellow); color: var(--yellow); background: #222; }
+        
+        /* INPUTS */
+        .meta-row { display: flex; gap: 15px; margin-bottom: 20px; }
         .col { flex: 1; }
-        label { display: block; font-size: 10px; color: #888; margin-bottom: 3px; font-weight: bold; text-transform: uppercase; }
-        input[type="text"], input[type="number"] { width: 100%; background: #050505; border: 1px solid #444; color: #fff; padding: 8px; font-family: monospace; font-size: 13px; }
+        label { display: block; font-size: 10px; color: #888; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+        input[type="text"] { width: 100%; background: #050505; border: 1px solid #444; color: #fff; padding: 10px; font-family: monospace; font-size: 14px; box-sizing: border-box; }
         input:focus { border-color: var(--cyan); outline: none; }
-        
-        /* Styles Spécifiques */
-        .len-input { border-color: #666 !important; color: #aaa !important; width: 50px !important; text-align: center; }
-        .acc-input { border-color: var(--yellow) !important; color: var(--yellow) !important; }
-        .freq-input { border-color: var(--purple) !important; color: var(--purple) !important; }
-        
-        textarea { width: 100%; height: 300px; background: #050505; color: #0f0; border: 1px solid #333; padding: 15px; margin-top: 20px; font-family: monospace; }
-        button { width: 100%; padding: 15px; background: var(--cyan); border: none; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 16px; text-transform: uppercase; }
-        button:hover { background: #fff; }
-        
-        .measure-box { border: 1px solid #333; padding: 10px; background: #111; }
-        .measure-title { font-size: 11px; font-weight: bold; color: var(--cyan); margin-bottom: 8px; border-bottom: 1px solid #333; }
-        .purple .measure-title { color: var(--purple); }
+
+        /* OUTPUT */
+        textarea { 
+            width: 100%; height: 400px; 
+            background: #080808; color: #0f0; 
+            border: 1px solid #333; padding: 15px; 
+            font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.4;
+            box-sizing: border-box; resize: vertical;
+        }
+
+        button { width: 100%; padding: 15px; background: var(--purple); color: #fff; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; text-transform: uppercase; }
+        button:hover { background: #fff; color: #000; }
+
+        .status { text-align: center; margin-top: 10px; font-size: 12px; height: 15px; color: var(--yellow); }
+        .security-badge { text-align:center; font-size:10px; color:#444; margin-top:5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Generator V6 | FM Freq Edition</h1>
+    <h1>🏭 FACTORY GENERATOR V21</h1>
+    <p class="subtitle">Convertisseur JSON vers JS (Sécurisé & Compatible Rumble/Solos)</p>
+
+    <div class="drop-zone" id="drop-zone">
+        <span style="font-size: 24px;">🛡️</span>
+        <span>GLISSE TON FICHIER .JSON ICI</span>
+        <span style="font-size: 10px; margin-top:5px;">(Ou clique pour parcourir)</span>
+    </div>
     
-    <div class="row">
-        <div class="col"><label>ID</label><input type="text" id="p-id" value="fm_preset_01"></div>
-        <div class="col"><label>Nom</label><input type="text" id="p-name" value="FM BASS TEST"></div>
-        <div class="col"><label>BPM</label><input type="number" id="p-bpm" value="135"></div>
-    </div>
+    <input type="file" id="file-input" accept=".json" style="display:none">
 
-    <h2 style="border-color: #fff">DRUMS & FM</h2>
-    <div class="row">
+    <div class="meta-row">
         <div class="col">
-            <label>LEN</label><input type="number" id="l-0" value="16" class="len-input">
-            <label>KICK SEQ</label><input type="text" id="d-0" value="1, 5, 9, 13">
-            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-0" value="1" class="acc-input">
+            <label>ID DU PRESET (Sans espaces, sécurisé)</label>
+            <input type="text" id="p-id" placeholder="my_techno_1" oninput="renderCodeFromCache()">
         </div>
         <div class="col">
-            <label>LEN</label><input type="number" id="l-1" value="16" class="len-input">
-            <label>SNARE SEQ</label><input type="text" id="d-1" value="5, 13">
-            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-1" value="5, 13" class="acc-input">
-        </div>
-        <div class="col">
-            <label>LEN</label><input type="number" id="l-2" value="16" class="len-input">
-            <label>HHC SEQ</label><input type="text" id="d-2" value="1, 3, 5, 7, 9, 11, 13, 15">
-            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-2" value="1" class="acc-input">
-        </div>
-        <div class="col">
-            <label>LEN</label><input type="number" id="l-3" value="16" class="len-input">
-            <label>HHO SEQ</label><input type="text" id="d-3" value="3, 7, 11, 15">
-            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-3" value="" class="acc-input">
-        </div>
-        <div class="col">
-            <label>LEN</label><input type="number" id="l-4" value="16" class="len-input">
-            <label>FM SEQ</label><input type="text" id="d-4" value="1, 4, 7, 10">
-            <label style="color:var(--purple)">FM FREQ (Ex: 100, 200)</label><input type="text" id="d-4-frq" value="100, 50, 100, 250" class="freq-input">
-            <label style="color:var(--yellow)">ACCENT</label><input type="text" id="a-4" value="1" class="acc-input">
+            <label>NOM AFFICHE (Nettoyé automatiquement)</label>
+            <input type="text" id="p-name" placeholder="MY PRESET" oninput="renderCodeFromCache()">
         </div>
     </div>
 
-    <h2 style="border-color: var(--cyan)">SYNTH 2 (CYAN)</h2>
-    <div class="row">
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 1 (1-16)</div>
-            <label>STEPS</label><input type="text" id="s2-m1-seq" value="">
-            <label>FREQS</label><input type="text" id="s2-m1-frq" value="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m1-acc" value="" class="acc-input">
-        </div>
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 2 (17-32)</div>
-            <label>STEPS</label><input type="text" id="s2-m2-seq" value="">
-            <label>FREQS</label><input type="text" id="s2-m2-frq" value="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m2-acc" value="" class="acc-input">
-        </div>
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 3 (33-48)</div>
-            <label>STEPS</label><input type="text" id="s2-m3-seq" placeholder="">
-            <label>FREQS</label><input type="text" id="s2-m3-frq" placeholder="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m3-acc" placeholder="" class="acc-input">
-        </div>
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 4 (49-64)</div>
-            <label>STEPS</label><input type="text" id="s2-m4-seq" placeholder="">
-            <label>FREQS</label><input type="text" id="s2-m4-frq" placeholder="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s2-m4-acc" placeholder="" class="acc-input">
-        </div>
-    </div>
+    <div class="status" id="status-msg"></div>
 
-    <h2 style="border-color: var(--purple)">SYNTH 3 (VIOLET)</h2>
-    <div class="row purple">
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 1</div>
-            <label>STEPS</label><input type="text" id="s3-m1-seq" placeholder="">
-            <label>FREQS</label><input type="text" id="s3-m1-frq" placeholder="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m1-acc" placeholder="" class="acc-input">
-        </div>
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 2</div>
-            <label>STEPS</label><input type="text" id="s3-m2-seq" placeholder="">
-            <label>FREQS</label><input type="text" id="s3-m2-frq" placeholder="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m2-acc" placeholder="" class="acc-input">
-        </div>
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 3</div>
-            <label>STEPS</label><input type="text" id="s3-m3-seq" placeholder="">
-            <label>FREQS</label><input type="text" id="s3-m3-frq" placeholder="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m3-acc" placeholder="" class="acc-input">
-        </div>
-        <div class="col measure-box">
-            <div class="measure-title">MESURE 4</div>
-            <label>STEPS</label><input type="text" id="s3-m4-seq" value="">
-            <label>FREQS</label><input type="text" id="s3-m4-frq" value="">
-            <label style="color:var(--yellow)">ACCENTS</label><input type="text" id="s3-m4-acc" value="" class="acc-input">
-        </div>
-    </div>
-
-    <button onclick="generate()">GÉNÉRER LE CODE JS</button>
-    <textarea id="output" readonly onclick="this.select()"></textarea>
+    <textarea id="output" readonly placeholder="En attente de fichier..."></textarea>
+    <button onclick="copyToClipboard()">COPIER LE CODE SÉCURISÉ</button>
+    <div class="security-badge">🔒 Input Sanitization Active</div>
 </div>
 
 <script>
-    // Parsing Humain -> Machine (-1)
-    function parseInputHuman(str) {
-        if(!str.trim()) return [];
-        return str.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x)).map(x => x - 1).filter(x => x >= 0 && x < 64);
-    }
-    // Parsing Fréquences (Pas de -1)
-    function parseFreqs(str) {
-        if(!str.trim()) return [];
-        return str.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
-    }
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const output = document.getElementById('output');
+    const statusMsg = document.getElementById('status-msg');
+    
+    let loadedData = null;
 
-    function buildSynthTrack(prefix) {
-        let fullSeq = [];
-        let fullAccents = []; 
-        let fullFreqs = new Array(64).fill(440);
-
-        for(let m=0; m<4; m++) {
-            let steps = parseInputHuman(document.getElementById(`${prefix}-m${m+1}-seq`).value);
-            let freqs = parseFreqs(document.getElementById(`${prefix}-m${m+1}-frq`).value);
-            let accs  = parseInputHuman(document.getElementById(`${prefix}-m${m+1}-acc`).value);
-
-            steps.forEach((machineIndex, i) => {
-                fullSeq.push(machineIndex);
-                if(freqs[i]) fullFreqs[machineIndex] = freqs[i];
-            });
-            
-            accs.forEach(accIndex => {
-                fullAccents.push(accIndex);
-            });
-        }
-        return { seq: fullSeq, freqs: fullFreqs, accents: fullAccents };
+    // --- SECURITY SANITIZER ---
+    function sanitizeInput(str, isId = false) {
+        if (!str) return "";
+        if (isId) return str.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "").replace(/'/g, "").replace(/`/g, "").replace(/\\/g, "");
     }
 
-    function generate() {
-        const id = document.getElementById('p-id').value || "my_preset";
-        const name = document.getElementById('p-name').value || "MY PRESET";
-        const bpm = document.getElementById('p-bpm').value;
+    // --- CLICK & DRAG HANDLING ---
+    // 1. Clic sur la zone déclenche l'input caché
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
 
-        // Track Lengths
-        const ls = [0,1,2,3,4].map(i => document.getElementById(`l-${i}`).value || 16);
+    // 2. Gestion du Drag & Drop
+    dropZone.addEventListener('dragover', (e) => { 
+        e.preventDefault(); 
+        dropZone.classList.add('active'); 
+    });
+    
+    dropZone.addEventListener('dragleave', () => { 
+        dropZone.classList.remove('active'); 
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault(); 
+        dropZone.classList.remove('active');
+        if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+    });
 
-        // Drums Logic (Base)
-        let drumSeqs = [], drumAccs = [];
-        for(let i=0; i<5; i++) {
-            drumSeqs.push(parseInputHuman(document.getElementById(`d-${i}`).value).join(', '));
-            drumAccs.push(parseInputHuman(document.getElementById(`a-${i}`).value).join(', '));
-        }
+    // 3. Gestion du fichier sélectionné via le clic
+    fileInput.addEventListener('change', (e) => { 
+        if(e.target.files[0]) processFile(e.target.files[0]); 
+    });
 
-        // --- NOUVEAU : FM DRUM FREQS LOGIC ---
-        // On mappe les fréquences entrées manuellement aux pas actifs
-        const fmSteps = parseInputHuman(document.getElementById('d-4').value);
-        const fmUserFreqs = parseFreqs(document.getElementById('d-4-frq').value);
-        let fmFreqsFull = new Array(64).fill(100); // 100Hz par défaut
+    // --- HELPER ---
+    function boolsToIndices(arr) {
+        if(!Array.isArray(arr)) return [];
+        return arr.map((val, i) => val ? i : -1).filter(i => i !== -1);
+    }
 
-        fmSteps.forEach((stepIndex, i) => {
-            if(fmUserFreqs[i]) {
-                fmFreqsFull[stepIndex] = fmUserFreqs[i];
+    // --- LECTURE ---
+    function processFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                loadedData = JSON.parse(e.target.result);
+                
+                // Pré-remplissage
+                const rawName = loadedData.name || "UNTITLED";
+                const cleanName = sanitizeInput(rawName);
+                const cleanID = cleanName.toLowerCase().replace(/\s+/g, '_');
+
+                document.getElementById('p-name').value = cleanName;
+                if(!document.getElementById('p-id').value) {
+                    document.getElementById('p-id').value = cleanID;
+                }
+
+                renderCodeFromCache();
+                statusMsg.innerText = "✅ JSON VALIDE & SÉCURISÉ";
+                statusMsg.style.color = "#0f0";
+            } catch(err) {
+                alert("Fichier corrompu : " + err.message);
             }
-        });
-        // -------------------------------------
+        };
+        reader.readAsText(file);
+    }
 
-        // Synths Logic
-        const s2 = buildSynthTrack('s2');
-        const s3 = buildSynthTrack('s3');
+    // --- GENERATION (ENGINE V21) ---
+    function renderCodeFromCache() {
+        if (!loadedData) return;
+        const data = loadedData;
+        
+        const rawId = document.getElementById('p-id').value || "new_preset";
+        const id = sanitizeInput(rawId, true);
+        const rawName = document.getElementById('p-name').value || "USER PRESET";
+        const name = sanitizeInput(rawName, false);
 
-        const code = `
+        const bpm = data.global ? data.global.bpm : (data.bpm || 120);
+        const swing = (data.global && data.global.swing !== undefined) ? data.global.swing : 0;
+        const len = data.global ? data.global.len : 16;
+        
+        let trackLengths = [16,16,16,16,16];
+        if(data.global) {
+            if(data.global.trackLengths) trackLengths = data.global.trackLengths;
+            else if(data.global.trackLens) trackLengths = data.global.trackLens;
+        } else if (data.trackLengths) {
+            trackLengths = data.trackLengths;
+        }
+
+        let controls = {};
+        if(data.controls) controls = JSON.parse(JSON.stringify(data.controls)); 
+
+        const mutes = data.mutes || [false, false, false, false, false];
+        const solos = data.solos || [false, false, false, false, false];
+
+        const dSeq = data.drums && data.drums.seq ? data.drums.seq : [[],[],[],[],[]];
+        const dAcc = data.drums && (data.drums.acc || data.drums.accents) ? (data.drums.acc || data.drums.accents) : [[],[],[],[],[]];
+        
+        const drumSeqsIndices = dSeq.map(seq => boolsToIndices(seq));
+        const drumAccsIndices = dAcc.map(seq => boolsToIndices(seq));
+
+        const synths = data.synths || {};
+        const s2Seq = boolsToIndices(synths.seq2 || []);
+        const s3Seq = boolsToIndices(synths.seq3 || []);
+        const s2Acc = boolsToIndices(synths.acc2 || []);
+        const s3Acc = boolsToIndices(synths.acc3 || []);
+
+        const roundArr = (arr) => arr ? arr.map(x => Math.round(x * 10) / 10) : [];
+        const freqs = data.freqs || {};
+        const f2 = roundArr(freqs.seq2 || data.freqs2);
+        const f3 = roundArr(freqs.seq3 || data.freqs3);
+        const fmFreqs = freqs.fm ? roundArr(freqs.fm) : [];
+
+        const chords = (data.chords && data.chords.qual) ? data.chords.qual : [];
+
+        const jsCode = `
     "${id}": {
         name: "${name}",
-        masterLength: 64,
+        masterLength: ${len},
         bpm: ${bpm},
-        swing: 0,
-        trackLengths: [${ls.join(', ')}],
+        swing: ${swing},
+        trackLengths: [${trackLengths.join(', ')}],
+        
+        // --- V21 CONTROLS (Knobs + Rumble) ---
+        controls: ${JSON.stringify(controls, null, 8).replace(/\n\s{8}/g, '\n            ').replace('}', '        }')},
+
+        // --- V21 MIXER STATE ---
+        mutes: [${mutes.join(', ')}],
+        solos: [${solos.join(', ')}],
+
         drums: {
             seq: [
-                makeSeq([${drumSeqs[0]}]), makeSeq([${drumSeqs[1]}]), makeSeq([${drumSeqs[2]}]), makeSeq([${drumSeqs[3]}]), makeSeq([${drumSeqs[4]}])
+                makeSeq([${drumSeqsIndices[0].join(', ')}]), // KICK
+                makeSeq([${drumSeqsIndices[1].join(', ')}]), // SNARE
+                makeSeq([${drumSeqsIndices[2].join(', ')}]), // HHC
+                makeSeq([${drumSeqsIndices[3].join(', ')}]), // HHO
+                makeSeq([${drumSeqsIndices[4].join(', ')}])  // FM
             ],
             accents: [
-                makeSeq([${drumAccs[0]}]), makeSeq([${drumAccs[1]}]), makeSeq([${drumAccs[2]}]), makeSeq([${drumAccs[3]}]), makeSeq([${drumAccs[4]}])
+                makeSeq([${drumAccsIndices[0].join(', ')}]),
+                makeSeq([${drumAccsIndices[1].join(', ')}]),
+                makeSeq([${drumAccsIndices[2].join(', ')}]),
+                makeSeq([${drumAccsIndices[3].join(', ')}]),
+                makeSeq([${drumAccsIndices[4].join(', ')}])
             ],
-            fmFreqs: [${fmFreqsFull.join(', ')}]
+            fmFreqs: [${fmFreqs.join(', ')}]
         },
+
         synths: {
-            seq2: makeSeq([${s2.seq.join(', ')}]),
-            seq3: makeSeq([${s3.seq.join(', ')}])
+            seq2: makeSeq([${s2Seq.join(', ')}]),
+            seq3: makeSeq([${s3Seq.join(', ')}]),
+            acc2: makeSeq([${s2Acc.join(', ')}]),
+            acc3: makeSeq([${s3Acc.join(', ')}])
         },
-        freqs2: [${s2.freqs.join(', ')}],
-        freqs3: [${s3.freqs.join(', ')}],
-        accents2: makeSeq([${s2.accents.join(', ')}]),
-        accents3: makeSeq([${s3.accents.join(', ')}])
+
+        freqs2: [${f2.join(', ')}],
+        freqs3: [${f3.join(', ')}],
+        
+        chords: {
+            qual: [${chords.join(', ')}]
+        }
     },`;
 
-        document.getElementById('output').value = code;
+        output.value = jsCode;
+    }
+
+    function copyToClipboard() {
+        if(!output.value) return;
+        output.select();
+        document.execCommand('copy');
+        statusMsg.innerText = "COPIÉ DANS LE PRESSE-PAPIER !";
+        setTimeout(() => statusMsg.innerText = "", 3000);
     }
 </script>
 
